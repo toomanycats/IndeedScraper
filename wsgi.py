@@ -12,7 +12,7 @@ except IOError:
 # line, it's possible required libraries won't be in your searchable path
 #
 import indeed_scrape
-import web_version as application
+from web_version import app as application
 #
 # Below for testing only
 #
