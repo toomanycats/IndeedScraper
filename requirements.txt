@@ -3,3 +3,4 @@ scikit-learn
 beautifulsoup4
 nltk
 flask==0.10.1
+bokeh
