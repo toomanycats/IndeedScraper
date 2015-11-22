@@ -1,6 +1,7 @@
-pandas
-scikit-learn
-beautifulsoup4
-nltk
+pandas==0.17.1
+scikit-learn==0.16.0
+beautifulsoup4==4.4.1
+nltk==3.0.2
 flask==0.10.1
-bokeh
+bokeh==0.10.0
+matplotlib==1.4.3
