@@ -30,7 +30,7 @@ class Indeed(object):
         self.stop_words = None
         self.num_samp = 300
         self.zip_code_file ='/home/daniel/git/Python2.7/DataScience/indeed/us_postal_codes.csv'
-        self.df = pd.DataFrame()
+        self.df = pd.DataFrame(columns=['url'])
         self.config_path = "/home/daniel/git/Python2.7/DataScience/indeed/tokens.cfg"
         self.query = None
         self.locations = None
@@ -88,13 +88,14 @@ class Indeed(object):
             url_city = self.get_url(zipcode)
             if url_city is not None:
                 for item in url_city:
-                    self.df.loc[ind, 'zipcode'] = str(zipcode)
-                    self.df.loc[ind, 'url'] = item[0]
-                    self.df.loc[ind, 'city'] = item[1]
-                    content = self.parse_content(item[0])
-                    self.df.loc[ind, 'summary'] = content
-                    self.df.loc[ind, 'summary_stem'] = self.stemmer_(content)
-                    ind += 1
+                    if item[0] not in self.df['url']:
+                        self.df.loc[ind, 'zipcode'] = str(zipcode)
+                        self.df.loc[ind, 'url'] = item[0]
+                        self.df.loc[ind, 'city'] = item[1]
+                        content = self.parse_content(item[0])
+                        self.df.loc[ind, 'summary'] = content
+                        self.df.loc[ind, 'summary_stem'] = self.stemmer_(content)
+                        ind += 1
 
     def get_urls(self):
         urls = []
