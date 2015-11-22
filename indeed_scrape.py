@@ -29,9 +29,9 @@ class Indeed(object):
         self.add_loc = None
         self.stop_words = None
         self.num_samp = 300
-        self.zip_code_file ='/home/daniel/git/Python2.7/DataScience/indeed/us_postal_codes.csv'
+        self.zip_code_file ='us_postal_codes.csv'
         self.df = pd.DataFrame(columns=['url'])
-        self.config_path = "/home/daniel/git/Python2.7/DataScience/indeed/tokens.cfg"
+        self.config_path = "tokens.cfg"
         self.query = None
         self.locations = None
 
