@@ -11,6 +11,12 @@ except IOError:
 # IMPORTANT: Put any additional includes below this line.  If placed above this
 # line, it's possible required libraries won't be in your searchable path
 #
+import sklearn
+import pandas
+import nltk
+import bs4
+import matplotlib
+import bokeh
 import indeed_scrape
 from web_version import app as application
 #
