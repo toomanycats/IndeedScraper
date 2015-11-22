@@ -1,3 +1,0 @@
-export NLTK_DATA=$OPENSHIFT_DATA_DIR
-python -m nltk.downloader all
-
