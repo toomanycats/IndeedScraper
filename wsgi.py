@@ -6,6 +6,7 @@ virtualenv = os.path.join(virtenv, 'bin/activate_this.py')
 try:
     execfile(virtualenv, dict(__file__=virtualenv))
 except IOError:
+    print "source activate failed"
     pass
 #
 # IMPORTANT: Put any additional includes below this line.  If placed above this
