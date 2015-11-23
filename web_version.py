@@ -22,9 +22,9 @@ input_template = jinja2.Template('''
 </head>
 <body>
     <h1>INDEED.COM JOB OPENINGS SKILL SCRAPER</h1>
-    <form action="." method="POST">
+    <form action="/main" method="POST">
         Enter keywords you normally use to search for openings on indeed.com<br>
-        <input type="text" name="kw">
+        <input type="text" name="kw"><br>
         Enter zipcodes<br>
         <input type="text" name="zipcodes"><br>
         <input type="submit" value="Submit" name="submit">
@@ -81,7 +81,7 @@ def plot_fig(df, num):
 def get_keywords():
     return input_template.render()
 
-@app.route('/', methods=['POST'])
+@app.route('/main/', methods=['POST'])
 def main():
     kws = request.form['kw']
     zips = request.form['zipcodes']
