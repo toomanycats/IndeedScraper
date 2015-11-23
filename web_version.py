@@ -114,8 +114,9 @@ def run_analysis(keywords, zipcodes):
     count, kw = ind.vectorizer(df['summary_stem'])
     #convert from sparse matrix to single dim np array
     count = count.toarray().sum(axis=0)
+    num = df['url'].count()
 
-    return kw, count, df['urls'].count(), df['city']
+    return kw, count, num, df['city']
 
 if __name__ == "__main__":
     app.debug = True
