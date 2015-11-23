@@ -77,7 +77,7 @@ def plot_fig(df, num):
 
     return p
 
-@app.route('/', methods=['POST'] )
+@app.route('/')
 def get_keywords():
     return input_template.render()
 
