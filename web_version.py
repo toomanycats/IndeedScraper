@@ -5,6 +5,7 @@
 ######################################
 import logging
 import pandas as pd
+from flask.view import View
 from flask import Flask
 from flask import request, render_template, url_for
 import indeed_scrape
@@ -19,6 +20,17 @@ data_dir = os.getenv('OPENSHIFT_DATA_DIR')
 logfile = os.path.join(data_dir, 'logfile.log')
 logging.basicConfig(filename=logfile, level=logging.INFO)
 
+please_wait_template = jinjga2.Template('''
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>please wait for data</title>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <h1>Collecting data, this could take a while.</h1>
+</body>
+</html>''')
 
 input_template = jinja2.Template('''
 <!DOCTYPE html>
@@ -29,7 +41,7 @@ input_template = jinja2.Template('''
 </head>
 <body>
     <h1>INDEED.COM JOB OPENINGS SKILL SCRAPER</h1>
-    <form action="/main/" method="POST">
+    <form action="/get_params/" method="POST">
         Enter keywords you normally use to search for openings on indeed.com<br>
         <input type="text" name="kw"><br>
         Enter zipcodes<br>
@@ -70,68 +82,78 @@ output_template = jinja2.Template("""
 
 app = Flask(__name__)
 
-def plot_fig(df, num):
+class Serve(View):
 
-    title_string = "Analysis of %i Postings" % num
+    def plot_fig(self, df, num):
 
-    p = Bar(df, 'kw',
-            values='count',
-            title=title_string,
-            title_text_font_size='15',
-            color='blue',
-            xlabel="keywords",
-            ylabel="Count")
+        title_string = "Analysis of %i Postings" % num
 
-    return p
+        p = Bar(df, 'kw',
+                values='count',
+                title=title_string,
+                title_text_font_size='15',
+                color='blue',
+                xlabel="keywords",
+                ylabel="Count")
 
-@app.route('/')
-def get_keywords():
-    return input_template.render()
+        return p
 
-@app.route('/main/', methods=['POST'])
-def main():
-    try:
-        kws = request.form['kw']
-        zips = request.form['zipcodes']
-        logging.info(kws)
-        logging.info(zips)
+    @app.route('/')
+    def get_keywords(self):
+        return input_template.render()
 
-        kw, count, num, cities = run_analysis(kws, zips)
+    @app.route('/get_params/', methods=['POST'])
+    def get_parms(self):
+        try:
+            self.kws = request.form['kw']
+            self.zips = request.form['zipcodes']
+            logging.info(self.kws)
+            logging.info(self.zips)
 
-        df = pd.DataFrame(columns=['keywords','counts', 'cities'])
+            return please_wait_template.render()
 
-        df['kw'] = kw
-        df['count'] = count
-        df['cities'] = cities
+        except Exception, err:
+            logging.error(err)
+            raise
 
-        p = plot_fig(df, num)
-        script, div = components(p)
+    @app.route('/get_params')
+    def get_data(self):
+        try:
+            kw, count, num, cities = run_analysis()
 
-        html = output_template.render(script=script, div=div)
+            df = pd.DataFrame(columns=['keywords','counts', 'cities'])
+            df['kw'] = kw
+            df['count'] = count
+            df['cities'] = cities
 
-        return encode_utf8(html)
+            p = plot_fig(df, num)
+            script, div = components(p)
 
-    except Exception, err:
-        logging.error(err)
-        raise
+            html = output_template.render(script=script, div=div)
 
-def run_analysis(keywords, zipcodes):
+            return encode_utf8(html)
 
-    ind = indeed_scrape.Indeed()
-    ind.query = keywords
-    ind.stop_words = "and"
-    ind.add_loc = zipcodes
+        except Exception, err:
+            logging.error(err)
+            raise
 
-    ind.main()
-    df = ind.df
-    df = df.drop_duplicates(['url']).dropna(how='any')
+    def run_analysis(self):
 
-    count, kw = ind.vectorizer(df['summary_stem'])
-    #convert from sparse matrix to single dim np array
-    count = count.toarray().sum(axis=0)
-    num = df['url'].count()
+        ind = indeed_scrape.Indeed()
+        ind.query = self.kws
+        ind.stop_words = "and"
+        ind.add_loc = self.zips
 
-    return kw, count, num, df['city']
+        ind.main()
+        df = ind.df
+        df = df.drop_duplicates(['url']).dropna(how='any')
+
+        count, kw = ind.vectorizer(df['summary_stem'])
+        #convert from sparse matrix to single dim np array
+        count = count.toarray().sum(axis=0)
+        num = df['url'].count()
+
+        return kw, count, num, df['city']
 
 if __name__ == "__main__":
     app.debug = True
