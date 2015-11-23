@@ -7,7 +7,7 @@ import logging
 import pandas as pd
 from flask.view import View
 from flask import Flask
-from flask import request, render_template, url_for
+from flask import request, render_template, url_for, redirect
 import indeed_scrape
 import jinja2
 from bokeh.embed import components
@@ -154,6 +154,12 @@ class Serve(View):
         num = df['url'].count()
 
         return kw, count, num, df['city']
+
+app.add_url_rule('/get_keywords/', view_func=Serve.as_view('get_keywords'))
+
+@app.route("/")
+def index():
+    return redirect('/get_keywords')
 
 if __name__ == "__main__":
     app.debug = True
