@@ -5,7 +5,7 @@
 ######################################
 import pandas as pd
 from flask import Flask
-from flask import request, render_template
+from flask import request, render_template, url_for
 import indeed_scrape
 import jinja2
 from bokeh.embed import components
@@ -22,7 +22,7 @@ input_template = jinja2.Template('''
 </head>
 <body>
     <h1>INDEED.COM JOB OPENINGS SKILL SCRAPER</h1>
-    <form action="/main" method="POST">
+    <form action="{{ url_for('main') }}" method="POST">
         Enter keywords you normally use to search for openings on indeed.com<br>
         <input type="text" name="kw"><br>
         Enter zipcodes<br>
