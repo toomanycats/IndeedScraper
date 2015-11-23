@@ -54,7 +54,7 @@ output_template = jinja2.Template("""
 
     {{ script }}
 
-    {{ div }}
+    {{ script2 }}
 
 </body>
 
@@ -85,7 +85,7 @@ def get_keywords():
 def main():
     kws = request.form['kw']
     zips = request.form['zipcodes']
-    return output_template.render(scripts="testing", div='testing')
+    return output_template.render(script=kws, script2=zips)
 #    kw, count, num, cities = run_analysis(kws, zips)
 #
 #    df = pd.DataFrame(columns=['keywords','counts', 'cities'])
