@@ -40,7 +40,7 @@ input_template = jinja2.Template('''
 </head>
 <body>
     <h1>INDEED.COM JOB OPENINGS SKILL SCRAPER</h1>
-    <form action="/please_wait/" method="POST">
+    <form action="/please_wait" method="POST">
         Enter keywords you normally use to search for openings on indeed.com<br>
         <input type="text" name="kw"><br>
         Enter zipcodes<br>
@@ -99,7 +99,6 @@ def plot_fig(df, num):
 def get_keywords():
     return input_template.render()
 
-@app.route('/please_wait/')
 def please_wait():
     try:
         return please_wait_template.render()
