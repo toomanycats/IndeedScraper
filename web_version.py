@@ -16,12 +16,16 @@ from bokeh.charts import Bar
 input_template = jinja2.Template('''
 <!DOCTYPE html>
 <html lang="en">
+<head>
+    <title>indeed skill scraper</title>
+    <meta charset="UTF-8">
+</head>
 <body>
     <h1>INDEED.COM JOB OPENINGS SKILL SCRAPER</h1>
-    <h2>Enter keywords you normally use to search for openings on indeed.com</h2>
+    <div>Enter keywords you normally use to search for openings on indeed.com</div>
     <form action="." method="POST">
         <div><input type="text" name="kw"></div>
-    <h2>Enter zipcodes </h2>
+    <div>Enter zipcodes </div>
         <div><input type="text" name="zipcodes"></div>
     <input type="submit" value="Submit">
     </form>
