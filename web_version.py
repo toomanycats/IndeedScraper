@@ -3,6 +3,7 @@
 # Author : Daniel Cuneo
 # Creation Date : 11-21-2015
 ######################################
+import logging
 import pandas as pd
 from flask import Flask
 from flask import request, render_template, url_for
@@ -12,6 +13,12 @@ from bokeh.embed import components
 from bokeh.plotting import figure, output_file
 from bokeh.util.string import encode_utf8
 from bokeh.charts import Bar
+import os
+
+data_dir = os.getenv('OPENSHIFT_DATA_DIR')
+logfile = os.path.join(data_dir, 'logfile.log')
+logging.basicConfig(filename=logfile, level=logging.info)
+
 
 input_template = jinja2.Template('''
 <!DOCTYPE html>
@@ -54,7 +61,7 @@ output_template = jinja2.Template("""
 
     {{ script }}
 
-    {{ script2 }}
+    {{ div }}
 
 </body>
 
@@ -83,23 +90,28 @@ def get_keywords():
 
 @app.route('/main/', methods=['POST'])
 def main():
-    kws = request.form['kw']
-    zips = request.form['zipcodes']
-    return output_template.render(script=kws, script2=zips)
-#    kw, count, num, cities = run_analysis(kws, zips)
-#
-#    df = pd.DataFrame(columns=['keywords','counts', 'cities'])
-#
-#    df['kw'] = kw
-#    df['count'] = count
-#    df['cities'] = cities
-#
-#    p = plot_fig(df, num)
-#    script, div = components(p)
-#
-#    html = output_template.render(script=script, div=div)
-#
-#    return encode_utf8(html)
+    try:
+        kws = request.form['kw']
+        zips = request.form['zipcodes']
+
+        kw, count, num, cities = run_analysis(kws, zips)
+
+        df = pd.DataFrame(columns=['keywords','counts', 'cities'])
+
+        df['kw'] = kw
+        df['count'] = count
+        df['cities'] = cities
+
+        p = plot_fig(df, num)
+        script, div = components(p)
+
+        html = output_template.render(script=script, div=div)
+
+        return encode_utf8(html)
+
+    except Exception, err:
+        logging.error(err)
+        raise
 
 def run_analysis(keywords, zipcodes):
 
