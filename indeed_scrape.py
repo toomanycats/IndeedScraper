@@ -19,6 +19,7 @@ import numpy as np
 from nltk import stem
 from nltk import tokenize
 import re
+import os
 
 toker = tokenize.word_tokenize
 stemmer = stem.SnowballStemmer('english')
@@ -26,12 +27,14 @@ stemmer = stem.SnowballStemmer('english')
 
 class Indeed(object):
     def __init__(self):
+        repo_dir = os.getenv("OPENSHIFT_REPO_DIR")
+
         self.add_loc = None
         self.stop_words = None
-        self.num_samp = 300
-        self.zip_code_file ='us_postal_codes.csv'
+        self.num_samp = 100
+        self.zip_code_file = os.path.join(repo_dir, 'us_postal_codes.csv')
         self.df = pd.DataFrame(columns=['url'])
-        self.config_path = "tokens.cfg"
+        self.config_path = os.path.join(repo_dir, "tokens.cfg")
         self.query = None
         self.locations = None
 
