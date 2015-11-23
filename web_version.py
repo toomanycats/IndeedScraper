@@ -20,7 +20,7 @@ data_dir = os.getenv('OPENSHIFT_DATA_DIR')
 logfile = os.path.join(data_dir, 'logfile.log')
 logging.basicConfig(filename=logfile, level=logging.INFO)
 
-please_wait_template = jinjga2.Template('''
+please_wait_template = jinja2.Template('''
 <!DOCTYPE html>
 <html lang="en">
 <head>
