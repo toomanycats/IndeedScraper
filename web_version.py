@@ -22,12 +22,12 @@ input_template = jinja2.Template('''
 </head>
 <body>
     <h1>INDEED.COM JOB OPENINGS SKILL SCRAPER</h1>
-    <div>Enter keywords you normally use to search for openings on indeed.com</div>
     <form action="." method="POST">
-        <div><input type="text" name="kw"></div>
-    <div>Enter zipcodes </div>
-        <div><input type="text" name="zipcodes"></div>
-    <input type="submit" value="Submit" name="submit">
+        Enter keywords you normally use to search for openings on indeed.com<br>
+        <input type="text" name="kw">
+        Enter zipcodes<br>
+        <input type="text" name="zipcodes"><br>
+        <input type="submit" value="Submit" name="submit">
     </form>
 </body>
 </html>''')
