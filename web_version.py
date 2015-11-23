@@ -115,7 +115,7 @@ def get_data():
         zips = request.form['zipcodes']
         logging.info(kws)
         logging.info(zips)
-        kw, count, num, cities = run_analysis()
+        kw, count, num, cities = run_analysis(kws, zips)
 
         df = pd.DataFrame(columns=['keywords','counts', 'cities'])
         df['kw'] = kw
