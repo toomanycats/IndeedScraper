@@ -17,7 +17,7 @@ import os
 
 data_dir = os.getenv('OPENSHIFT_DATA_DIR')
 logfile = os.path.join(data_dir, 'logfile.log')
-logging.basicConfig(filename=logfile, level=logging.info)
+logging.basicConfig(filename=logfile, level=logging.INFO)
 
 
 input_template = jinja2.Template('''
