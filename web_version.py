@@ -5,7 +5,7 @@
 ######################################
 import logging
 import pandas as pd
-from flask.view import View
+from flask.views import View
 from flask import Flask
 from flask import request, render_template, url_for, redirect
 import indeed_scrape
