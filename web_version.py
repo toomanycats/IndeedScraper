@@ -5,7 +5,6 @@
 ######################################
 import logging
 import pandas as pd
-from flask.views import View
 from flask import Flask
 from flask import request, render_template, url_for, redirect
 import indeed_scrape
@@ -41,7 +40,7 @@ input_template = jinja2.Template('''
 </head>
 <body>
     <h1>INDEED.COM JOB OPENINGS SKILL SCRAPER</h1>
-    <form action="/get_params/" method="POST">
+    <form action="/please_wait/" method="POST">
         Enter keywords you normally use to search for openings on indeed.com<br>
         <input type="text" name="kw"><br>
         Enter zipcodes<br>
@@ -82,84 +81,76 @@ output_template = jinja2.Template("""
 
 app = Flask(__name__)
 
-class Serve(View):
+def plot_fig(df, num):
 
-    def plot_fig(self, df, num):
+    title_string = "Analysis of %i Postings" % num
 
-        title_string = "Analysis of %i Postings" % num
+    p = Bar(df, 'kw',
+            values='count',
+            title=title_string,
+            title_text_font_size='15',
+            color='blue',
+            xlabel="keywords",
+            ylabel="Count")
 
-        p = Bar(df, 'kw',
-                values='count',
-                title=title_string,
-                title_text_font_size='15',
-                color='blue',
-                xlabel="keywords",
-                ylabel="Count")
+    return p
 
-        return p
+@app.route('/')
+def get_keywords():
+    return input_template.render()
 
-    @app.route('/')
-    def get_keywords(self):
-        return input_template.render()
+@app.route('/please_wait/')
+def please_wait():
+    try:
+        return please_wait_template.render()
 
-    @app.route('/get_params/', methods=['POST'])
-    def get_params(self):
-        try:
-            self.kws = request.form['kw']
-            self.zips = request.form['zipcodes']
-            logging.info(self.kws)
-            logging.info(self.zips)
+    except Exception, err:
+        logging.error(err)
+        raise
 
-            return please_wait_template.render()
+@app.route('/please_wait/', methods=['POST'])
+def get_data():
+    try:
+        kws = request.form['kw']
+        zips = request.form['zipcodes']
+        logging.info(kws)
+        logging.info(zips)
+        kw, count, num, cities = run_analysis()
 
-        except Exception, err:
-            logging.error(err)
-            raise
+        df = pd.DataFrame(columns=['keywords','counts', 'cities'])
+        df['kw'] = kw
+        df['count'] = count
+        df['cities'] = cities
 
-    @app.route('/get_params')
-    def get_data(self):
-        try:
-            kw, count, num, cities = run_analysis()
+        p = plot_fig(df, num)
+        script, div = components(p)
 
-            df = pd.DataFrame(columns=['keywords','counts', 'cities'])
-            df['kw'] = kw
-            df['count'] = count
-            df['cities'] = cities
+        html = output_template.render(script=script, div=div)
 
-            p = plot_fig(df, num)
-            script, div = components(p)
+        return encode_utf8(html)
 
-            html = output_template.render(script=script, div=div)
+    except Exception, err:
+        logging.error(err)
+        raise
 
-            return encode_utf8(html)
+def run_analysis(kws, zips):
 
-        except Exception, err:
-            logging.error(err)
-            raise
+    ind = indeed_scrape.Indeed()
+    ind.query = kws
+    ind.stop_words = "and"
+    ind.add_loc = zips
 
-    def run_analysis(self):
+    ind.main()
+    df = ind.df
+    df = df.drop_duplicates(['url']).dropna(how='any')
 
-        ind = indeed_scrape.Indeed()
-        ind.query = self.kws
-        ind.stop_words = "and"
-        ind.add_loc = self.zips
+    count, kw = ind.vectorizer(df['summary_stem'])
+    #convert from sparse matrix to single dim np array
+    count = count.toarray().sum(axis=0)
+    num = df['url'].count()
 
-        ind.main()
-        df = ind.df
-        df = df.drop_duplicates(['url']).dropna(how='any')
+    return kw, count, num, df['city']
 
-        count, kw = ind.vectorizer(df['summary_stem'])
-        #convert from sparse matrix to single dim np array
-        count = count.toarray().sum(axis=0)
-        num = df['url'].count()
-
-        return kw, count, num, df['city']
-
-#app.add_url_rule('/get_keywords/', view_func=Serve.as_view('get_keywords'))
-
-#@app.route("/")
-#def index():
-#    return redirect('/get_keywords')
 
 if __name__ == "__main__":
     app.debug = True
