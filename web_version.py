@@ -27,7 +27,7 @@ input_template = jinja2.Template('''
         <div><input type="text" name="kw"></div>
     <div>Enter zipcodes </div>
         <div><input type="text" name="zipcodes"></div>
-    <input type="submit" value="Submit">
+    <input type="submit" value="Submit" name="submit">
     </form>
 </body>
 </html>''')
@@ -35,6 +35,10 @@ input_template = jinja2.Template('''
 output_template = jinja2.Template("""
 <!DOCTYPE html>
 <html lang="en-US">
+<head>
+    <title>indeed skill scraper results</title>
+    <meta charset="UTF-8">
+</head>
 
 <link
     href="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.css"
@@ -46,7 +50,7 @@ output_template = jinja2.Template("""
 
 <body>
 
-    <h1>INDEED.COM JOB OPENINGS SKILL SCRAPER</h1>
+    <h1>INDEED.COM JOB OPENINGS SKILL SCRAPER RESULTS</h1>
 
     {{ script }}
 
