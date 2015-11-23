@@ -99,6 +99,7 @@ def plot_fig(df, num):
 def get_keywords():
     return input_template.render()
 
+@app.route('/please_wait/')
 def please_wait():
     try:
         return please_wait_template.render()
