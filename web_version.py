@@ -75,10 +75,8 @@ def get_keywords():
 
 @app.route('/', methods=['POST'])
 def main():
-    #kws = request.form['kw']
-    #zips = request.form['zipcodes']
-    kws= "data science"
-    zips = "^(94)"
+    kws = request.form['kw']
+    zips = request.form['zipcodes']
     kw, count, num, cities = run_analysis(kws, zips)
 
     df = pd.DataFrame(columns=['keywords','counts', 'cities'])
