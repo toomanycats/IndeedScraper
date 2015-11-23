@@ -93,6 +93,8 @@ def main():
     try:
         kws = request.form['kw']
         zips = request.form['zipcodes']
+        logging.info(kws)
+        logging.info(zips)
 
         kw, count, num, cities = run_analysis(kws, zips)
 
