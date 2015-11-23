@@ -103,7 +103,7 @@ class Serve(View):
         return input_template.render()
 
     @app.route('/get_params/', methods=['POST'])
-    def get_parms(self):
+    def get_params(self):
         try:
             self.kws = request.form['kw']
             self.zips = request.form['zipcodes']
@@ -155,11 +155,11 @@ class Serve(View):
 
         return kw, count, num, df['city']
 
-app.add_url_rule('/get_keywords/', view_func=Serve.as_view('get_keywords'))
+#app.add_url_rule('/get_keywords/', view_func=Serve.as_view('get_keywords'))
 
-@app.route("/")
-def index():
-    return redirect('/get_keywords')
+#@app.route("/")
+#def index():
+#    return redirect('/get_keywords')
 
 if __name__ == "__main__":
     app.debug = True
