@@ -77,7 +77,7 @@ def plot_fig(df, num):
 
     return p
 
-@app.route('/')
+@app.route('/', methods=['POST'] )
 def get_keywords():
     return input_template.render()
 
@@ -85,20 +85,21 @@ def get_keywords():
 def main():
     kws = request.form['kw']
     zips = request.form['zipcodes']
-    kw, count, num, cities = run_analysis(kws, zips)
-
-    df = pd.DataFrame(columns=['keywords','counts', 'cities'])
-
-    df['kw'] = kw
-    df['count'] = count
-    df['cities'] = cities
-
-    p = plot_fig(df, num)
-    script, div = components(p)
-
-    html = output_template.render(script=script, div=div)
-
-    return encode_utf8(html)
+    return output_template.render(scripts="testing", div='testing')
+#    kw, count, num, cities = run_analysis(kws, zips)
+#
+#    df = pd.DataFrame(columns=['keywords','counts', 'cities'])
+#
+#    df['kw'] = kw
+#    df['count'] = count
+#    df['cities'] = cities
+#
+#    p = plot_fig(df, num)
+#    script, div = components(p)
+#
+#    html = output_template.render(script=script, div=div)
+#
+#    return encode_utf8(html)
 
 def run_analysis(keywords, zipcodes):
 
