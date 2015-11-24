@@ -136,7 +136,7 @@ def process_data():
             logging.error(err)
             raise
 
-    retrun dict(get_data=get_data)
+    return dict(get_data=get_data)
 
 def run_analysis(kws, zips):
     try:
