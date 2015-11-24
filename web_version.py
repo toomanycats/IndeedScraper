@@ -109,7 +109,7 @@ def please_wait():
         logging.error(err)
         raise
 
-@app.route('/get_data/', methods=['POST'])
+@app.route('/please_wait/, methods=['POST'])
 def get_data():
     try:
         kws = request.form['kw']
