@@ -110,30 +110,33 @@ def please_wait():
         raise
 
 @app.context_processor
-def get_data():
-    try:
-        logging.info("starting get_data")
-        kws = request.form['kw']
-        zips = request.form['zipcodes']
-        logging.info(kws)
-        logging.info(zips)
-        kw, count, num, cities = run_analysis(kws, zips)
+def process_data():
+    def get_data():
+        try:
+            logging.info("starting get_data")
+            kws = request.form['kw']
+            zips = request.form['zipcodes']
+            logging.info(kws)
+            logging.info(zips)
+            kw, count, num, cities = run_analysis(kws, zips)
 
-        df = pd.DataFrame(columns=['keywords','counts', 'cities'])
-        df['kw'] = kw
-        df['count'] = count
-        df['cities'] = cities
+            df = pd.DataFrame(columns=['keywords','counts', 'cities'])
+            df['kw'] = kw
+            df['count'] = count
+            df['cities'] = cities
 
-        p = plot_fig(df, num)
-        script, div = components(p)
+            p = plot_fig(df, num)
+            script, div = components(p)
 
-        html = output_template.render(script=script, div=div)
+            html = output_template.render(script=script, div=div)
 
-        return dict(get_data=encode_utf8(html))
+            return encode_utf8(html)
 
-    except Exception, err:
-        logging.error(err)
-        raise
+        except Exception, err:
+            logging.error(err)
+            raise
+
+    retrun dict(get_data=get_data)
 
 def run_analysis(kws, zips):
     try:
