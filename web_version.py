@@ -28,8 +28,8 @@ please_wait_template = jinja2.Template('''
 </head>
 <body>
     <h1>Collecting data, this could take a while.</h1>
+<div> {{ results }} </div>
 </body>
-{{ results }}
 </html>''')
 
 input_template = jinja2.Template('''
@@ -139,8 +139,7 @@ def run_analysis(kws, zips):
         ind = indeed_scrape.Indeed()
         ind.query = kws
         ind.stop_words = "and"
-        #ind.add_loc = zips
-        ind.locations = "94133"
+        ind.add_loc = zips
 
         ind.main()
         df = ind.df
