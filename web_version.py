@@ -28,7 +28,6 @@ please_wait_template = jinja2.Template('''
 </head>
 <body>
     <h1>Collecting data, this could take a while.</h1>
-{{ get_data_fun }}
 </body>
 </html>''')
 
@@ -103,13 +102,13 @@ def get_keywords():
 @app.route('/please_wait/')
 def please_wait():
     try:
-        return please_wait_template.render(get_data_fun=get_data)
+        return please_wait_template.render()
 
     except Exception, err:
         logging.error(err)
         raise
 
-@app.route('/please_wait/, methods=['POST'])
+@app.after_request
 def get_data():
     try:
         kws = request.form['kw']
