@@ -28,6 +28,7 @@ please_wait_template = jinja2.Template('''
 </head>
 <body>
     <h1>Collecting data, this could take a while.</h1>
+{{ get_data_fun }}
 </body>
 </html>''')
 
@@ -102,13 +103,13 @@ def get_keywords():
 @app.route('/please_wait/')
 def please_wait():
     try:
-        return please_wait_template.render()
+        return please_wait_template.render(get_data_fun=get_data)
 
     except Exception, err:
         logging.error(err)
         raise
 
-@app.route('/please_wait/', methods=['POST'])
+@app.route('/get_data/', methods=['POST'])
 def get_data():
     try:
         kws = request.form['kw']
@@ -134,22 +135,26 @@ def get_data():
         raise
 
 def run_analysis(kws, zips):
+    try:
+        ind = indeed_scrape.Indeed()
+        ind.query = kws
+        ind.stop_words = "and"
+        ind.add_loc = zips
 
-    ind = indeed_scrape.Indeed()
-    ind.query = kws
-    ind.stop_words = "and"
-    ind.add_loc = zips
+        ind.main()
+        df = ind.df
+        df = df.drop_duplicates(['url']).dropna(how='any')
 
-    ind.main()
-    df = ind.df
-    df = df.drop_duplicates(['url']).dropna(how='any')
+        count, kw = ind.vectorizer(df['summary_stem'])
+        #convert from sparse matrix to single dim np array
+        count = count.toarray().sum(axis=0)
+        num = df['url'].count()
 
-    count, kw = ind.vectorizer(df['summary_stem'])
-    #convert from sparse matrix to single dim np array
-    count = count.toarray().sum(axis=0)
-    num = df['url'].count()
+        return kw, count, num, df['city']
 
-    return kw, count, num, df['city']
+    except Exception, err:
+        logging.error(err)
+        raise
 
 
 if __name__ == "__main__":
