@@ -29,6 +29,7 @@ please_wait_template = jinja2.Template('''
 <body>
     <h1>Collecting data, this could take a while.</h1>
 </body>
+{{ results }}
 </html>''')
 
 input_template = jinja2.Template('''
@@ -108,7 +109,7 @@ def please_wait():
         logging.error(err)
         raise
 
-@app.after_request
+@app.context_processor
 def get_data():
     try:
         kws = request.form['kw']
@@ -127,7 +128,7 @@ def get_data():
 
         html = output_template.render(script=script, div=div)
 
-        return encode_utf8(html)
+        return dict(results=encode_utf8(html))
 
     except Exception, err:
         logging.error(err)
@@ -138,7 +139,8 @@ def run_analysis(kws, zips):
         ind = indeed_scrape.Indeed()
         ind.query = kws
         ind.stop_words = "and"
-        ind.add_loc = zips
+        #ind.add_loc = zips
+        ind.locations = "94133"
 
         ind.main()
         df = ind.df
