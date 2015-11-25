@@ -42,7 +42,7 @@ input_template = jinja2.Template('''
     <h1>INDEED.COM JOB OPENINGS SKILL SCRAPER</h1>
     <form action="/please_wait"  method="POST">
         Enter keywords you normally use to search for openings on indeed.com<br>
-        <input type="text" name="kw"><br>
+        <input type="text" name="kw" placeholder="data science"><br>
         Enter zipcodes<br>
         <input type="text" name="zipcodes" placeholder="^(941)"><br>
         <input type="submit" value="Submit" name="submit">
@@ -99,16 +99,7 @@ def plot_fig(df, num):
 def get_keywords():
     return input_template.render()
 
-@app.route('/please_wait/')
-def please_wait():
-    try:
-        return please_wait_template.render()
-
-    except Exception, err:
-        logging.error(err)
-        raise
-
-@app.after_request(methods=['post'])
+@app.route('/please_wait/', methods=['post'])
 def get_data(response):
     try:
         logging.info("starting get_data")
@@ -134,13 +125,24 @@ def get_data(response):
         logging.error(err)
         raise
 
+@app.route('/please_wait/')
+def please_wait():
+    logging.info("please wait")
+    try:
+        return please_wait_template.render()
+
+    except Exception, err:
+        logging.error(err)
+        raise
+
 def run_analysis(kws, zips):
     try:
         logging.info("starting run_analysis")
         ind = indeed_scrape.Indeed()
         ind.query = kws
         ind.stop_words = "and"
-        ind.add_loc = zips
+        #ind.add_loc = zips
+        ind.locations='94133'
 
         ind.main()
         df = ind.df
