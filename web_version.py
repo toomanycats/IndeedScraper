@@ -143,19 +143,25 @@ def run_analysis(kws, zips):
         ind = indeed_scrape.Indeed()
         ind.query = kws
         ind.stop_words = "and"
-        #ind.add_loc = zips
-        ind.locations='94133'
+        ind.add_loc = zips
 
         ind.main()
-        df = ind.df
-        df = df.drop_duplicates(['url']).dropna(how='any')
-
-        count, kw = ind.vectorizer(df['summary_stem'])
-        #convert from sparse matrix to single dim np array
-        count = count.toarray().sum(axis=0)
-        num = df['url'].count()
-
-        return kw, count, num, df['city']
+        index = 0
+        for zipcode in ind.locations:
+            index = ind.get_city_url_content(index, zipcode)
+            df = ind.df.drop_duplicates(['url']).dropna(how='any')
+            if df is not None:
+                try:
+                    count, kw = ind.vectorizer(df['summary_stem'])
+                    #convert from sparse matrix to single dim np array
+                    count = count.toarray().sum(axis=0)
+                    num = df['url'].count()
+                    dff = pd.DataFrame()
+                    dff['kw'] = kw
+                    dff['count'] = count
+                    plot_fig(df, num)
+                except Exception, err:
+                   logging.error(err)
 
     except Exception, err:
         logging.error(err)
