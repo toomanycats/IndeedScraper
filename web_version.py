@@ -3,10 +3,11 @@
 # Author : Daniel Cuneo
 # Creation Date : 11-21-2015
 ######################################
+import time
 import logging
 import pandas as pd
 from flask import Flask
-from flask import request, render_template, url_for, redirect
+from flask import request, render_template
 import indeed_scrape
 import jinja2
 from bokeh.embed import components
@@ -97,12 +98,13 @@ def plot_fig(df, num):
 
 @app.route('/')
 def get_keywords():
+    logging.info("running app:%s" % time.strftime("%d-%m-%Y:%H:%M:%S"))
     return input_template.render()
 
 @app.route('/please_wait/', methods=['post'])
 def get_data(response):
     try:
-        logging.info("starting get_data")
+        logging.info("starting get_data: %s" % time.strftime("%H:%M:%S"))
         kws = request.form['kw']
         zips = request.form['zipcodes']
         logging.info(kws)
@@ -127,7 +129,7 @@ def get_data(response):
 
 @app.route('/please_wait/')
 def please_wait():
-    logging.info("please wait")
+    logging.info("render please wait %s" % time.strftime("%H:%M:%S"))
     try:
         return please_wait_template.render()
 
@@ -137,7 +139,7 @@ def please_wait():
 
 def run_analysis(kws, zips):
     try:
-        logging.info("starting run_analysis")
+        logging.info("starting run_analysis %s" % time.strftime("%H:%M:%S") )
         ind = indeed_scrape.Indeed()
         ind.query = kws
         ind.stop_words = "and"
