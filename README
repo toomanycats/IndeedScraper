@@ -1,4 +1,5 @@
 Web app version of serial running code.
+
 Once this is working reasonably, I'll add a Spark
 version for faster data generation.
 rhc set-env NLTK_DATA=/var/lib/openshift/5650aa2d7628e19d43000032/app-root/data/ -a indeed
