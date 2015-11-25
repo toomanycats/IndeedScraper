@@ -40,11 +40,11 @@ input_template = jinja2.Template('''
 </head>
 <body>
     <h1>INDEED.COM JOB OPENINGS SKILL SCRAPER</h1>
-    <form action="/please_wait" method="POST">
+    <form action="."  method="POST">
         Enter keywords you normally use to search for openings on indeed.com<br>
         <input type="text" name="kw"><br>
         Enter zipcodes<br>
-        <input type="text" name="zipcodes"><br>
+        <input type="text" name="zipcodes" placeholder="^(941)"><br>
         <input type="submit" value="Submit" name="submit">
     </form>
 </body>
@@ -108,7 +108,7 @@ def please_wait():
         logging.error(err)
         raise
 
-@app.route('/please_wait/', methods=['post'])
+@app.route('/', methods=['post'])
 def get_data():
     try:
         logging.info("starting get_data")
