@@ -28,7 +28,6 @@ please_wait_template = jinja2.Template('''
 </head>
 <body>
     <h1>Collecting data, this could take a while.</h1>
-<div> {{ get_data() }} </div>
 </body>
 </html>''')
 
@@ -109,34 +108,31 @@ def please_wait():
         logging.error(err)
         raise
 
-@app.context_processor
-def process_data():
-    def get_data():
-        try:
-            logging.info("starting get_data")
-            kws = request.form['kw']
-            zips = request.form['zipcodes']
-            logging.info(kws)
-            logging.info(zips)
-            kw, count, num, cities = run_analysis(kws, zips)
+@app.route('/please_wait/', methods=['post'])
+def get_data():
+    try:
+        logging.info("starting get_data")
+        kws = request.form['kw']
+        zips = request.form['zipcodes']
+        logging.info(kws)
+        logging.info(zips)
+        kw, count, num, cities = run_analysis(kws, zips)
 
-            df = pd.DataFrame(columns=['keywords','counts', 'cities'])
-            df['kw'] = kw
-            df['count'] = count
-            df['cities'] = cities
+        df = pd.DataFrame(columns=['keywords','counts', 'cities'])
+        df['kw'] = kw
+        df['count'] = count
+        df['cities'] = cities
 
-            p = plot_fig(df, num)
-            script, div = components(p)
+        p = plot_fig(df, num)
+        script, div = components(p)
 
-            html = output_template.render(script=script, div=div)
+        html = output_template.render(script=script, div=div)
 
-            return encode_utf8(html)
+        return encode_utf8(html)
 
-        except Exception, err:
-            logging.error(err)
-            raise
-
-    return dict(get_data=get_data)
+    except Exception, err:
+        logging.error(err)
+        raise
 
 def run_analysis(kws, zips):
     try:
