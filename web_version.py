@@ -47,7 +47,7 @@ input_template = jinja2.Template('''
             height: 35px;
             z-index: 1000;
             display: none;
-            background: url(/static/loading.gif) no-repeat;
+            background: url(static/loading.gif) no-repeat;
             cursor: wait;
             }
     </style>
