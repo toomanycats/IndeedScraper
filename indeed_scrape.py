@@ -86,15 +86,22 @@ class Indeed(object):
 
         return locations
 
+    def end_url_loop(self):
+        df = self.df.dropna(how='any')
+        if df.url.count() >= self.num_urls:
+            return True
+        else:
+            return False
+
     def get_city_url_content_stem(self):
         ind = 0
         for zipcode in self.locations:
+            if self.end_url_loop():
+                return
             url_city = self.get_url(zipcode)
             if url_city is not None:
                 for item in url_city:
                     if item[0] not in self.df['url']:
-                        if ind >= self.num_urls:
-                            return
                         self.df.loc[ind, 'zipcode'] = str(zipcode)
                         self.df.loc[ind, 'url'] = item[0]
                         self.df.loc[ind, 'city'] = item[1]

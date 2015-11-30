@@ -15,39 +15,57 @@ from bokeh.plotting import figure, output_file
 from bokeh.util.string import encode_utf8
 from bokeh.charts import Bar
 import os
+import numpy as np
 
 data_dir = os.getenv('OPENSHIFT_DATA_DIR')
 logfile = os.path.join(data_dir, 'logfile.log')
 logging.basicConfig(filename=logfile, level=logging.INFO)
 
-please_wait_template = jinja2.Template('''
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>please wait for data</title>
-    <meta charset="UTF-8">
-</head>
-<body>
-    <h1>Collecting data, this could take a while.</h1>
-</body>
-</html>''')
-
 input_template = jinja2.Template('''
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script type="text/javascript">// <![CDATA[
+        function preloader(){
+            document.getElementById("loading").style.display = "none";
+            document.getElementById("content").style.display = "block";
+        }//preloader
+        window.onload = preloader;
+// ]]></script>
+
     <title>indeed skill scraper</title>
     <meta charset="UTF-8">
+
+    <style type="text/css">
+        div#content {
+        display: none;
+        }
+
+        div#loading {
+            margin: auto;
+            width: 35px;
+            height: 35px;
+            z-index: 1000;
+            display: none;
+            background: url(/static/loading.gif) no-repeat;
+            cursor: wait;
+            }
+    </style>
 </head>
+
 <body>
-    <h1>INDEED.COM JOB OPENINGS SKILL SCRAPER</h1>
-    <form action="/please_wait"  method="POST">
-        Enter keywords you normally use to search for openings on indeed.com<br>
-        <input type="text" name="kw" placeholder="data science"><br>
-        Enter zipcodes<br>
-        <input type="text" name="zipcodes" placeholder="^(941)"><br>
-        <input type="submit" value="Submit" name="submit">
-    </form>
+    <div id="loading"></div>
+
+    <div id="content">
+        <h3>INDEED.COM JOB OPENINGS SKILL SCRAPER</h3>
+        <form action="/"  method="POST">
+            Enter keywords you normally use to search for openings on indeed.com<br>
+            <input type="text" name="kw" placeholder="data science"><br>
+            Enter zipcodes<br>
+            <input type="text" name="zipcodes" placeholder="^(941)"><br>
+            <input type="submit" value="Submit" name="submit" onclick="loading();">
+        </form>
+    </div>
 </body>
 </html>''')
 
@@ -61,20 +79,18 @@ output_template = jinja2.Template("""
 
 <link
     href="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.css"
-    rel="stylesheet" type="text/css"
->
+    rel="stylesheet" type="text/css">
+
 <script
     src="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.js"
 ></script>
 
 <body>
+        <h1>INDEED.COM JOB OPENINGS SKILL SCRAPER RESULTS</h1>
 
-    <h1>INDEED.COM JOB OPENINGS SKILL SCRAPER RESULTS</h1>
+        {{ script }}
 
-    {{ script }}
-
-    {{ div }}
-
+        {{ div }}
 </body>
 
 </html>
@@ -92,7 +108,9 @@ def plot_fig(df, num):
             title_text_font_size='15',
             color='blue',
             xlabel="keywords",
-            ylabel="Count")
+            ylabel="Count",
+            width=1100,
+            height=500)
 
     return p
 
@@ -101,69 +119,54 @@ def get_keywords():
     logging.info("running app:%s" % time.strftime("%d-%m-%Y:%H:%M:%S"))
     return input_template.render()
 
-@app.route('/please_wait/', methods=['post'])
-def get_data(response):
+@app.route('/', methods=['post'])
+def get_data():
     try:
         logging.info("starting get_data: %s" % time.strftime("%H:%M:%S"))
         kws = request.form['kw']
         zips = request.form['zipcodes']
         logging.info(kws)
         logging.info(zips)
-        kw, count, num, cities = run_analysis(kws, zips)
+        template = run_analysis(kws, zips)
 
-        df = pd.DataFrame(columns=['keywords','counts', 'cities'])
-        df['kw'] = kw
-        df['count'] = count
-        df['cities'] = cities
-
-        p = plot_fig(df, num)
-        script, div = components(p)
-
-        html = output_template.render(script=script, div=div)
-
-        return encode_utf8(html)
+        return template
 
     except Exception, err:
         logging.error(err)
         raise
 
-@app.route('/please_wait/')
-def please_wait():
-    logging.info("render please wait %s" % time.strftime("%H:%M:%S"))
-    try:
-        return please_wait_template.render()
-
-    except Exception, err:
-        logging.error(err)
-        raise
-
-def run_analysis(kws, zips):
+def run_analysis(kws, zips, num_urls=200):
     try:
         logging.info("starting run_analysis %s" % time.strftime("%H:%M:%S") )
         ind = indeed_scrape.Indeed()
         ind.query = kws
         ind.stop_words = "and"
         ind.add_loc = zips
+        ind.num_samp = 10 # num additional random zipcodes
+        ind.num_urls = num_urls# max of 100 postings
 
         ind.main()
-        index = 0
-        for zipcode in ind.locations:
-            index = ind.get_city_url_content(index, zipcode)
-            df = ind.df.drop_duplicates(['url']).dropna(how='any')
-            if df is not None:
-                try:
-                    count, kw = ind.vectorizer(df['summary_stem'])
-                    #convert from sparse matrix to single dim np array
-                    count = count.toarray().sum(axis=0)
-                    num = df['url'].count()
-                    dff = pd.DataFrame()
-                    dff['kw'] = kw
-                    dff['count'] = count
-                    plot_fig(df, num)
-                except Exception, err:
-                   logging.error(err)
+        df = ind.df
+        df = df.drop_duplicates(subset=['url']).dropna(how='any')
+        count, kw = ind.vectorizer(df['summary_stem'], max_features=50)
+        #convert from sparse matrix to single dim np array
+        count = count.toarray().sum(axis=0)
+        num = ind.df['url'].count()
+        dff = pd.DataFrame()
+        dff['kw'] = kw
+        dff['count'] = count
+        p = plot_fig(dff, num)
+        script, div = components(p)
+        html = output_template.render(script=script, div=div)
+
+        return encode_utf8(html)
+
+    except ValueError:
+        logging.info("vectorizer found no words")
+        pass
 
     except Exception, err:
+        print err
         logging.error(err)
         raise
 
