@@ -11,7 +11,7 @@ from flask import request, render_template
 import indeed_scrape
 import jinja2
 from bokeh.embed import components
-from bokeh.plotting import figure, output_file
+from bokeh.plotting import figure
 from bokeh.util.string import encode_utf8
 from bokeh.charts import Bar
 import os
@@ -47,7 +47,7 @@ input_template = jinja2.Template('''
             height: 35px;
             z-index: 1000;
             display: none;
-            background: url(/static/loading.gif) no-repeat;
+            background: url(static/loading.gif) no-repeat;
             cursor: wait;
             }
     </style>
@@ -62,7 +62,7 @@ input_template = jinja2.Template('''
             Enter keywords you normally use to search for openings on indeed.com<br>
             <input type="text" name="kw" placeholder="data science"><br>
             Enter zipcodes<br>
-            <input type="text" name="zipcodes" placeholder="^(941)"><br>
+            <input type="text" name="zipcodes" value="^[90]"><br>
             <input type="submit" value="Submit" name="submit" onclick="loading();">
         </form>
     </div>
@@ -135,7 +135,7 @@ def get_data():
         logging.error(err)
         raise
 
-def run_analysis(kws, zips, num_urls=200):
+def run_analysis(kws, zips, num_urls=100):
     try:
         logging.info("starting run_analysis %s" % time.strftime("%H:%M:%S") )
         ind = indeed_scrape.Indeed()
@@ -163,7 +163,8 @@ def run_analysis(kws, zips, num_urls=200):
 
     except ValueError:
         logging.info("vectorizer found no words")
-        pass
+        html = output_template.render(script="", div="no results")
+        return html
 
     except Exception, err:
         print err

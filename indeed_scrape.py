@@ -87,7 +87,7 @@ class Indeed(object):
         return locations
 
     def end_url_loop(self):
-        df = self.df.dropna(how='any')
+        df = self.df.dropna(how='any').drop_duplicates(subset=['url'])
         if df.url.count() >= self.num_urls:
             return True
         else:
