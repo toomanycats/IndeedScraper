@@ -25,45 +25,19 @@ input_template = jinja2.Template('''
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script type="text/javascript">// <![CDATA[
-            function preloader(){
-                document.getElementById("loading").style.display = "none";
-                document.getElementById("content").style.display = "block";
-            }//preloader
-            window.onload = preloader;
-    // ]]></script>
-
     <title>indeed skill scraper</title>
     <meta charset="UTF-8">
-
-    <style type="text/css">
-        div#content { display: none; }
-
-        div#loading {
-            margin: auto;
-            width: 35px;
-            height: 35px;
-            z-index: 1000;
-            display: none;
-            background: url(loading.gif) no-repeat;
-            cursor: wait;
-            }
-    </style>
 </head>
 
 <body>
-    <div id="loading"></div>
-
-    <div id="content">
         <h3>INDEED.COM JOB OPENINGS SKILL SCRAPER</h3>
         <form action="/get_data/"  method="POST">
             Enter keywords you normally use to search for openings on indeed.com<br>
             <input type="text" name="kw" placeholder="data science"><br>
             Enter zipcodes<br>
             <input type="text" name="zipcodes" value="^[90]"><br>
-            <input type="submit" value="Submit" name="submit" onclick="loading();">
+            <input type="submit" value="Submit" name="submit">
         </form>
-    </div>
 </body>
 </html>''')
 
@@ -73,6 +47,31 @@ output_template = jinja2.Template("""
 <head>
     <title>indeed skill scraper results</title>
     <meta charset="UTF-8">
+
+    <script type="text/javascript">
+            function preloader(){
+                document.getElementById("loading").style.display = "none";
+                document.getElementById("content").style.display = "block";
+            }
+            window.onload = preloader;
+    </script>
+
+    <style type="text/css">
+        div#content {
+        display: none;
+        }
+
+        div#loading {
+        top: 200 px;
+        margin: auto;
+        position: absolute;
+        z-index: 1000
+        width: 160px;
+        height: 24px;
+        background: url('loading.gif') no-repeat;
+        cursor: wait;
+        }
+    </style>
 </head>
 
 <link
@@ -83,12 +82,18 @@ output_template = jinja2.Template("""
     src="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.js"
 ></script>
 
+
 <body>
+    <div id="loading"></div>
+
+    <div id="content">
         <h1>INDEED.COM JOB OPENINGS SKILL SCRAPER RESULTS</h1>
 
         {{ script }}
 
         {{ div }}
+
+    </div>
 </body>
 
 </html>
@@ -98,7 +103,7 @@ app = Flask(__name__)
 
 def plot_fig(df, num, kws):
 
-    title_string = "Analysis of %i Postings for %s" % (num, kws)
+    title_string = "Analysis of %i Postings for:'%s'" % (num, kws)
 
     p = Bar(df, 'kw',
             values='count',
