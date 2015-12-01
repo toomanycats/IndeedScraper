@@ -7,11 +7,10 @@ import ConfigParser
 import time
 import logging
 import pandas as pd
-from flask import Flask
-from flask import request, render_template, session
+from flask import Flask, request, render_template, session
 import indeed_scrape
 from bokeh.embed import components
-from bokeh.plotting import figure, output_file
+from bokeh.plotting import figure
 from bokeh.util.string import encode_utf8
 from bokeh.charts import Bar
 import os
@@ -29,6 +28,7 @@ sess_key = config_parser.get("flask_session_key", "key")
 
 app = Flask(__name__)
 app.secret_key = sess_key
+
 
 def plot_fig(df, num):
 
@@ -48,25 +48,33 @@ def plot_fig(df, num):
 
 @app.route('/')
 def get_keywords():
-    logging.info("running app:%s" % time.strftime("%d-%m-%Y:%H:%M:%S"))
-    return render_template('index.html')
-
-@app.route('/', methods=['post'])
-def get_data():
     try:
-        logging.info("getting form data: %s" % time.strftime("%H:%M:%S"))
-        session['kws'] = request.form['kw']
-        session['zips'] = request.form['zipcodes']
-        logging.info(session['kws'])
-        logging.info(session['zips'])
-
-        return render_template('please_wait.html')
+        logging.info("running app:%s" % time.strftime("%d-%m-%Y:%H:%M:%S"))
+        return render_template('index.html')
 
     except Exception, err:
         logging.error(err)
         raise
 
-@app.route('/please_wait/')
+@app.route('/get_data/', methods=['get', 'post'])
+def get_data():
+    try:
+        logging.info("getting form data: %s" % time.strftime("%H:%M:%S"))
+        session['kws'] = request.form['kw']
+        session['zips'] = request.form['zipcodes']
+
+        logging.info(session['kws'])
+        logging.info(session['zips'])
+
+        script, div = run_analysis()
+
+        html = render_template('output.html', script=script, div=div)
+        return encode_utf8(html)
+
+    except Exception, err:
+        logging.error(err)
+        raise
+
 def run_analysis(num_urls=100):
     try:
         logging.info("starting run_analysis %s" % time.strftime("%H:%M:%S") )
@@ -91,16 +99,14 @@ def run_analysis(num_urls=100):
         dff['count'] = count
         p = plot_fig(dff, num)
         script, div = components(p)
-        html = render_template('output.html', script=script, div=div)
 
-        return encode_utf8(html)
+        return script, div
 
     except ValueError:
         logging.info("vectorizer found no words")
-        pass
+        html = render_template('output.html', script="no results found" )
 
     except Exception, err:
-        print err
         logging.error(err)
         raise
 
