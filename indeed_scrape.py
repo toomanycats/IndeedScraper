@@ -55,11 +55,12 @@ class Indeed(object):
         pub = 'publisher=%(pub_id)s'
         chan = '&chnl=%(channel_name)s'
         loc = '&l=%(loc)s'
+        #query = '&as_and=&as_phr=&as_any=&as_not=&as_ttl=%s' % query
         query = '&q=%s' % query
         start = '&start=0'
         frm = '&fromage=30'
         limit = '&limit=25'
-        site = '&st=employer'
+        site = '&st=jobsite'
         format = '&format=json'
         sort = '&sort=0'
         country = '&co=us'
