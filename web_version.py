@@ -3,6 +3,7 @@
 # Author : Daniel Cuneo
 # Creation Date : 11-21-2015
 ######################################
+import ConfigParser
 import time
 import logging
 import pandas as pd
@@ -19,7 +20,15 @@ data_dir = os.getenv('OPENSHIFT_DATA_DIR')
 logfile = os.path.join(data_dir, 'logfile.log')
 logging.basicConfig(filename=logfile, level=logging.INFO)
 
+repo_dir = os.getenv("OPENSHIFT_REPO_DIR")
+config_path = os.path.join(repo_dir, "tokens.cfg")
+
+config_parser = ConfigParser.RawConfigParser()
+config_parser.read(config_path)
+sess_key = config_parser.get("flask_session_key", "key")
+
 app = Flask(__name__)
+app.secret_key = sess_key
 
 def plot_fig(df, num):
 
@@ -45,7 +54,7 @@ def get_keywords():
 @app.route('/', methods=['post'])
 def get_data():
     try:
-        logging.info("starting get_data: %s" % time.strftime("%H:%M:%S"))
+        logging.info("getting form data: %s" % time.strftime("%H:%M:%S"))
         session['kws'] = request.form['kw']
         session['zips'] = request.form['zipcodes']
         logging.info(session['kws'])
