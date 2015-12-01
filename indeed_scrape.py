@@ -96,19 +96,18 @@ class Indeed(object):
     def get_city_url_content_stem(self):
         ind = 0
         for zipcode in self.locations:
-            if self.end_url_loop():
-                return
             url_city = self.get_url(zipcode)
-            if url_city is not None:
-                for item in url_city:
-                    if item[0] not in self.df['url']:
-                        self.df.loc[ind, 'zipcode'] = str(zipcode)
-                        self.df.loc[ind, 'url'] = item[0]
-                        self.df.loc[ind, 'city'] = item[1]
-                        content = self.parse_content(item[0])
-                        self.df.loc[ind, 'summary'] = content
-                        self.df.loc[ind, 'summary_stem'] = self.stemmer_(content)
-                        ind += 1
+            for item in url_city:
+                self.df.loc[ind, 'zipcode'] = str(zipcode)
+                self.df.loc[ind, 'url'] = item[0]
+                self.df.loc[ind, 'city'] = item[1]
+                content = self.parse_content(item[0])
+                self.df.loc[ind, 'summary'] = content
+                self.df.loc[ind, 'summary_stem'] = self.stemmer_(content)
+                ind += 1
+                if np.mod(ind, self.num_urls) == 0:# check periodically
+                    if self.end_url_loop():
+                        return
 
     def get_urls(self):
         urls = []

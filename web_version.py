@@ -25,21 +25,19 @@ input_template = jinja2.Template('''
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script type="text/javascript">// <![CDATA[
-        function preloader(){
-            document.getElementById("loading").style.display = "none";
-            document.getElementById("content").style.display = "block";
-        }//preloader
-        window.onload = preloader;
-// ]]></script>
+    <script type="text/javascript">// <![CDATA[
+            function preloader(){
+                document.getElementById("loading").style.display = "none";
+                document.getElementById("content").style.display = "block";
+            }//preloader
+            window.onload = preloader;
+    // ]]></script>
 
     <title>indeed skill scraper</title>
     <meta charset="UTF-8">
 
     <style type="text/css">
-        div#content {
-        display: none;
-        }
+        div#content { display: none; }
 
         div#loading {
             margin: auto;
@@ -47,7 +45,7 @@ input_template = jinja2.Template('''
             height: 35px;
             z-index: 1000;
             display: none;
-            background: url(static/loading.gif) no-repeat;
+            background: url(loading.gif) no-repeat;
             cursor: wait;
             }
     </style>
@@ -98,9 +96,9 @@ output_template = jinja2.Template("""
 
 app = Flask(__name__)
 
-def plot_fig(df, num):
+def plot_fig(df, num, kws):
 
-    title_string = "Analysis of %i Postings" % num
+    title_string = "Analysis of %i Postings for %s" % (num, kws)
 
     p = Bar(df, 'kw',
             values='count',
@@ -144,18 +142,22 @@ def run_analysis(kws, zips, num_urls=100):
         ind.add_loc = zips
         ind.num_samp = 10 # num additional random zipcodes
         ind.num_urls = num_urls# max of 100 postings
-
         ind.main()
+
         df = ind.df
         df = df.drop_duplicates(subset=['url']).dropna(how='any')
+
         count, kw = ind.vectorizer(df['summary_stem'], max_features=50)
         #convert from sparse matrix to single dim np array
         count = count.toarray().sum(axis=0)
-        num = ind.df['url'].count()
+
+        num = df['url'].count()
+
         dff = pd.DataFrame()
         dff['kw'] = kw
         dff['count'] = count
-        p = plot_fig(dff, num)
+
+        p = plot_fig(dff, num, kws)
         script, div = components(p)
         html = output_template.render(script=script, div=div)
 
