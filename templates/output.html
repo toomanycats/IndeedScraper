@@ -1,22 +1,22 @@
 <!DOCTYPE html>
 <html lang="en-US">
 <head>
-    <title>indeed skill scraper results</title>
     <meta charset="UTF-8">
+    <meta http-equiv='content-type' content='text/html; charset=utf-8' />
+    <title>indeed skill scraper results</title>
 
-    <link href="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.css"
-        rel="stylesheet" type="text/css" >
+    {{ js_resources|indent(4)|safe }}
 
-    <script src="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.js" ></script>
+    {{ css_resources|indent(4)|safe }}
+
+    {{ plot_script|indent(4)|safe }}
 </head>
 
 <body>
 
     <h1>INDEED.COM JOB OPENINGS SKILL SCRAPER RESULTS</h1>
 
-    {{ script }}
-
-    {{ div }}
+    {{ plot_div|indent(4)|safe }}
 
 </body>
 

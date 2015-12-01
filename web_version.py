@@ -13,6 +13,7 @@ from bokeh.embed import components
 from bokeh.plotting import figure
 from bokeh.util.string import encode_utf8
 from bokeh.charts import Bar
+from bokeh.resources import INLINE
 import os
 
 data_dir = os.getenv('OPENSHIFT_DATA_DIR')
@@ -68,7 +69,16 @@ def get_data():
 
         script, div = run_analysis()
 
-        html = render_template('output.html', script=script, div=div)
+        js_resources = INLINE.render_js()
+        css_resources = INLINE.render_css()
+
+        html = render_template('output.html',
+                                plot_script=script,
+                                plot_div=div,
+                                js_resources=js_resources,
+                                css_resources=css_resources
+                                )
+
         return encode_utf8(html)
 
     except Exception, err:
@@ -98,7 +108,7 @@ def run_analysis(num_urls=100):
         dff['kw'] = kw
         dff['count'] = count
         p = plot_fig(dff, num)
-        script, div = components(p)
+        script, div = components(p, INLINE)
 
         return script, div
 
