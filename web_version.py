@@ -58,7 +58,7 @@ input_template = jinja2.Template('''
 
     <div id="content">
         <h3>INDEED.COM JOB OPENINGS SKILL SCRAPER</h3>
-        <form action="/"  method="POST">
+        <form action="/get_data/"  method="POST">
             Enter keywords you normally use to search for openings on indeed.com<br>
             <input type="text" name="kw" placeholder="data science"><br>
             Enter zipcodes<br>
@@ -119,7 +119,7 @@ def get_keywords():
     logging.info("running app:%s" % time.strftime("%d-%m-%Y:%H:%M:%S"))
     return input_template.render()
 
-@app.route('/', methods=['post'])
+@app.route('/get_data/', methods=['post'])
 def get_data():
     try:
         logging.info("starting get_data: %s" % time.strftime("%H:%M:%S"))
