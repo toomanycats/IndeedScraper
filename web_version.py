@@ -6,8 +6,7 @@
 import time
 import logging
 import pandas as pd
-from flask import Flask
-from flask import request, render_template
+from flask import Flask, request
 import indeed_scrape
 import jinja2
 from bokeh.embed import components
@@ -87,11 +86,9 @@ output_template = jinja2.Template("""
     <div id="loading"></div>
 
     <div id="content">
-        <h1>INDEED.COM JOB OPENINGS SKILL SCRAPER RESULTS</h1>
+        <h1>Keyword Frequency for Stemmed Bigrams</h1>
 
-        {{ script }}
-
-        {{ div }}
+        {{ analysis }}
 
     </div>
 </body>
@@ -130,9 +127,13 @@ def get_data():
         zips = request.form['zipcodes']
         logging.info(kws)
         logging.info(zips)
-        template = run_analysis(kws, zips)
 
-        return template
+        output_template.globals['run_analysis'] = run_analysis
+        html = output_template.render(analysis=run_analysis(kws, zips))
+
+        return encode_utf8(html)
+        #template = run_analysis(kws, zips)
+        #return template
 
     except Exception, err:
         logging.error(err)
@@ -164,9 +165,9 @@ def run_analysis(kws, zips, num_urls=100):
 
         p = plot_fig(dff, num, kws)
         script, div = components(p)
-        html = output_template.render(script=script, div=div)
-
-        return encode_utf8(html)
+        return "%s\n%s" %(script, div)
+        #html = output_template.render(script=script, div=div)
+        #return encode_utf8(html)
 
     except ValueError:
         logging.info("vectorizer found no words")
