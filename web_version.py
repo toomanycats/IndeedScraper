@@ -127,7 +127,7 @@ def get_data():
         raise
 
 @app.route('/run_analysis/')
-def run_analysis(num_urls):
+def run_analysis():
     try:
         logging.info("starting run_analysis %s" % time.strftime("%H:%M:%S") )
         ind = indeed_scrape.Indeed()
@@ -135,7 +135,7 @@ def run_analysis(num_urls):
         ind.stop_words = "and"
         ind.add_loc = session['zips']
         ind.num_samp = 0 # num additional random zipcodes
-        ind.num_urls = num_urls
+        ind.num_urls = 100
         ind.main()
 
         df = ind.df
