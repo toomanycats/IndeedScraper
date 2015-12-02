@@ -73,11 +73,44 @@ output_template = jinja2.Template("""
 <body>
 
     <h1>Keyword Frequency of Stemmed Bigrams</h1>
-    <div id="chart">Collecting data may take a while...</div>
+    <div id="chart">Collecting data will take about a minute...</div>
+
+    <!-- Next iteration
+
+    <form action="/radius"  method="POST">
+        Explore around the radius of a word across all posts.<br>
+        <input type="text" name="word" placeholder="experience"><br>
+        <input type="submit" value="Submit" name="submit">
+    </form>
+-->
 
 </body>
 </html>
 """)
+
+radius_template = jinja2.Template('''
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <title>Radius</title>
+    <meta charset="UTF-8">
+    <link href="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.css"
+          rel="stylesheet" type="text/css">
+
+    <script src="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.js"></script>
+</head>
+
+<html>
+<body>
+    <br><br><br>
+    <h2>Words found about a 5 word radius.</h2>
+
+    {{ div }}
+    {{ script }}
+
+</body>
+</html>
+''')
 
 app = Flask(__name__)
 app.secret_key=key
@@ -127,7 +160,7 @@ def get_data():
         raise
 
 @app.route('/run_analysis/')
-def run_analysis(num_urls):
+def run_analysis():
     try:
         logging.info("starting run_analysis %s" % time.strftime("%H:%M:%S") )
         ind = indeed_scrape.Indeed()
@@ -135,11 +168,12 @@ def run_analysis(num_urls):
         ind.stop_words = "and"
         ind.add_loc = session['zips']
         ind.num_samp = 0 # num additional random zipcodes
-        ind.num_urls = num_urls
+        ind.num_urls = 10
         ind.main()
 
         df = ind.df
         df = df.drop_duplicates(subset=['url']).dropna(how='any')
+        session['df'] = df
 
         count, kw = ind.vectorizer(df['summary_stem'], n_min=2, max_features=30)
         #convert from sparse matrix to single dim np array
@@ -154,8 +188,6 @@ def run_analysis(num_urls):
         p = plot_fig(dff, num)
         script, div = components(p)
         return "%s\n%s" %(script, div)
-        #html = output_template.render(script=script, div=div)
-        #return encode_utf8(html)
 
     except ValueError:
         logging.info("vectorizer found no words")
@@ -166,6 +198,32 @@ def run_analysis(num_urls):
         print err
         logging.error(err)
         raise
+
+@app.route('/radius/', methods=['post'])
+def radius():
+
+    kw = request.form['word']
+    session['radius_kw'] = kw
+    logging.info("radius key word:%s" % kw)
+
+    series = session['df']['summary_stem']
+    ind = Indeed.Indeed()
+
+    words = ind.find_words_in_radius(series, kw, radius=5)
+    count, kw = ind.vectorizer(words)
+
+    count = count.toarray().sum(axis=0)
+
+    num = df['url'].count()
+
+    dff = pd.DataFrame()
+    dff['kw'] = kw
+    dff['count'] = count
+
+    p = plot_fig(dff, num)
+    script, div = components(p)
+
+    return radius_template.render(div=div, script=script)
 
 
 if __name__ == "__main__":
