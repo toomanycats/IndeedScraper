@@ -90,9 +90,8 @@ def plot_fig(df, num):
 
     title_string = "Analysis of %i Postings for:'%s'" % (num, kws)
 
-    p = Bar(df['kw'],
-            df['count'],
-            #values='count',
+    p = Bar(df, 'kw',
+            values='count',
             title=title_string,
             title_text_font_size='15',
             color='blue',
@@ -130,7 +129,7 @@ def get_data():
         raise
 
 @app.route('/run_analysis/')
-def run_analysis():
+def run_analysis(num_urls):
     try:
         logging.info("starting run_analysis %s" % time.strftime("%H:%M:%S") )
         ind = indeed_scrape.Indeed()
@@ -138,13 +137,13 @@ def run_analysis():
         ind.stop_words = "and"
         ind.add_loc = session['zips']
         ind.num_samp = 0 # num additional random zipcodes
-        ind.num_urls = 100 # max of 100 postings
+        ind.num_urls = num_urls
         ind.main()
 
         df = ind.df
         df = df.drop_duplicates(subset=['url']).dropna(how='any')
 
-        count, kw = ind.vectorizer(df['summary_stem'], n_min=1, max_features=30)
+        count, kw = ind.vectorizer(df['summary_stem'], n_min=2, max_features=30)
         #convert from sparse matrix to single dim np array
         count = count.toarray().sum(axis=0)
 
