@@ -86,8 +86,6 @@ def plot_fig(df, num):
     kws = session['kws']
     zips = session['zips']
 
-    df.sort('count', inplace=True)
-
     title_string = "Analysis of %i Postings for:'%s'" % (num, kws)
 
     p = Bar(df, 'kw',
