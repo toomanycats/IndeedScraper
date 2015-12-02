@@ -6,7 +6,7 @@
 import time
 import logging
 import pandas as pd
-from flask import Flask, request
+from flask import Flask, request, session
 import indeed_scrape
 import jinja2
 from bokeh.embed import components
@@ -15,10 +15,16 @@ from bokeh.util.string import encode_utf8
 from bokeh.charts import Bar
 import os
 import numpy as np
+import ConfigParser
 
 data_dir = os.getenv('OPENSHIFT_DATA_DIR')
 logfile = os.path.join(data_dir, 'logfile.log')
 logging.basicConfig(filename=logfile, level=logging.INFO)
+
+repo_dir = os.getenv('OPENSHIFT_REPO_DIR')
+config = ConfigParser.RawConfigParser()
+config.read(os.path.join(repo_dir, 'tokens.cfg'))
+key = config.get("sess_key", 'key')
 
 input_template = jinja2.Template('''
 <!DOCTYPE html>
@@ -46,31 +52,13 @@ output_template = jinja2.Template("""
 <head>
     <title>indeed skill scraper results</title>
     <meta charset="UTF-8">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 
-    <script type="text/javascript">
-            function preloader(){
-                document.getElementById("loading").style.display = "none";
-                document.getElementById("content").style.display = "block";
-            }
-            window.onload = preloader;
+    <script>
+        $(function () {
+        $("#chart").load("/run_analysis");
+        });
     </script>
-
-    <style type="text/css">
-        div#content {
-        display: none;
-        }
-
-        div#loading {
-        top: 200 px;
-        margin: auto;
-        position: absolute;
-        z-index: 1000
-        width: 160px;
-        height: 24px;
-        background: url('loading.gif') no-repeat;
-        cursor: wait;
-        }
-    </style>
 </head>
 
 <link
@@ -83,27 +71,28 @@ output_template = jinja2.Template("""
 
 
 <body>
-    <div id="loading"></div>
 
-    <div id="content">
-        <h1>Keyword Frequency for Stemmed Bigrams</h1>
+    <h1>Keyword Frequency of Stemmed Bigrams</h1>
+    <div id="chart">Collecting data may take a while...</div>
 
-        {{ analysis }}
-
-    </div>
 </body>
-
 </html>
 """)
 
 app = Flask(__name__)
+app.secret_key=key
 
-def plot_fig(df, num, kws):
+def plot_fig(df, num):
+    kws = session['kws']
+    zips = session['zips']
+
+    df.sort('count', inplace=True)
 
     title_string = "Analysis of %i Postings for:'%s'" % (num, kws)
 
-    p = Bar(df, 'kw',
-            values='count',
+    p = Bar(df['kw'],
+            df['count'],
+            #values='count',
             title=title_string,
             title_text_font_size='15',
             color='blue',
@@ -125,35 +114,37 @@ def get_data():
         logging.info("starting get_data: %s" % time.strftime("%H:%M:%S"))
         kws = request.form['kw']
         zips = request.form['zipcodes']
-        logging.info(kws)
-        logging.info(zips)
 
-        output_template.globals['run_analysis'] = run_analysis
-        html = output_template.render(analysis=run_analysis(kws, zips))
+        session['kws'] = kws
+        session['zips'] = zips
+
+        logging.info(session['kws'])
+        logging.info(session['zips'])
+
+        html = output_template.render()
 
         return encode_utf8(html)
-        #template = run_analysis(kws, zips)
-        #return template
 
     except Exception, err:
         logging.error(err)
         raise
 
-def run_analysis(kws, zips, num_urls=100):
+@app.route('/run_analysis/')
+def run_analysis():
     try:
         logging.info("starting run_analysis %s" % time.strftime("%H:%M:%S") )
         ind = indeed_scrape.Indeed()
-        ind.query = kws
+        ind.query = session['kws']
         ind.stop_words = "and"
-        ind.add_loc = zips
-        ind.num_samp = 10 # num additional random zipcodes
-        ind.num_urls = num_urls# max of 100 postings
+        ind.add_loc = session['zips']
+        ind.num_samp = 0 # num additional random zipcodes
+        ind.num_urls = 100 # max of 100 postings
         ind.main()
 
         df = ind.df
         df = df.drop_duplicates(subset=['url']).dropna(how='any')
 
-        count, kw = ind.vectorizer(df['summary_stem'], max_features=50)
+        count, kw = ind.vectorizer(df['summary_stem'], n_min=1, max_features=30)
         #convert from sparse matrix to single dim np array
         count = count.toarray().sum(axis=0)
 
@@ -163,7 +154,7 @@ def run_analysis(kws, zips, num_urls=100):
         dff['kw'] = kw
         dff['count'] = count
 
-        p = plot_fig(dff, num, kws)
+        p = plot_fig(dff, num)
         script, div = components(p)
         return "%s\n%s" %(script, div)
         #html = output_template.render(script=script, div=div)
