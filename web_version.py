@@ -55,10 +55,11 @@ output_template = jinja2.Template("""
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 
     <script>
-        $(function () {
-        $("#chart").load("/run_analysis");
+        $(function(){
+        $("#chart").load("/run_analysis")
         });
     </script>
+
 </head>
 
 <link
@@ -71,18 +72,19 @@ output_template = jinja2.Template("""
 
 
 <body>
-
-    <h1>Keyword Frequency of Stemmed Bigrams</h1>
-    <div id="chart">Collecting data will take about a minute...</div>
-
-    <!-- Next iteration
-
-    <form action="/radius"  method="POST">
+    <!--
+    <div id="radius">
+    <form  action="/radius"  method="POST">
         Explore around the radius of a word across all posts.<br>
         <input type="text" name="word" placeholder="experience"><br>
         <input type="submit" value="Submit" name="submit">
     </form>
--->
+    </div>
+    -->
+
+    <h1>Keyword Frequency of Stemmed Bigrams</h1>
+    <div id="chart">Collecting data will take about a minute...</div>
+
 
 </body>
 </html>
@@ -92,7 +94,7 @@ radius_template = jinja2.Template('''
 <!DOCTYPE html>
 <html lang="en-US">
 <head>
-    <title>Radius</title>
+    <title>radius</title>
     <meta charset="UTF-8">
     <link href="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.css"
           rel="stylesheet" type="text/css">
@@ -115,9 +117,7 @@ radius_template = jinja2.Template('''
 app = Flask(__name__)
 app.secret_key=key
 
-def plot_fig(df, num):
-    kws = session['kws']
-    zips = session['zips']
+def plot_fig(df, num, kws):
 
     title_string = "Analysis of %i Postings for:'%s'" % (num, kws)
 
@@ -185,7 +185,9 @@ def run_analysis():
         dff['kw'] = kw
         dff['count'] = count
 
-        p = plot_fig(dff, num)
+        kws = session['kws']
+
+        p = plot_fig(dff, num, kws)
         script, div = components(p)
         return "%s\n%s" %(script, div)
 
@@ -220,7 +222,7 @@ def radius():
     dff['kw'] = kw
     dff['count'] = count
 
-    p = plot_fig(dff, num)
+    p = plot_fig(dff, num, kws)
     script, div = components(p)
 
     return radius_template.render(div=div, script=script)
