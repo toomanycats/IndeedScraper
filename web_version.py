@@ -26,6 +26,8 @@ config = ConfigParser.RawConfigParser()
 config.read(os.path.join(repo_dir, 'tokens.cfg'))
 key = config.get("sess_key", 'key')
 
+df_file = os.path.join(data_dir, 'df_file.csv')
+
 input_template = jinja2.Template('''
 <!DOCTYPE html>
 <html lang="en">
@@ -72,19 +74,16 @@ output_template = jinja2.Template("""
 
 
 <body>
-    <!--
-    <div id="radius">
-    <form  action="/radius"  method="POST">
-        Explore around the radius of a word across all posts.<br>
-        <input type="text" name="word" placeholder="experience"><br>
-        <input type="submit" value="Submit" name="submit">
-    </form>
-    </div>
-    -->
 
     <h1>Keyword Frequency of Stemmed Bigrams</h1>
     <div id="chart">Collecting data will take about a minute...</div>
 
+    <br><br><br>
+    <form  id=radius action="/radius/"  method="post">
+        Explore around the radius of a word across all posts. The default is five words in front and in back. <br>
+        <input type="text" name="word" placeholder="experience"><br>
+        <input type="submit" value="Submit" name="submit">
+    </form>
 
 </body>
 </html>
@@ -159,6 +158,22 @@ def get_data():
         logging.error(err)
         raise
 
+def get_plot_comp(kw, count, df):
+        count = count.toarray().sum(axis=0)
+
+        num = df['url'].count()
+
+        dff = pd.DataFrame()
+        dff['kw'] = kw
+        dff['count'] = count
+
+        kws = session['kws']
+
+        p = plot_fig(dff, num, kws)
+        script, div = components(p)
+
+        return script, div
+
 @app.route('/run_analysis/')
 def run_analysis():
     try:
@@ -173,22 +188,13 @@ def run_analysis():
 
         df = ind.df
         df = df.drop_duplicates(subset=['url']).dropna(how='any')
-        session['df'] = df
+
+        # save df for additional analysis
+        df.to_csv(df_file, index=False)
 
         count, kw = ind.vectorizer(df['summary_stem'], n_min=2, max_features=30)
-        #convert from sparse matrix to single dim np array
-        count = count.toarray().sum(axis=0)
 
-        num = df['url'].count()
-
-        dff = pd.DataFrame()
-        dff['kw'] = kw
-        dff['count'] = count
-
-        kws = session['kws']
-
-        p = plot_fig(dff, num, kws)
-        script, div = components(p)
+        script, div = get_plot_comp(kw, count, df)
         return "%s\n%s" %(script, div)
 
     except ValueError:
@@ -208,26 +214,20 @@ def radius():
     session['radius_kw'] = kw
     logging.info("radius key word:%s" % kw)
 
-    series = session['df']['summary_stem']
-    ind = Indeed.Indeed()
+    df = pd.read_csv(df_file)
+    series = df['summary_stem']
+    ind = indeed_scrape.Indeed()
 
     words = ind.find_words_in_radius(series, kw, radius=5)
     count, kw = ind.vectorizer(words)
 
-    count = count.toarray().sum(axis=0)
-
-    num = df['url'].count()
-
-    dff = pd.DataFrame()
-    dff['kw'] = kw
-    dff['count'] = count
-
-    p = plot_fig(dff, num, kws)
-    script, div = components(p)
-
+    script, div = get_plot_comp(kw, count, df)
     return radius_template.render(div=div, script=script)
 
 
 if __name__ == "__main__":
     app.debug = False
     app.run()
+
+
+
