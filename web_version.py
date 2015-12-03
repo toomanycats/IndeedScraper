@@ -75,7 +75,7 @@ output_template = jinja2.Template("""
 
 <body>
 
-    <h1>Keyword Frequency of Stemmed Bigrams</h1>
+    <h1>Keyword Frequency of Bigrams</h1>
     <div id="chart">Collecting data will take about a minute...</div>
 
     <br><br><br>
@@ -183,7 +183,7 @@ def run_analysis():
         ind.stop_words = "and"
         ind.add_loc = session['zips']
         ind.num_samp = 0 # num additional random zipcodes
-        ind.num_urls = 10
+        ind.num_urls = 200
         ind.main()
 
         df = ind.df
@@ -192,7 +192,10 @@ def run_analysis():
         # save df for additional analysis
         df.to_csv(df_file, index=False)
 
-        count, kw = ind.vectorizer(df['summary_stem'], n_min=2, max_features=30)
+        try:
+            count, kw = ind.vectorizer(df['summary'], n_min=2, max_features=30)
+        except ValueError:
+            return "Those key word(s) were not found."
 
         script, div = get_plot_comp(kw, count, df, 'kws')
         return "%s\n%s" %(script, div)
@@ -215,11 +218,14 @@ def radius():
     logging.info("radius key word:%s" % kw)
 
     df = pd.read_csv(df_file)
-    series = df['summary_stem']
+    series = df['summary']
     ind = indeed_scrape.Indeed()
 
     words = ind.find_words_in_radius(series, kw, radius=5)
-    count, kw = ind.vectorizer(words, max_features=30)
+    try:
+        count, kw = ind.vectorizer(words, max_features=30)
+    except ValueError:
+        return "Those key word(s) were not found."
 
     script, div = get_plot_comp(kw, count, df, 'radius_kw')
     return radius_template.render(div=div, script=script)
