@@ -158,7 +158,7 @@ def get_data():
         logging.error(err)
         raise
 
-def get_plot_comp(kw, count, df):
+def get_plot_comp(kw, count, df, title_key):
         count = count.toarray().sum(axis=0)
 
         num = df['url'].count()
@@ -167,7 +167,7 @@ def get_plot_comp(kw, count, df):
         dff['kw'] = kw
         dff['count'] = count
 
-        kws = session['kws']
+        kws = session[title_key]
 
         p = plot_fig(dff, num, kws)
         script, div = components(p)
@@ -194,7 +194,7 @@ def run_analysis():
 
         count, kw = ind.vectorizer(df['summary_stem'], n_min=2, max_features=30)
 
-        script, div = get_plot_comp(kw, count, df)
+        script, div = get_plot_comp(kw, count, df, 'kws')
         return "%s\n%s" %(script, div)
 
     except ValueError:
@@ -219,9 +219,9 @@ def radius():
     ind = indeed_scrape.Indeed()
 
     words = ind.find_words_in_radius(series, kw, radius=5)
-    count, kw = ind.vectorizer(words)
+    count, kw = ind.vectorizer(words, max_features=30)
 
-    script, div = get_plot_comp(kw, count, df)
+    script, div = get_plot_comp(kw, count, df, 'radius_kw')
     return radius_template.render(div=div, script=script)
 
 
