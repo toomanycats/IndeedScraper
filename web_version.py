@@ -64,6 +64,12 @@ output_template = jinja2.Template("""
         });
     </script>
 
+    <script>
+        $(function(){
+        $("#title").load("/job_title")
+        });
+    </script>
+
 </head>
 
 <link
@@ -78,7 +84,10 @@ output_template = jinja2.Template("""
 <body>
 
     <h1>Keyword Frequency of Bigrams</h1>
-    <div id="chart">Collecting data will take about a minute...</div>
+    <div id="chart">Collecting data could take several minutes...</div>
+
+    <br><br><br>
+    <div id="title">Job Titles</div>
 
     <br><br><br>
     <form  id=radius action="/radius/"  method="post">
@@ -198,7 +207,7 @@ def run_analysis():
         df.to_csv(df_file, index=False)
 
         try:
-            count, kw = ind.vectorizer(df['summary'], n_min=2, max_features=30)
+            count, kw = ind.vectorizer(df['summary'], n_min=2, max_features=50)
         except ValueError:
             return "Those key word(s) were not found."
 
@@ -228,12 +237,24 @@ def radius():
 
     words = ind.find_words_in_radius(series, kw, radius=5)
     try:
-        count, kw = ind.vectorizer(words, max_features=30)
+        count, kw = ind.vectorizer(words, max_features=30, n_min=1)
     except ValueError:
         return "Those key word(s) were not found."
 
     script, div = get_plot_comp(kw, count, df, 'radius_kw')
     return radius_template.render(div=div, script=script)
+
+@app.route('/job_title/')
+def job_title():
+    logging.info("job title running")
+
+    df = pd.read_csv(df_file)
+
+    titles = df['jobtitle'].unique().tolist()
+
+    list_of_titles = '<br>'.join(titles)
+
+    return list_of_titles
 
 
 if __name__ == "__main__":
