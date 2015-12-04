@@ -86,6 +86,7 @@ output_template = jinja2.Template("""
     <div id="chart">Collecting data could take several minutes...</div>
 
     <br><br><br>
+    <h2>Unique list of job titles returned</h2>
     <div id="title">Job Titles</div>
 
     <br><br><br>
@@ -204,7 +205,7 @@ def run_analysis():
         ind.main()
 
         df = ind.df
-        df = df.drop_duplicates(subset=['url']).dropna(how='any')
+        df = df.drop_duplicates(subset=['url', 'summary']).dropna(how='any')
 
         # save df for additional analysis
         df.to_csv(session['df_file'], index=False)
