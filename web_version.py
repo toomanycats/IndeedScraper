@@ -145,6 +145,9 @@ def plot_fig(df, num, kws):
 
 @app.route('/')
 def get_keywords():
+    if os.path.exists(df_file):
+        os.remove(df_file)
+
     logging.info("running app:%s" % time.strftime("%d-%m-%Y:%H:%M:%S"))
     return input_template.render()
 
