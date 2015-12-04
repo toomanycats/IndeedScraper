@@ -64,10 +64,11 @@ class Indeed(object):
         format = '&format=json'
         sort = '&sort=0'
         country = '&co=us'
+        radius = '&radius=1'
         suffix = '&userip=1.2.3.4&useragent=Mozilla/%%2F4.0%%28Firefox%%29&v=2'
 
         self.api = prefix + pub + chan + loc + query + start + frm + limit + \
-                   site + format + country + sort + suffix
+                   site + format + country + sort + radius + suffix
 
     def format_query(self, query):
          #return "%%20".join(query.split(" "))
@@ -89,7 +90,7 @@ class Indeed(object):
         return locations
 
     def end_url_loop(self):
-        df = self.df.dropna(how='any').drop_duplicates(subset=['url'])
+        df = self.df.dropna(how='any').drop_duplicates(subset=['url', 'company'])
         if df.url.count() >= self.num_urls:
             return True
         else:
@@ -104,6 +105,7 @@ class Indeed(object):
                 self.df.loc[ind, 'url'] = item[0]
                 self.df.loc[ind, 'city'] = item[1]
                 self.df.loc[ind, 'jobtitle'] = item[2]
+                self.df.loc[ind, 'company'] = item[3]
                 content = self.parse_content(item[0])
                 self.df.loc[ind, 'summary'] = content
                 self.df.loc[ind, 'summary_stem'] = self.stemmer_(content)
@@ -136,7 +138,7 @@ class Indeed(object):
             response.close()
 
             urls = []
-            urls.extend([ (item['url'], item['city'], item['jobtitle']) for item in data['results']])
+            urls.extend([ (item['url'], item['city'], item['jobtitle'], item['company']) for item in data['results']])
 
         except urllib2.HTTPError, err:
             print err
