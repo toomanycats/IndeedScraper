@@ -16,6 +16,7 @@ from bokeh.util.string import encode_utf8
 from bokeh.charts import Bar
 import os
 import numpy as np
+import json
 
 data_dir = os.getenv('OPENSHIFT_DATA_DIR')
 logfile = os.path.join(data_dir, 'logfile.log')
@@ -215,6 +216,10 @@ def run_analysis():
 
         # save df for additional analysis
         df.to_csv(session['df_file'], index=False)
+        # save titles for later
+        titles = df['jobtitle'].unique().tolist()
+        #session['titles'] = json.dumps(titles)
+        logging.info("titles:%s" % session['titles'])
 
         try:
             count, kw = ind.vectorizer(df['summary'], n_min=2, max_features=50)
@@ -260,8 +265,9 @@ def radius():
 def job_title():
     logging.info("job title running")
     df = pd.read_csv(session['df_file'])
-
     titles = df['jobtitle'].unique().tolist()
+
+    #list_of_titles = '<br>'.join(session['titles'])
     list_of_titles = '<br>'.join(titles)
 
     return list_of_titles
