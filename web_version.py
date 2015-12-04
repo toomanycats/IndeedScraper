@@ -3,6 +3,7 @@
 # Author : Daniel Cuneo
 # Creation Date : 11-21-2015
 ######################################
+import uuid #for random strints
 import time
 import logging
 import pandas as pd
@@ -25,8 +26,6 @@ repo_dir = os.getenv('OPENSHIFT_REPO_DIR')
 config = ConfigParser.RawConfigParser()
 config.read(os.path.join(repo_dir, 'tokens.cfg'))
 key = config.get("sess_key", 'key')
-
-df_file = os.path.join(data_dir, 'df_file.csv')
 
 input_template = jinja2.Template('''
 <!DOCTYPE html>
@@ -145,10 +144,11 @@ def plot_fig(df, num, kws):
 
 @app.route('/')
 def get_keywords():
-    if os.path.exists(df_file):
-        os.remove(df_file)
-
     logging.info("running app:%s" % time.strftime("%d-%m-%Y:%H:%M:%S"))
+    df_file = mk_df_file_name()
+    logging.info("df file path: %s" % df_file)
+    session['df_file'] = df_file
+
     return input_template.render()
 
 @app.route('/get_data/', methods=['post'])
@@ -207,7 +207,7 @@ def run_analysis():
         df = df.drop_duplicates(subset=['url']).dropna(how='any')
 
         # save df for additional analysis
-        df.to_csv(df_file, index=False)
+        df.to_csv(session['df_file'], index=False)
 
         try:
             count, kw = ind.vectorizer(df['summary'], n_min=2, max_features=50)
@@ -234,7 +234,7 @@ def radius():
     session['radius_kw'] = kw
     logging.info("radius key word:%s" % kw)
 
-    df = pd.read_csv(df_file)
+    df = pd.read_csv(session['df_file'])
     series = df['summary']
     ind = indeed_scrape.Indeed()
 
@@ -251,7 +251,7 @@ def radius():
 def job_title():
     logging.info("job title running")
 
-    df = pd.read_csv(df_file)
+    df = pd.read_csv(session['df_file'])
 
     titles = df['jobtitle'].unique().tolist()
 
@@ -259,6 +259,10 @@ def job_title():
 
     return list_of_titles
 
+def mk_df_file_name():
+    random_string = str(uuid.uuid4()) + ".csv"
+
+    return os.path.join(data_dir, random_string)
 
 if __name__ == "__main__":
     app.run()
