@@ -41,6 +41,8 @@ input_template = jinja2.Template('''
         <form action="/get_data/"  method="POST">
             Enter keywords you normally use to search for openings on indeed.com<br>
             <input type="text" name="kw" placeholder="data science"><br>
+             The number of job postings to scrape.<br>
+            <input type="text" name="num" value="200"><br>
             Enter zipcodes<br>
             <input type="text" name="zipcodes" value="^[90]"><br>
             <input type="submit" value="Submit" name="submit">
@@ -143,12 +145,15 @@ def get_data():
         logging.info("starting get_data: %s" % time.strftime("%H:%M:%S"))
         kws = request.form['kw']
         zips = request.form['zipcodes']
+        num_urls = int(request.form['num'])
 
         session['kws'] = kws
         session['zips'] = zips
+        session['num_urls'] = num_urls
 
         logging.info(session['kws'])
         logging.info(session['zips'])
+        logging.info(session['num_urls'])
 
         html = output_template.render()
 
@@ -183,7 +188,7 @@ def run_analysis():
         ind.stop_words = "and"
         ind.add_loc = session['zips']
         ind.num_samp = 0 # num additional random zipcodes
-        ind.num_urls = 200
+        ind.num_urls = session['num_urls']
         ind.main()
 
         df = ind.df
