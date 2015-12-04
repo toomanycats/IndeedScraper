@@ -26,6 +26,8 @@ config = ConfigParser.RawConfigParser()
 config.read(os.path.join(repo_dir, 'tokens.cfg'))
 key = config.get("sess_key", 'key')
 
+df_file = os.path.join(data_dir, 'df_file.csv')
+
 input_template = jinja2.Template('''
 <!DOCTYPE html>
 <html lang="en">
@@ -39,6 +41,8 @@ input_template = jinja2.Template('''
         <form action="/get_data/"  method="POST">
             Enter keywords you normally use to search for openings on indeed.com<br>
             <input type="text" name="kw" placeholder="data science"><br>
+             The number of job postings to scrape.<br>
+            <input type="text" name="num" value="200"><br>
             Enter zipcodes<br>
             <input type="text" name="zipcodes" value="^[90]"><br>
             <input type="submit" value="Submit" name="submit">
@@ -55,10 +59,17 @@ output_template = jinja2.Template("""
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 
     <script>
-        $(function () {
-        $("#chart").load("/run_analysis");
+        $(function(){
+        $("#chart").load("/run_analysis")
         });
     </script>
+
+    <script>
+        $(function(){
+        $("#title").load("/job_title")
+        });
+    </script>
+
 </head>
 
 <link
@@ -72,19 +83,51 @@ output_template = jinja2.Template("""
 
 <body>
 
-    <h1>Keyword Frequency of Stemmed Bigrams</h1>
-    <div id="chart">Collecting data may take a while...</div>
+    <h1>Keyword Frequency of Bigrams</h1>
+    <div id="chart">Collecting data could take several minutes...</div>
+
+    <br><br><br>
+    <div id="title">Job Titles</div>
+
+    <br><br><br>
+    <form  id=radius action="/radius/"  method="post">
+        Explore around the radius of a word across all posts. The default is five words in front and in back. <br>
+        <input type="text" name="word" placeholder="experience"><br>
+        <input type="submit" value="Submit" name="submit">
+    </form>
 
 </body>
 </html>
 """)
 
+radius_template = jinja2.Template('''
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <title>radius</title>
+    <meta charset="UTF-8">
+    <link href="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.css"
+          rel="stylesheet" type="text/css">
+
+    <script src="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.js"></script>
+</head>
+
+<html>
+<body>
+    <br><br><br>
+    <h2>Words found about a 5 word radius.</h2>
+
+    {{ div }}
+    {{ script }}
+
+</body>
+</html>
+''')
+
 app = Flask(__name__)
 app.secret_key=key
 
-def plot_fig(df, num):
-    kws = session['kws']
-    zips = session['zips']
+def plot_fig(df, num, kws):
 
     title_string = "Analysis of %i Postings for:'%s'" % (num, kws)
 
@@ -111,12 +154,15 @@ def get_data():
         logging.info("starting get_data: %s" % time.strftime("%H:%M:%S"))
         kws = request.form['kw']
         zips = request.form['zipcodes']
+        num_urls = int(request.form['num'])
 
         session['kws'] = kws
         session['zips'] = zips
+        session['num_urls'] = num_urls
 
         logging.info(session['kws'])
         logging.info(session['zips'])
+        logging.info(session['num_urls'])
 
         html = output_template.render()
 
@@ -125,6 +171,22 @@ def get_data():
     except Exception, err:
         logging.error(err)
         raise
+
+def get_plot_comp(kw, count, df, title_key):
+        count = count.toarray().sum(axis=0)
+
+        num = df['url'].count()
+
+        dff = pd.DataFrame()
+        dff['kw'] = kw
+        dff['count'] = count
+
+        kws = session[title_key]
+
+        p = plot_fig(dff, num, kws)
+        script, div = components(p)
+
+        return script, div
 
 @app.route('/run_analysis/')
 def run_analysis():
@@ -135,27 +197,22 @@ def run_analysis():
         ind.stop_words = "and"
         ind.add_loc = session['zips']
         ind.num_samp = 0 # num additional random zipcodes
-        ind.num_urls = 100
+        ind.num_urls = session['num_urls']
         ind.main()
 
         df = ind.df
         df = df.drop_duplicates(subset=['url']).dropna(how='any')
 
-        count, kw = ind.vectorizer(df['summary_stem'], n_min=2, max_features=30)
-        #convert from sparse matrix to single dim np array
-        count = count.toarray().sum(axis=0)
+        # save df for additional analysis
+        df.to_csv(df_file, index=False)
 
-        num = df['url'].count()
+        try:
+            count, kw = ind.vectorizer(df['summary'], n_min=2, max_features=50)
+        except ValueError:
+            return "Those key word(s) were not found."
 
-        dff = pd.DataFrame()
-        dff['kw'] = kw
-        dff['count'] = count
-
-        p = plot_fig(dff, num)
-        script, div = components(p)
+        script, div = get_plot_comp(kw, count, df, 'kws')
         return "%s\n%s" %(script, div)
-        #html = output_template.render(script=script, div=div)
-        #return encode_utf8(html)
 
     except ValueError:
         logging.info("vectorizer found no words")
@@ -167,7 +224,42 @@ def run_analysis():
         logging.error(err)
         raise
 
+@app.route('/radius/', methods=['post'])
+def radius():
+
+    kw = request.form['word']
+    session['radius_kw'] = kw
+    logging.info("radius key word:%s" % kw)
+
+    df = pd.read_csv(df_file)
+    series = df['summary']
+    ind = indeed_scrape.Indeed()
+
+    words = ind.find_words_in_radius(series, kw, radius=5)
+    try:
+        count, kw = ind.vectorizer(words, max_features=30, n_min=1)
+    except ValueError:
+        return "Those key word(s) were not found."
+
+    script, div = get_plot_comp(kw, count, df, 'radius_kw')
+    return radius_template.render(div=div, script=script)
+
+@app.route('/job_title/')
+def job_title():
+    logging.info("job title running")
+
+    df = pd.read_csv(df_file)
+
+    titles = df['jobtitle'].unique().tolist()
+
+    list_of_titles = '<br>'.join(titles)
+
+    return list_of_titles
+
 
 if __name__ == "__main__":
     app.debug = False
     app.run()
+
+
+

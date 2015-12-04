@@ -50,13 +50,13 @@ class Indeed(object):
             raise ValueError
 
         # beware of escaped %
-        query = self.format_query(self.query)
+        self.format_query(self.query)
         prefix = 'http://api.indeed.com/ads/apisearch?'
         pub = 'publisher=%(pub_id)s'
         chan = '&chnl=%(channel_name)s'
         loc = '&l=%(loc)s'
-        #query = '&as_and=&as_phr=&as_any=&as_not=&as_ttl=%s' % query
-        query = '&q=%s' % query
+        query = '&q=title%%3A%%28%(query)s%%29'
+        #query = '&q=%s' % query
         start = '&start=0'
         frm = '&fromage=30'
         limit = '&limit=25'
@@ -70,7 +70,8 @@ class Indeed(object):
                    site + format + country + sort + suffix
 
     def format_query(self, query):
-         return "%%20".join(query.split(" "))
+         #return "%%20".join(query.split(" "))
+         self.query = "+".join(query.split(" "))
 
     def load_config(self):
         '''loads a config file that contains tokens'''
@@ -97,11 +98,12 @@ class Indeed(object):
     def get_city_url_content_stem(self):
         ind = 0
         for zipcode in self.locations:
-            url_city = self.get_url(zipcode)
-            for item in url_city:
+            url_city_title = self.get_url(zipcode)
+            for item in url_city_title:
                 self.df.loc[ind, 'zipcode'] = str(zipcode)
                 self.df.loc[ind, 'url'] = item[0]
                 self.df.loc[ind, 'city'] = item[1]
+                self.df.loc[ind, 'jobtitle'] = item[2]
                 content = self.parse_content(item[0])
                 self.df.loc[ind, 'summary'] = content
                 self.df.loc[ind, 'summary_stem'] = self.stemmer_(content)
@@ -124,7 +126,8 @@ class Indeed(object):
 
         api = self.api %{'pub_id':self.pub_id,
                          'loc':location,
-                         'channel_name':self.channel_name
+                         'channel_name':self.channel_name,
+                         'query':self.query
                         }
 
         try:
@@ -133,7 +136,7 @@ class Indeed(object):
             response.close()
 
             urls = []
-            urls.extend([ (item['url'], item['city']) for item in data['results']])
+            urls.extend([ (item['url'], item['city'], item['jobtitle']) for item in data['results']])
 
         except urllib2.HTTPError, err:
             print err
