@@ -205,7 +205,7 @@ def run_analysis():
         ind.main()
 
         df = ind.df
-        df = df.drop_duplicates(subset=['url', 'summary']).dropna(how='any')
+        df = df.drop_duplicates(subset=['url', 'company']).dropna(how='any')
 
         # save df for additional analysis
         df.to_csv(session['df_file'], index=False)
