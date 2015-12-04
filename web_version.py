@@ -37,13 +37,23 @@ input_template = jinja2.Template('''
 
 <body>
         <h3>INDEED.COM JOB OPENINGS SKILL SCRAPER</h3>
+
         <form action="/get_data/"  method="POST">
-            Enter keywords you normally use to search for openings on indeed.com<br>
+
+            Enter job title keywords you normally use to search for openings on indeed.com<br>
+            The scraper will use the "in title" mode of indeed's search engine.Care has been<br>
+            taken to not allow duplicates. Depending on how many posting you enter, it can take<br>
+            a long time to complete. Start with the default then go higher.<br><br>
             <input type="text" name="kw" placeholder="data science"><br>
+
              The number of job postings to scrape.<br>
-            <input type="text" name="num" value="200"><br>
-            Enter zipcodes<br>
-            <input type="text" name="zipcodes" value="^[90]"><br>
+            <input type="text" name="num" value="100"><br><br>
+
+            For now, the zipcodes are regular expression based. If you don't know what that means<br>
+            use the default below. This default will search zipcodes that begin with a 9 and a 0,<br>
+            which is East and West coasts.<br><br>
+            <input type="text" name="zipcodes" value="^[90]"><br><br>
+
             <input type="submit" value="Submit" name="submit">
         </form>
 </body>
