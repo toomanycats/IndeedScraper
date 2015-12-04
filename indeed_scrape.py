@@ -103,6 +103,9 @@ class Indeed(object):
             if url_city_title is None:
                 continue
             for item in url_city_title:
+                # head off company dupes
+                if item[3] in df['company']:
+                    continue
                 self.df.loc[ind, 'zipcode'] = str(zipcode)
                 self.df.loc[ind, 'url'] = item[0]
                 self.df.loc[ind, 'city'] = item[1]
