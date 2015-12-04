@@ -248,12 +248,14 @@ def radius():
     df = pd.read_csv(session['df_file'])
     series = df['summary']
     ind = indeed_scrape.Indeed()
+    ind.stop_words = "and"
+    ind.add_stop_words()
 
     words = ind.find_words_in_radius(series, kw, radius=5)
     try:
-        count, kw = ind.vectorizer(words, max_features=30, n_min=1)
+        count, kw = ind.vectorizer(words, max_features=50, n_min=1)
     except ValueError:
-        return "Those key word(s) were not found."
+        return "The key word was not found in the top 50."
 
     script, div = get_plot_comp(kw, count, df, 'radius_kw')
     return radius_template.render(div=div, script=script)
