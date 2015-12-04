@@ -219,7 +219,6 @@ def run_analysis():
 
         # save df for additional analysis
         df.to_csv(session['df_file'], index=False)
-        session['titles'] = df['jobtitle'].unique().tolist()
 
         try:
             count, kw = ind.vectorizer(df['summary'], n_min=2, max_features=50)
@@ -264,8 +263,9 @@ def radius():
 @app.route('/job_title/')
 def job_title():
     logging.info("job title running")
+    df = pd.read_csv(session['df_file'])
 
-    titles = session['titles']
+    titles = df['jobtitle'].unique().tolist()
     list_of_titles = '<br>'.join(titles)
 
     return list_of_titles
