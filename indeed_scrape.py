@@ -100,6 +100,8 @@ class Indeed(object):
         ind = 0
         for zipcode in self.locations:
             url_city_title = self.get_url(zipcode)
+            if url_city_title is None:
+                continue
             for item in url_city_title:
                 self.df.loc[ind, 'zipcode'] = str(zipcode)
                 self.df.loc[ind, 'url'] = item[0]
