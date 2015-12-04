@@ -151,7 +151,6 @@ def plot_fig(df, num, kws):
 @app.route('/')
 def get_keywords():
     logging.info("running app:%s" % time.strftime("%d-%m-%Y:%H:%M:%S"))
-    app.secret_key=mk_random_string()
     df_file = os.path.join(data_dir,  mk_random_string())
 
     logging.info("df file path: %s" % df_file)
@@ -271,6 +270,8 @@ def mk_random_string():
     random_string = str(uuid.uuid4()) + ".csv"
 
     return random_string
+
+app.secret_key=mk_random_string()
 
 if __name__ == "__main__":
     app.run()
