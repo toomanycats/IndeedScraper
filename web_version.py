@@ -16,16 +16,12 @@ from bokeh.util.string import encode_utf8
 from bokeh.charts import Bar
 import os
 import numpy as np
-import ConfigParser
 
 data_dir = os.getenv('OPENSHIFT_DATA_DIR')
 logfile = os.path.join(data_dir, 'logfile.log')
 logging.basicConfig(filename=logfile, level=logging.INFO)
 
 repo_dir = os.getenv('OPENSHIFT_REPO_DIR')
-config = ConfigParser.RawConfigParser()
-config.read(os.path.join(repo_dir, 'tokens.cfg'))
-key = config.get("sess_key", 'key')
 
 input_template = jinja2.Template('''
 <!DOCTYPE html>
@@ -135,7 +131,6 @@ radius_template = jinja2.Template('''
 ''')
 
 app = Flask(__name__)
-app.secret_key=key
 
 def plot_fig(df, num, kws):
 
@@ -156,7 +151,9 @@ def plot_fig(df, num, kws):
 @app.route('/')
 def get_keywords():
     logging.info("running app:%s" % time.strftime("%d-%m-%Y:%H:%M:%S"))
-    df_file = mk_df_file_name()
+    app.secret_key=mk_random_string()
+    df_file = os.path.join(data_dir,  mk_random_string())
+
     logging.info("df file path: %s" % df_file)
     session['df_file'] = df_file
 
@@ -270,10 +267,10 @@ def job_title():
 
     return list_of_titles
 
-def mk_df_file_name():
+def mk_random_string():
     random_string = str(uuid.uuid4()) + ".csv"
 
-    return os.path.join(data_dir, random_string)
+    return random_string
 
 if __name__ == "__main__":
     app.run()
