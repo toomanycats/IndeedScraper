@@ -34,7 +34,7 @@ class Indeed(object):
         self.stop_words = None
         self.num_samp = 100
         self.zip_code_file = os.path.join(repo_dir, 'us_postal_codes.csv')
-        self.df = pd.DataFrame(columns=['url'])
+        self.df = pd.DataFrame(columns=['url', 'company', 'summary', 'summary_stem', 'city', 'zipcode', 'jobtitle'])
         self.config_path = os.path.join(repo_dir, "tokens.cfg")
         self.query = None
         self.locations = None
@@ -104,7 +104,7 @@ class Indeed(object):
                 continue
             for item in url_city_title:
                 # head off company dupes
-                if item[3] in df['company']:
+                if item[3] in self.df['company']:
                     continue
                 self.df.loc[ind, 'zipcode'] = str(zipcode)
                 self.df.loc[ind, 'url'] = item[0]
@@ -364,6 +364,7 @@ class Indeed(object):
         for string in series:
             test = string.decode('ascii', 'ignore')
             test = tokenize.word_tokenize(test)
+            test = self.len_tester(test)
             test = np.array(test)
 
             kw_ind = np.where(test == keyword)[0]
