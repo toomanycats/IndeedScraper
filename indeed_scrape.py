@@ -113,7 +113,7 @@ class Indeed(object):
                 self.df.loc[ind, 'company'] = item[3]
                 content = self.parse_content(item[0])
                 self.df.loc[ind, 'summary'] = content
-                self.df.loc[ind, 'summary_stem'] = self.stemmer_(content)
+                #self.df.loc[ind, 'summary_stem'] = self.stemmer_(content)
                 ind += 1
                 if np.mod(ind, self.num_urls) == 0:# check periodically
                     if self.end_url_loop():
