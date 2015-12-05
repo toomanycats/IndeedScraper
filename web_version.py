@@ -120,6 +120,7 @@ radius_template = jinja2.Template('''
 ''')
 
 app = Flask(__name__)
+app.secret_key = str(uuid.uuid4())
 
 def plot_fig(df, num, kws):
 
@@ -256,7 +257,6 @@ def mk_random_string():
 
 
 if __name__ == "__main__":
-    app.secret_key=mk_random_string()
     app.run()
 
 
