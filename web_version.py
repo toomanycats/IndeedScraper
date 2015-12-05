@@ -192,7 +192,7 @@ def get_plot_comp(kw, count, df, title_key):
 def run_analysis():
     try:
         logging.info("starting run_analysis %s" % time.strftime("%H:%M:%S") )
-        ind = indeed_scrape.Indeed()
+        ind = indeed_scrape.Indeed(query_type='title')
         ind.query = session['kws']
         ind.stop_words = "and"
         ind.add_loc = session['zips']
@@ -201,7 +201,7 @@ def run_analysis():
         ind.main()
 
         df = ind.df
-        df = df.drop_duplicates(subset=['url', 'company']).dropna(how='any')
+        df = df.drop_duplicates(subset=['url', 'job_key']).dropna(how='any')
 
         # save df for additional analysis
         df.to_csv(session['df_file'], index=False)
