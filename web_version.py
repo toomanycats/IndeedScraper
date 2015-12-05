@@ -254,9 +254,9 @@ def mk_random_string():
 
     return random_string
 
-app.secret_key=mk_random_string()
 
 if __name__ == "__main__":
+    app.secret_key=mk_random_string()
     app.run()
 
 
