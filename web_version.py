@@ -16,7 +16,6 @@ from bokeh.util.string import encode_utf8
 from bokeh.charts import Bar
 import os
 import numpy as np
-import json
 
 data_dir = os.getenv('OPENSHIFT_DATA_DIR')
 logfile = os.path.join(data_dir, 'logfile.log')
@@ -33,22 +32,22 @@ input_template = jinja2.Template('''
 </head>
 
 <body>
-        <h3>INDEED.COM JOB OPENINGS SKILL SCRAPER</h3>
+        <h1>indeed.com job openings skill scraper</h1>
 
         <form action="/get_data/"  method="POST">
 
-            Enter job title keywords you normally use to search for openings on indeed.com<br>
-            The scraper will use the "in title" mode of indeed's search engine.Care has been<br>
+            <h2>Enter <strong>job title keywords</strong> you normally use to search for openings on indeed.com</h2>
+            The scraper will use the "in title" mode of indeed's search engine. Care has been<br>
             taken to not allow duplicates. Depending on how many posting you enter, it can take<br>
-            a long time to complete. Start with the default then go higher.<br><br>
-            <input type="text" name="kw" placeholder="data science"><br>
+            a long time to complete. Start with the default then go higher.<br>
+            <input type="text" name="kw" placeholder="data science"><br><br>
 
              The number of job postings to scrape.<br>
-            <input type="text" name="num" value="100"><br><br>
+            <input type="text" name="num" value="50"><br><br>
 
             For now, the zipcodes are regular expression based. If you don't know what that means<br>
             use the default below. This default will search zipcodes that begin with a 9 and a 0,<br>
-            which is East and West coasts.<br><br>
+            which is East and West coasts.<br>
             <input type="text" name="zipcodes" value="^[90]"><br><br>
 
             <input type="submit" value="Submit" name="submit">
@@ -64,18 +63,11 @@ output_template = jinja2.Template("""
     <meta charset="UTF-8">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 
-    <script>
-        $(function(){
-        $("#chart").load("/run_analysis")
-        });
+    <script type="text/javascript">
+        $(function() {
+            $("#chart").load("/run_analysis")
+            });
     </script>
-
-    <script>
-        $(function(){
-        $("#title").load("/job_title")
-        });
-    </script>
-
 </head>
 
 <link
@@ -91,10 +83,6 @@ output_template = jinja2.Template("""
 
     <h1>Keyword Frequency of Bigrams</h1>
     <div id="chart">Collecting data could take several minutes...</div>
-
-    <br><br><br>
-    <h2>Unique list of job titles returned</h2>
-    <div id="title">Job Titles</div>
 
     <br><br><br>
     <form  id=radius action="/radius/"  method="post">
@@ -171,9 +159,9 @@ def get_data():
         session['zips'] = zips
         session['num_urls'] = num_urls
 
-        logging.info(session['kws'])
-        logging.info(session['zips'])
-        logging.info(session['num_urls'])
+        logging.info("key words:%s" % session['kws'])
+        logging.info("zipcode regex:%s" % session['zips'])
+        logging.info("number urls:%s" % session['num_urls'])
 
         html = output_template.render()
 
@@ -218,16 +206,16 @@ def run_analysis():
         df.to_csv(session['df_file'], index=False)
         # save titles for later
         titles = df['jobtitle'].unique().tolist()
-        #session['titles'] = json.dumps(titles)
-        logging.info("titles:%s" % session['titles'])
 
         try:
             count, kw = ind.vectorizer(df['summary'], n_min=2, max_features=50)
         except ValueError:
             return "Those key word(s) were not found."
 
+        list_of_titles = '<br>'.join(titles)
+
         script, div = get_plot_comp(kw, count, df, 'kws')
-        return "%s\n%s" %(script, div)
+        return "%s\n%s\n\n%s" %(script, div, list_of_titles)
 
     except ValueError:
         logging.info("vectorizer found no words")
@@ -260,17 +248,6 @@ def radius():
 
     script, div = get_plot_comp(kw, count, df, 'radius_kw')
     return radius_template.render(div=div, script=script)
-
-@app.route('/job_title/')
-def job_title():
-    logging.info("job title running")
-    df = pd.read_csv(session['df_file'])
-    titles = df['jobtitle'].unique().tolist()
-
-    #list_of_titles = '<br>'.join(session['titles'])
-    list_of_titles = '<br>'.join(titles)
-
-    return list_of_titles
 
 def mk_random_string():
     random_string = str(uuid.uuid4()) + ".csv"
