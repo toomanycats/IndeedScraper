@@ -26,15 +26,15 @@ stemmer = stem.SnowballStemmer('english')
 
 
 class Indeed(object):
-    def __init__(self):
+    def __init__(self, query_type):
         repo_dir = os.getenv("OPENSHIFT_REPO_DIR")
-
+        self.query_type = query_type
         self.num_urls = 1000
         self.add_loc = None
         self.stop_words = None
         self.num_samp = 100
         self.zip_code_file = os.path.join(repo_dir, 'us_postal_codes.csv')
-        self.df = pd.DataFrame(columns=['url'])
+        self.df = pd.DataFrame(columns=['url', 'job_key', 'summary', 'summary_stem', 'city', 'zipcode', 'jobtitle'])
         self.config_path = os.path.join(repo_dir, "tokens.cfg")
         self.query = None
         self.locations = None
@@ -55,8 +55,10 @@ class Indeed(object):
         pub = 'publisher=%(pub_id)s'
         chan = '&chnl=%(channel_name)s'
         loc = '&l=%(loc)s'
-        query = '&q=title%%3A%%28%(query)s%%29'
-        #query = '&q=%s' % query
+        if self.query_type == 'title':
+            query = '&q=title%%3A%%28%(query)s%%29'
+        else:
+            query = '&q=%(query)s'
         start = '&start=0'
         frm = '&fromage=30'
         limit = '&limit=25'
@@ -64,14 +66,17 @@ class Indeed(object):
         format = '&format=json'
         sort = '&sort=0'
         country = '&co=us'
+        radius = '&radius=5'
         suffix = '&userip=1.2.3.4&useragent=Mozilla/%%2F4.0%%28Firefox%%29&v=2'
 
         self.api = prefix + pub + chan + loc + query + start + frm + limit + \
-                   site + format + country + sort + suffix
+                   site + format + country + sort + radius + suffix
 
     def format_query(self, query):
-         #return "%%20".join(query.split(" "))
-         self.query = "+".join(query.split(" "))
+        if self.query_type == 'title':
+            self.query = "+".join(query.split(" "))
+        else:
+            self.query = "%%20".join(query.split(" "))
 
     def load_config(self):
         '''loads a config file that contains tokens'''
@@ -89,7 +94,7 @@ class Indeed(object):
         return locations
 
     def end_url_loop(self):
-        df = self.df.dropna(how='any').drop_duplicates(subset=['url'])
+        df = self.df.dropna(how='any').drop_duplicates(subset=['url', 'job_key'])
         if df.url.count() >= self.num_urls:
             return True
         else:
@@ -99,14 +104,20 @@ class Indeed(object):
         ind = 0
         for zipcode in self.locations:
             url_city_title = self.get_url(zipcode)
+            if url_city_title is None:
+                continue
             for item in url_city_title:
+                # head off dupes
+                if item[3] in self.df['job_key']:
+                    continue
                 self.df.loc[ind, 'zipcode'] = str(zipcode)
                 self.df.loc[ind, 'url'] = item[0]
                 self.df.loc[ind, 'city'] = item[1]
                 self.df.loc[ind, 'jobtitle'] = item[2]
+                self.df.loc[ind, 'job_key'] = item[3]
                 content = self.parse_content(item[0])
                 self.df.loc[ind, 'summary'] = content
-                self.df.loc[ind, 'summary_stem'] = self.stemmer_(content)
+                #self.df.loc[ind, 'summary_stem'] = self.stemmer_(content)
                 ind += 1
                 if np.mod(ind, self.num_urls) == 0:# check periodically
                     if self.end_url_loop():
@@ -136,7 +147,7 @@ class Indeed(object):
             response.close()
 
             urls = []
-            urls.extend([ (item['url'], item['city'], item['jobtitle']) for item in data['results']])
+            urls.extend([ (item['url'], item['city'], item['jobtitle'], item['jobkey']) for item in data['results']])
 
         except urllib2.HTTPError, err:
             print err
@@ -357,6 +368,7 @@ class Indeed(object):
         for string in series:
             test = string.decode('ascii', 'ignore')
             test = tokenize.word_tokenize(test)
+            test = self.len_tester(test)
             test = np.array(test)
 
             kw_ind = np.where(test == keyword)[0]

@@ -3,6 +3,7 @@
 # Author : Daniel Cuneo
 # Creation Date : 11-21-2015
 ######################################
+import uuid #for random strints
 import time
 import logging
 import pandas as pd
@@ -15,18 +16,12 @@ from bokeh.util.string import encode_utf8
 from bokeh.charts import Bar
 import os
 import numpy as np
-import ConfigParser
 
 data_dir = os.getenv('OPENSHIFT_DATA_DIR')
 logfile = os.path.join(data_dir, 'logfile.log')
 logging.basicConfig(filename=logfile, level=logging.INFO)
 
 repo_dir = os.getenv('OPENSHIFT_REPO_DIR')
-config = ConfigParser.RawConfigParser()
-config.read(os.path.join(repo_dir, 'tokens.cfg'))
-key = config.get("sess_key", 'key')
-
-df_file = os.path.join(data_dir, 'df_file.csv')
 
 input_template = jinja2.Template('''
 <!DOCTYPE html>
@@ -37,14 +32,24 @@ input_template = jinja2.Template('''
 </head>
 
 <body>
-        <h3>INDEED.COM JOB OPENINGS SKILL SCRAPER</h3>
+        <h1>indeed.com job openings skill scraper</h1>
+
         <form action="/get_data/"  method="POST">
-            Enter keywords you normally use to search for openings on indeed.com<br>
-            <input type="text" name="kw" placeholder="data science"><br>
+
+            <h2>Enter <strong>job title keywords</strong> you normally use to search for openings on indeed.com</h2>
+            The scraper will use the "in title" mode of indeed's search engine. Care has been<br>
+            taken to not allow duplicates. Depending on how many posting you enter, it can take<br>
+            a long time to complete. Start with the default then go higher.<br>
+            <input type="text" name="kw" placeholder="data science"><br><br>
+
              The number of job postings to scrape.<br>
-            <input type="text" name="num" value="200"><br>
-            Enter zipcodes<br>
-            <input type="text" name="zipcodes" value="^[90]"><br>
+            <input type="text" name="num" value="50"><br><br>
+
+            For now, the zipcodes are regular expression based. If you don't know what that means<br>
+            use the default below. This default will search zipcodes that begin with a 9 and a 0,<br>
+            which is East and West coasts.<br>
+            <input type="text" name="zipcodes" value="^[90]"><br><br>
+
             <input type="submit" value="Submit" name="submit">
         </form>
 </body>
@@ -58,18 +63,11 @@ output_template = jinja2.Template("""
     <meta charset="UTF-8">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 
-    <script>
-        $(function(){
-        $("#chart").load("/run_analysis")
-        });
+    <script type="text/javascript">
+        $(function() {
+            $("#chart").load("/run_analysis")
+            });
     </script>
-
-    <script>
-        $(function(){
-        $("#title").load("/job_title")
-        });
-    </script>
-
 </head>
 
 <link
@@ -85,9 +83,6 @@ output_template = jinja2.Template("""
 
     <h1>Keyword Frequency of Bigrams</h1>
     <div id="chart">Collecting data could take several minutes...</div>
-
-    <br><br><br>
-    <div id="title">Job Titles</div>
 
     <br><br><br>
     <form  id=radius action="/radius/"  method="post">
@@ -125,7 +120,7 @@ radius_template = jinja2.Template('''
 ''')
 
 app = Flask(__name__)
-app.secret_key=key
+app.secret_key = str(uuid.uuid4())
 
 def plot_fig(df, num, kws):
 
@@ -146,6 +141,11 @@ def plot_fig(df, num, kws):
 @app.route('/')
 def get_keywords():
     logging.info("running app:%s" % time.strftime("%d-%m-%Y:%H:%M:%S"))
+    df_file = os.path.join(data_dir,  mk_random_string())
+
+    logging.info("df file path: %s" % df_file)
+    session['df_file'] = df_file
+
     return input_template.render()
 
 @app.route('/get_data/', methods=['post'])
@@ -160,9 +160,9 @@ def get_data():
         session['zips'] = zips
         session['num_urls'] = num_urls
 
-        logging.info(session['kws'])
-        logging.info(session['zips'])
-        logging.info(session['num_urls'])
+        logging.info("key words:%s" % session['kws'])
+        logging.info("zipcode regex:%s" % session['zips'])
+        logging.info("number urls:%s" % session['num_urls'])
 
         html = output_template.render()
 
@@ -192,7 +192,7 @@ def get_plot_comp(kw, count, df, title_key):
 def run_analysis():
     try:
         logging.info("starting run_analysis %s" % time.strftime("%H:%M:%S") )
-        ind = indeed_scrape.Indeed()
+        ind = indeed_scrape.Indeed(query_type='title')
         ind.query = session['kws']
         ind.stop_words = "and"
         ind.add_loc = session['zips']
@@ -201,18 +201,22 @@ def run_analysis():
         ind.main()
 
         df = ind.df
-        df = df.drop_duplicates(subset=['url']).dropna(how='any')
+        df = df.drop_duplicates(subset=['url', 'job_key']).dropna(how='any')
 
         # save df for additional analysis
-        df.to_csv(df_file, index=False)
+        df.to_csv(session['df_file'], index=False)
+        # save titles for later
+        titles = df['jobtitle'].unique().tolist()
 
         try:
             count, kw = ind.vectorizer(df['summary'], n_min=2, max_features=50)
         except ValueError:
             return "Those key word(s) were not found."
 
+        list_of_titles = '<br>'.join(titles)
+
         script, div = get_plot_comp(kw, count, df, 'kws')
-        return "%s\n%s" %(script, div)
+        return "%s\n%s\n\n%s" %(script, div, list_of_titles)
 
     except ValueError:
         logging.info("vectorizer found no words")
@@ -231,34 +235,28 @@ def radius():
     session['radius_kw'] = kw
     logging.info("radius key word:%s" % kw)
 
-    df = pd.read_csv(df_file)
+    df = pd.read_csv(session['df_file'])
     series = df['summary']
     ind = indeed_scrape.Indeed()
+    ind.stop_words = "and"
+    ind.add_stop_words()
 
     words = ind.find_words_in_radius(series, kw, radius=5)
     try:
-        count, kw = ind.vectorizer(words, max_features=30, n_min=1)
+        count, kw = ind.vectorizer(words, max_features=50, n_min=1)
     except ValueError:
-        return "Those key word(s) were not found."
+        return "The key word was not found in the top 50."
 
     script, div = get_plot_comp(kw, count, df, 'radius_kw')
     return radius_template.render(div=div, script=script)
 
-@app.route('/job_title/')
-def job_title():
-    logging.info("job title running")
+def mk_random_string():
+    random_string = str(uuid.uuid4()) + ".csv"
 
-    df = pd.read_csv(df_file)
-
-    titles = df['jobtitle'].unique().tolist()
-
-    list_of_titles = '<br>'.join(titles)
-
-    return list_of_titles
+    return random_string
 
 
 if __name__ == "__main__":
-    app.debug = False
     app.run()
 
 
