@@ -27,7 +27,7 @@ stemmer = stem.SnowballStemmer('english')
 
 data_dir = os.getenv('OPENSHIFT_DATA_DIR')
 logfile = os.path.join(data_dir, 'logfile.log')
-logging.basicConfig(filename=logfile, level=logging.INFO)
+logging.basicConfig(filename=logfile, level=logging.DEBUG)
 
 class Indeed(object):
     def __init__(self, query_type):
@@ -45,8 +45,7 @@ class Indeed(object):
 
     def _split_on_spaces(self, string):
         ob = re.compile('\s+')
-        return ob.split(string)
-
+        return ob.split(string.strip())
 
     def add_stop_words(self):
         if self.stop_words is not None:
@@ -64,7 +63,7 @@ class Indeed(object):
         chan = '&chnl=%(channel_name)s'
         loc = '&l=%(loc)s'
         if self.query_type == 'title':
-            query = '&q=title%%28%(query)s%%29'
+            query = '&q=title%%3A%%28%(query)s%%29'
         else:
             query = '&q=%(query)s'
         start = '&start=0'
@@ -74,7 +73,7 @@ class Indeed(object):
         format = '&format=json'
         sort = '&sort=0'
         country = '&co=us'
-        radius = '&radius=100'
+        radius = '&radius=25'
         suffix = '&userip=1.2.3.4&useragent=Mozilla/%%2F4.0%%28Firefox%%29&v=2'
 
         self.api = prefix + pub + chan + loc + query + start + frm + limit + \
@@ -86,8 +85,10 @@ class Indeed(object):
         logging.debug("query: %s" % self.query)
         if self.query_type == 'title':
             self.form_query = "+".join(self._split_on_spaces(self.query))
-        else:
+        elif self.query_type == 'kw':
             self.form_query = "%%20".join(self._split_on_spaces(self.query))
+        else:
+            raise Exception, "not a recogized type"
 
     def load_config(self):
         '''loads a config file that contains tokens'''
