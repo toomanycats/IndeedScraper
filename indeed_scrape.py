@@ -86,7 +86,7 @@ class Indeed(object):
         if self.query_type == 'title':
             self.form_query = "+".join(self._split_on_spaces(self.query))
         elif self.query_type == 'kw':
-            self.form_query = "%%20".join(self._split_on_spaces(self.query))
+            self.form_query = "+".join(self._split_on_spaces(self.query))
         else:
             raise Exception, "not a recogized type"
 
