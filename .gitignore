@@ -2,3 +2,4 @@
 *.cfg
 us_postal_codes_test.csv
 logfile.log
+df_dir/*.*
