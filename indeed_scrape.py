@@ -73,7 +73,7 @@ class Indeed(object):
         format = '&format=json'
         sort = '&sort=0'
         country = '&co=us'
-        radius = '&radius=25'
+        radius = '&radius=5'
         suffix = '&userip=1.2.3.4&useragent=Mozilla/%%2F4.0%%28Firefox%%29&v=2'
 
         self.api = prefix + pub + chan + loc + query + start + frm + limit + \
