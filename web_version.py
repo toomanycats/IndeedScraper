@@ -150,6 +150,7 @@ def get_keywords():
 
     logging.info("df file path: %s" % df_file)
     session['df_file'] = df_file
+    df.to_csv(session['df_file'])
 
     return input_template.render()
 
@@ -211,7 +212,7 @@ def run_analysis():
         df = ind.df
 
         # save df for additional analysis
-        df.to_csv(session['df_file'], index=False)
+        df.to_csv(session['df_file'], index=False, mode='a')
         # save titles for later
         titles = df['jobtitle'].unique().tolist()
 
