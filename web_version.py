@@ -146,10 +146,6 @@ def plot_fig(df, num, kws):
 def get_keywords():
     app.secret_key = str(uuid.uuid4())
     logging.info("running app:%s" % time.strftime("%d-%m-%Y:%H:%M:%S"))
-    df_file = os.path.join(data_dir,  'df_dir', mk_random_string())
-
-    logging.info("df file path: %s" % df_file)
-    session['df_file'] = df_file
 
     return input_template.render()
 
@@ -162,6 +158,10 @@ def get_data():
         zips = request.form['zipcodes']
         num_urls = int(request.form['num'])
 
+        df_file = os.path.join(data_dir,  'df_dir', mk_random_string())
+        logging.info("df file path: %s" % df_file)
+
+        session['df_file'] = df_file
         session['kws'] = kws
         session['zips'] = zips
         session['num_urls'] = num_urls
