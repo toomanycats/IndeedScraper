@@ -53,7 +53,7 @@ input_template = jinja2.Template('''
             Enter where you are searching a known job title or want to use keywords.<br>
             Keywords typically runs much faster though have diverse job title returns.<br>
 
-            <input type="text" name="type" placeholder="title/kw"><br><br>
+            <input type="text" name="type" value="title"><br><br>
 
             <input type="submit" value="Submit" name="submit">
         </form>
@@ -150,7 +150,9 @@ def get_keywords():
 
     logging.info("df file path: %s" % df_file)
     session['df_file'] = df_file
-    df.to_csv(session['df_file'])
+
+    f = open(df_file, 'w')
+    f.close()
 
     return input_template.render()
 
