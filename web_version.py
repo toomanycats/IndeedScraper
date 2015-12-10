@@ -197,21 +197,17 @@ def run_analysis():
         ind.stop_words = "and"
         ind.add_loc = session['zips']
         ind.num_samp = 0 # num additional random zipcodes
-        ind.num_urls = session['num_urls']
+        ind.num_urls = int(session['num_urls'])
         ind.main()
 
         df = ind.df
-        df = df.drop_duplicates(subset=['url', 'job_key']).dropna(how='any')
 
         # save df for additional analysis
         df.to_csv(session['df_file'], index=False)
         # save titles for later
         titles = df['jobtitle'].unique().tolist()
 
-        try:
-            count, kw = ind.vectorizer(df['summary'], n_min=2, max_features=50)
-        except ValueError:
-            return "Those key word(s) were not found."
+        count, kw = ind.vectorizer(df['summary'], n_min=2, max_features=50)
 
         list_of_titles = '<br>'.join(titles)
 
@@ -220,8 +216,7 @@ def run_analysis():
 
     except ValueError:
         logging.info("vectorizer found no words")
-        html = output_template.render(script="", div="no results")
-        return html
+        return "no keywords found"
 
     except Exception, err:
         print err
