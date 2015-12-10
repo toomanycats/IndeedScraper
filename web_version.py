@@ -145,6 +145,7 @@ def plot_fig(df, num, kws):
 
 @app.route('/')
 def get_keywords():
+    app.secret_key = str(uuid.uuid4())
     logging.info("running app:%s" % time.strftime("%d-%m-%Y:%H:%M:%S"))
     df_file = os.path.join(data_dir,  'df_dir', mk_random_string())
 
@@ -240,7 +241,7 @@ def radius():
 
     df = pd.read_csv(session['df_file'])
     series = df['summary']
-    ind = indeed_scrape.Indeed()
+    ind = indeed_scrape.Indeed('kw')
     ind.stop_words = "and"
     ind.add_stop_words()
 
