@@ -19,7 +19,7 @@ import numpy as np
 
 data_dir = os.getenv('OPENSHIFT_DATA_DIR')
 logfile = os.path.join(data_dir, 'logfile.log')
-logging.basicConfig(filename=logfile, level=logging.INFO)
+logging.basicConfig(filename=logfile, level=logging.DEBUG)
 
 repo_dir = os.getenv('OPENSHIFT_REPO_DIR')
 
@@ -146,13 +146,10 @@ def plot_fig(df, num, kws):
 @app.route('/')
 def get_keywords():
     logging.info("running app:%s" % time.strftime("%d-%m-%Y:%H:%M:%S"))
-    df_file = os.path.join(data_dir,  mk_random_string())
+    df_file = os.path.join(data_dir,  'df_dir', mk_random_string())
 
     logging.info("df file path: %s" % df_file)
     session['df_file'] = df_file
-
-    f = open(df_file, 'w')
-    f.close()
 
     return input_template.render()
 
@@ -214,7 +211,7 @@ def run_analysis():
         df = ind.df
 
         # save df for additional analysis
-        df.to_csv(session['df_file'], index=False, mode='a')
+        df.to_csv(session['df_file'], index=False)
         # save titles for later
         titles = df['jobtitle'].unique().tolist()
 
