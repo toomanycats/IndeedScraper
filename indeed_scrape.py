@@ -27,7 +27,7 @@ stemmer = stem.SnowballStemmer('english')
 
 data_dir = os.getenv('OPENSHIFT_DATA_DIR')
 logfile = os.path.join(data_dir, 'logfile.log')
-logging.basicConfig(filename=logfile, level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 class Indeed(object):
     def __init__(self, query_type):
@@ -79,10 +79,10 @@ class Indeed(object):
         self.api = prefix + pub + chan + loc + query + start + frm + limit + \
                    site + format + country + sort + radius + suffix
 
-        logging.debug("api string: %s" % self.api)
+        logger.debug("api string: %s" % self.api)
 
     def format_query(self):
-        logging.debug("query: %s" % self.query)
+        logger.debug("query: %s" % self.query)
         if self.query_type == 'title':
             self.form_query = "+".join(self._split_on_spaces(self.query))
         elif self.query_type == 'kw':
@@ -107,7 +107,7 @@ class Indeed(object):
 
     def end_url_loop(self):
         df = self.df.dropna(subset=['summary'])
-        logging.debug("df count: %i" % df.url.count())
+        logger.debug("df count: %i" % df.url.count())
         if df.url.count() >= self.num_urls:
             return True
         else:
@@ -118,13 +118,13 @@ class Indeed(object):
         for zipcode in self.locations:
             url_city_title = self.get_url(zipcode)
             if url_city_title is None:
-                logging.debug("url: None found")
+                logger.debug("url: None found")
                 continue
 
             for item in url_city_title:
                 # head off dupes
                 if item[3] in self.df['job_key']:
-                    logging.debug("duplicate jobkey:%s" % item[3])
+                    logger.debug("duplicate jobkey:%s" % item[3])
                     continue
                 self.df.loc[ind, 'zipcode'] = str(zipcode)
                 self.df.loc[ind, 'url'] = item[0]
@@ -135,7 +135,7 @@ class Indeed(object):
                 self.df.loc[ind, 'summary'] = content
                 #self.df.loc[ind, 'summary_stem'] = self.stemmer_(content)
                 ind += 1
-                logging.debug("index increase: %i" % ind)
+                logger.debug("index increase: %i" % ind)
 
                 if np.mod(ind, self.num_urls) == 0 and self.end_url_loop():
                     self.df.dropna(subset=['summary'], inplace=True)
@@ -161,7 +161,7 @@ class Indeed(object):
                          'query':self.form_query
                         }
 
-        logging.debug("full api:%s" % api)
+        logger.debug("full api:%s" % api)
 
         try:
             response = urllib2.urlopen(api)
@@ -172,11 +172,11 @@ class Indeed(object):
             urls.extend([ (item['url'], item['city'], item['jobtitle'], item['jobkey']) for item in data['results']])
 
         except urllib2.HTTPError, err:
-            logging.debug("get url: %s" % err)
+            logger.debug("get url: %s" % err)
             return None
 
         except Exception, err:
-            logging.debug("get url: %s" % err)
+            logger.debug("get url: %s" % err)
             return None
 
         return urls
@@ -193,11 +193,11 @@ class Indeed(object):
             return content
 
         except urllib2.HTTPError, err:
-            logging.debug("get content:%s" % err)
+            logger.debug("get content:%s" % err)
             return None
 
         except Exception, err:
-            logging.debug("get content:%s" % err)
+            logger.debug("get content:%s" % err)
             return None
 
     def len_tester(self, word_list):
