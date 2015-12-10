@@ -3,8 +3,8 @@
 # Author : Daniel Cuneo
 # Creation Date : 11-05-2015
 ######################################
-#TODO: add logger
-#TODO: use MRJob mapper for parsing
+import re
+import pdb
 import ConfigParser
 import logging
 import json
@@ -27,7 +27,7 @@ stemmer = stem.SnowballStemmer('english')
 
 data_dir = os.getenv('OPENSHIFT_DATA_DIR')
 logfile = os.path.join(data_dir, 'logfile.log')
-logging.basicConfig(filename=logfile, level=logging.DEBUG)
+logging.basicConfig(filename=logfile, level=logging.INFO)
 
 class Indeed(object):
     def __init__(self, query_type):
@@ -43,9 +43,14 @@ class Indeed(object):
         self.query = None
         self.locations = None
 
+    def _split_on_spaces(self, string):
+        ob = re.compile('\s+')
+        return ob.split(string)
+
+
     def add_stop_words(self):
         if self.stop_words is not None:
-            words = self.stop_words.split(" ")
+            words = self._split_on_spaces(self.stop_words)
             self.stop_words = ENGLISH_STOP_WORDS.union(words)
 
     def build_api_string(self):
@@ -54,13 +59,12 @@ class Indeed(object):
             raise ValueError
 
         # beware of escaped %
-        self.format_query(self.query)
         prefix = 'http://api.indeed.com/ads/apisearch?'
         pub = 'publisher=%(pub_id)s'
         chan = '&chnl=%(channel_name)s'
         loc = '&l=%(loc)s'
         if self.query_type == 'title':
-            query = '&q=title%%3A%%28%(query)s%%29'
+            query = '&q=title%%28%(query)s%%29'
         else:
             query = '&q=%(query)s'
         start = '&start=0'
@@ -70,17 +74,20 @@ class Indeed(object):
         format = '&format=json'
         sort = '&sort=0'
         country = '&co=us'
-        radius = '&radius=5'
+        radius = '&radius=100'
         suffix = '&userip=1.2.3.4&useragent=Mozilla/%%2F4.0%%28Firefox%%29&v=2'
 
         self.api = prefix + pub + chan + loc + query + start + frm + limit + \
                    site + format + country + sort + radius + suffix
 
-    def format_query(self, query):
+        logging.debug("api string: %s" % self.api)
+
+    def format_query(self):
+        logging.debug("query: %s" % self.query)
         if self.query_type == 'title':
-            self.query = "+".join(query.split(" "))
+            self.form_query = "+".join(self._split_on_spaces(self.query))
         else:
-            self.query = "%%20".join(query.split(" "))
+            self.form_query = "%%20".join(self._split_on_spaces(self.query))
 
     def load_config(self):
         '''loads a config file that contains tokens'''
@@ -130,7 +137,7 @@ class Indeed(object):
                 logging.debug("index increase: %i" % ind)
 
                 if np.mod(ind, self.num_urls) == 0 and self.end_url_loop():
-                    self.df.dropna(subset=['summary', 'url'], inplace=True)
+                    self.df.dropna(subset=['summary'], inplace=True)
                     return
                 else:
                     continue
@@ -150,8 +157,10 @@ class Indeed(object):
         api = self.api %{'pub_id':self.pub_id,
                          'loc':location,
                          'channel_name':self.channel_name,
-                         'query':self.query
+                         'query':self.form_query
                         }
+
+        logging.debug("full api:%s" % api)
 
         try:
             response = urllib2.urlopen(api)
@@ -162,11 +171,11 @@ class Indeed(object):
             urls.extend([ (item['url'], item['city'], item['jobtitle'], item['jobkey']) for item in data['results']])
 
         except urllib2.HTTPError, err:
-            print err
+            logging.debug("get url: %s" % err)
             return None
 
         except Exception, err:
-            print err
+            logging.debug("get url: %s" % err)
             return None
 
         return urls
@@ -183,11 +192,11 @@ class Indeed(object):
             return content
 
         except urllib2.HTTPError, err:
-            print err
+            logging.debug("get content:%s" % err)
             return None
 
         except Exception, err:
-            print err
+            logging.debug("get content:%s" % err)
             return None
 
     def len_tester(self, word_list):
@@ -288,6 +297,7 @@ class Indeed(object):
         save-on-quit feature more usable, the locations are shuffled prior to
         getting the content.'''
 
+        self.format_query()
         self.load_config()
         self.build_api_string()
         self.add_stop_words()
