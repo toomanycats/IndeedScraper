@@ -68,6 +68,12 @@ output_template = jinja2.Template("""
     <meta charset="UTF-8">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 
+    <script type="text/javascript">
+        $(document).read(function() {
+            $("#chart").load("/run_analysis")
+            });
+    </script>
+
 </head>
 
 <link
@@ -77,15 +83,7 @@ output_template = jinja2.Template("""
 <script
     src="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.js"
 ></script>
-
-
 <body>
-
-    <script type="text/javascript">
-        $(function() {
-            $("#chart").load("/run_analysis")
-            });
-    </script>
 
     <h1>Keyword Frequency of Bigrams</h1>
     <div id="chart">Collecting data could take several minutes...</div>
