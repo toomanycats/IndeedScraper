@@ -6,6 +6,7 @@
 #TODO: add logger
 #TODO: use MRJob mapper for parsing
 import ConfigParser
+import logging
 import json
 import pandas as pd
 import urllib2
@@ -24,6 +25,9 @@ import os
 toker = tokenize.word_tokenize
 stemmer = stem.SnowballStemmer('english')
 
+data_dir = os.getenv('OPENSHIFT_DATA_DIR')
+logfile = os.path.join(data_dir, 'logfile.log')
+logging.basicConfig(filename=logfile, level=logging.DEBUG)
 
 class Indeed(object):
     def __init__(self, query_type):
@@ -94,7 +98,8 @@ class Indeed(object):
         return locations
 
     def end_url_loop(self):
-        df = self.df.dropna(how='any').drop_duplicates(subset=['url', 'job_key'])
+        df = self.df.dropna(subset=['summary'])
+        logging.debug("df count: %i" % df.url.count())
         if df.url.count() >= self.num_urls:
             return True
         else:
@@ -105,10 +110,13 @@ class Indeed(object):
         for zipcode in self.locations:
             url_city_title = self.get_url(zipcode)
             if url_city_title is None:
+                logging.debug("url: None found")
                 continue
+
             for item in url_city_title:
                 # head off dupes
                 if item[3] in self.df['job_key']:
+                    logging.debug("duplicate jobkey:%s" % item[3])
                     continue
                 self.df.loc[ind, 'zipcode'] = str(zipcode)
                 self.df.loc[ind, 'url'] = item[0]
@@ -119,9 +127,13 @@ class Indeed(object):
                 self.df.loc[ind, 'summary'] = content
                 #self.df.loc[ind, 'summary_stem'] = self.stemmer_(content)
                 ind += 1
-                if np.mod(ind, self.num_urls) == 0:# check periodically
-                    if self.end_url_loop():
-                        return
+                logging.debug("index increase: %i" % ind)
+
+                if np.mod(ind, self.num_urls) == 0 and self.end_url_loop():
+                    self.df.dropna(subset=['summary', 'url'], inplace=True)
+                    return
+                else:
+                    continue
 
     def get_urls(self):
         urls = []
