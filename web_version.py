@@ -53,7 +53,7 @@ input_template = jinja2.Template('''
             Enter where you are searching a known job title or want to use keywords.<br>
             Keywords typically runs much faster though have diverse job title returns.<br>
 
-            <input type="text" name="type" value="title"><br><br>
+            <input type="text" name="type_" value="title"><br><br>
 
             <input type="submit" value="Submit" name="submit">
         </form>
@@ -160,7 +160,7 @@ def get_keywords():
 def get_data():
     try:
         logging.info("starting get_data: %s" % time.strftime("%H:%M:%S"))
-        type_ = request.form['type']
+        type_ = request.form['type_']
         kws = request.form['kw']
         zips = request.form['zipcodes']
         num_urls = int(request.form['num'])
@@ -168,9 +168,9 @@ def get_data():
         session['kws'] = kws
         session['zips'] = zips
         session['num_urls'] = num_urls
-        session['type'] = type_
+        session['type_'] = type_
 
-        logging.info("type:%s" % session['type'])
+        logging.info("type:%s" % session['type_'])
         logging.info("key words:%s" % session['kws'])
         logging.info("zipcode regex:%s" % session['zips'])
         logging.info("number urls:%s" % session['num_urls'])
@@ -203,7 +203,7 @@ def get_plot_comp(kw, count, df, title_key):
 def run_analysis():
     try:
         logging.info("starting run_analysis %s" % time.strftime("%H:%M:%S") )
-        ind = indeed_scrape.Indeed(query_type=session['type'])
+        ind = indeed_scrape.Indeed(query_type=session['type_'])
         ind.query = session['kws']
         ind.stop_words = "and"
         ind.add_loc = session['zips']
