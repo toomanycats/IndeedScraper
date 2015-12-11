@@ -7,7 +7,7 @@ import uuid #for random strints
 import time
 import logging
 import pandas as pd
-from flask import Flask, request, session
+from flask import Flask, request
 import indeed_scrape
 import jinja2
 from bokeh.embed import components
@@ -16,12 +16,16 @@ from bokeh.util.string import encode_utf8
 from bokeh.charts import Bar
 import os
 import numpy as np
+import json
+import pickle
 
 data_dir = os.getenv('OPENSHIFT_DATA_DIR')
 logfile = os.path.join(data_dir, 'logfile.log')
 logging.basicConfig(filename=logfile, level=logging.DEBUG)
 
 repo_dir = os.getenv('OPENSHIFT_REPO_DIR')
+
+session_file = os.path.join(data_dir, 'df_dir', 'session_file.pck')
 
 input_template = jinja2.Template('''
 <!DOCTYPE html>
@@ -128,7 +132,7 @@ app.secret_key = str(uuid.uuid4())
 
 def plot_fig(df, num, kws):
 
-    title_string = "Analysis of %i Postings for:'%s'" % (num, kws)
+    title_string = "Analysis of %i Postings for:'%s'" % (num, kws.strip())
 
     p = Bar(df, 'kw',
             values='count',
@@ -153,24 +157,28 @@ def get_keywords():
 def get_data():
     try:
         logging.info("starting get_data: %s" % time.strftime("%H:%M:%S"))
+
         type_ = request.form['type_']
         kws = request.form['kw']
         zips = request.form['zipcodes']
         num_urls = int(request.form['num'])
 
         df_file = os.path.join(data_dir,  'df_dir', mk_random_string())
+        logging.info("session file path: %s" % df_file)
+
+
+        put_to_sess({'type_':type_,
+                     'kws':kws,
+                     'zips':zips,
+                     'num_urls':num_urls,
+                     'df_file':df_file
+                     })
+
         logging.info("df file path: %s" % df_file)
-
-        session['df_file'] = df_file
-        session['kws'] = kws
-        session['zips'] = zips
-        session['num_urls'] = num_urls
-        session['type_'] = type_
-
-        logging.info("type:%s" % session['type_'])
-        logging.info("key words:%s" % session['kws'])
-        logging.info("zipcode regex:%s" % session['zips'])
-        logging.info("number urls:%s" % session['num_urls'])
+        logging.info("type:%s" %  type_)
+        logging.info("key words:%s" % kws)
+        logging.info("zipcode regex:%s" % zips)
+        logging.info("number urls:%s" % num_urls)
 
         html = output_template.render()
 
@@ -189,7 +197,7 @@ def get_plot_comp(kw, count, df, title_key):
         dff['kw'] = kw
         dff['count'] = count
 
-        kws = session[title_key]
+        kws = get_sess()['kws']
 
         p = plot_fig(dff, num, kws)
         script, div = components(p)
@@ -200,18 +208,18 @@ def get_plot_comp(kw, count, df, title_key):
 def run_analysis():
     try:
         logging.info("starting run_analysis %s" % time.strftime("%H:%M:%S") )
-        ind = indeed_scrape.Indeed(query_type=session['type_'])
-        ind.query = session['kws']
+        ind = indeed_scrape.Indeed(query_type=get_sess()['type_'])
+        ind.query = get_sess()['kws']
         ind.stop_words = "and"
-        ind.add_loc = session['zips']
+        ind.add_loc = get_sess()['zips']
         ind.num_samp = 0 # num additional random zipcodes
-        ind.num_urls = int(session['num_urls'])
+        ind.num_urls = int(get_sess()['num_urls'])
         ind.main()
 
         df = ind.df
 
         # save df for additional analysis
-        df.to_csv(session['df_file'], index=False)
+        df.to_csv(get_sess()['df_file'], index=False)
         # save titles for later
         titles = df['jobtitle'].unique().tolist()
 
@@ -235,10 +243,9 @@ def run_analysis():
 def radius():
 
     kw = request.form['word']
-    session['radius_kw'] = kw
     logging.info("radius key word:%s" % kw)
 
-    df = pd.read_csv(session['df_file'])
+    df = pd.read_csv(get_sess()['df_file'])
     series = df['summary']
     ind = indeed_scrape.Indeed('kw')
     ind.stop_words = "and"
@@ -257,6 +264,12 @@ def mk_random_string():
     random_string = str(uuid.uuid4()) + ".csv"
 
     return random_string
+
+def put_to_sess(values):
+    pickle.dump(values, open(session_file, 'wb'))
+
+def get_sess():
+    return pickle.load(open(session_file, 'rb'))
 
 
 if __name__ == "__main__":
