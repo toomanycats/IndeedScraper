@@ -25,9 +25,7 @@ import os
 toker = tokenize.word_tokenize
 stemmer = stem.SnowballStemmer('english')
 
-data_dir = os.getenv('OPENSHIFT_DATA_DIR')
-logfile = os.path.join(data_dir, 'logfile.log')
-logger = logging.getLogger(__name__)
+logging = logging.getLogger(__name__)
 
 class Indeed(object):
     def __init__(self, query_type):
@@ -42,6 +40,7 @@ class Indeed(object):
         self.config_path = os.path.join(repo_dir, "tokens.cfg")
         self.query = None
         self.locations = None
+        self.radius = 1
 
     def _split_on_spaces(self, string):
         ob = re.compile('\s+')
@@ -67,25 +66,25 @@ class Indeed(object):
         else:
             query = '&q=%(query)s'
         start = '&start=0'
-        frm = '&fromage=30'
+        frm = '&fromage=60'
         limit = '&limit=25'
         site = '&st=jobsite'
         format = '&format=json'
         sort = '&sort=0'
         country = '&co=us'
-        radius = '&radius=5'
+        radius = '&radius=%(radius)s'
         suffix = '&userip=1.2.3.4&useragent=Mozilla/%%2F4.0%%28Firefox%%29&v=2'
 
         self.api = prefix + pub + chan + loc + query + start + frm + limit + \
                    site + format + country + sort + radius + suffix
 
-        logger.debug("api string: %s" % self.api)
+        logging.debug("api string: %s" % self.api)
 
     def format_query(self):
-        logger.debug("query: %s" % self.query)
+        logging.debug("query: %s" % self.query)
         if self.query_type == 'title':
             self.form_query = "+".join(self._split_on_spaces(self.query))
-        elif self.query_type == 'kw':
+        elif self.query_type == 'keywords':
             self.form_query = "+".join(self._split_on_spaces(self.query))
         else:
             raise Exception, "not a recogized type"
@@ -107,24 +106,44 @@ class Indeed(object):
 
     def end_url_loop(self):
         df = self.df.dropna(subset=['summary'])
-        logger.debug("df count: %i" % df.url.count())
-        if df.url.count() >= self.num_urls:
-            return True
+        count = df.url.count()
+        logging.info("df count: %i" % count)
+        if count  >= self.num_urls:
+            return True, count
         else:
-            return False
+            return False, count
+
+    def compute_radius(self, count, prev_count):
+        delta_cnt = count - prev_count
+
+        if  delta_cnt == 0:
+            self.radius += 20
+
+        elif delta_cnt  > 2 and self.radius > 10:
+            self.radius = int(self.radius / 10) + 1
+
+        else:
+            pass
+
+        prev_count = count
+        logging.info("radius change:%i" % self.radius)
+
+        return prev_count
 
     def get_city_url_content_stem(self):
         ind = 0
-        for zipcode in self.locations:
+        prev_count = 0
+
+        for zip_ind, zipcode in enumerate(self.locations):
             url_city_title = self.get_url(zipcode)
             if url_city_title is None:
-                logger.debug("url: None found")
+                logging.debug("url: None found")
                 continue
 
             for item in url_city_title:
-                # head off dupes
+                # avoid dupes
                 if item[3] in self.df['job_key']:
-                    logger.debug("duplicate jobkey:%s" % item[3])
+                    logging.debug("duplicate job key:%s" % item[3])
                     continue
                 self.df.loc[ind, 'zipcode'] = str(zipcode)
                 self.df.loc[ind, 'url'] = item[0]
@@ -135,22 +154,20 @@ class Indeed(object):
                 self.df.loc[ind, 'summary'] = content
                 #self.df.loc[ind, 'summary_stem'] = self.stemmer_(content)
                 ind += 1
-                logger.debug("index increase: %i" % ind)
+                logging.debug("index increase: %i" % ind)
 
-                if np.mod(ind, self.num_urls) == 0 and self.end_url_loop():
-                    self.df.dropna(subset=['summary'], inplace=True)
-                    return
+                if np.mod(zip_ind, 2) == 0:
+                    end_bool, count = self.end_url_loop()
+                    if end_bool:
+                        self.df = self.df.dropna(subset=['summary'])
+                        return
+                    else:
+                        prev_count = self.compute_radius(count, prev_count)
+                        logging.info("index: %i" % ind)
+                        logging.info("count marker: %i" % prev_count)
+
                 else:
                     continue
-
-    def get_urls(self):
-        urls = []
-        for item in self.locations:
-            url = self.get_url(item)
-            if url is not None:
-                urls.extend(url)
-
-        return urls
 
     def get_url(self, location):
         '''method good for use with MapReduce'''
@@ -158,10 +175,11 @@ class Indeed(object):
         api = self.api %{'pub_id':self.pub_id,
                          'loc':location,
                          'channel_name':self.channel_name,
-                         'query':self.form_query
+                         'query':self.form_query,
+                         'radius':self.radius
                         }
 
-        logger.debug("full api:%s" % api)
+        logging.debug("full api:%s" % api)
 
         try:
             response = urllib2.urlopen(api)
@@ -172,11 +190,11 @@ class Indeed(object):
             urls.extend([ (item['url'], item['city'], item['jobtitle'], item['jobkey']) for item in data['results']])
 
         except urllib2.HTTPError, err:
-            logger.debug("get url: %s" % err)
+            logging.debug("get url: %s" % err)
             return None
 
         except Exception, err:
-            logger.debug("get url: %s" % err)
+            logging.debug("get url: %s" % err)
             return None
 
         return urls
@@ -193,11 +211,11 @@ class Indeed(object):
             return content
 
         except urllib2.HTTPError, err:
-            logger.debug("get content:%s" % err)
+            logging.debug("get content:%s" % err)
             return None
 
         except Exception, err:
-            logger.debug("get content:%s" % err)
+            logging.debug("get content:%s" % err)
             return None
 
     def len_tester(self, word_list):
@@ -228,23 +246,18 @@ class Indeed(object):
             return None
 
         content = content.decode("ascii", "ignore")
-        soup = BeautifulSoup(content, 'html.parser')
+        soup = BeautifulSoup(content, 'lxml')
 
         try:
             summary = soup.find('span', {'summary'})
 
         except AttributeError:
-            summary = soup.find_all('span')
-
-        if summary is None:
+            #TODO: dealing with no summary class
+            logging.info('summary returned None')
             return None
+            #summary = soup.find_all('span')
 
-        bullets = summary.find_all("li")
-
-        if bullets is not None and len(bullets) > 2:
-            skills = bullets
-        else:
-            skills = summary
+        skills = summary.find_all("li")
 
         try:
             output = [item.get_text() for item in skills]
@@ -253,13 +266,13 @@ class Indeed(object):
             return None
 
         if len(output) > 0:
-            return " ".join(output)
+            return " ".join(output).replace('\n', '')
         else:
             return None
 
     def parse_zipcode_beg(self):
         '''locs are zipcode prefixes, like:902, provided as string'''
-        pat = '^%s' %self.add_loc
+        pat = '^%s' % self.add_loc
         obj = re.compile(pat)
 
         self.df_zip['include'] = self.df_zip['Postal Code'].apply(lambda x: 1 if obj.match(x) else 0)

@@ -21,7 +21,7 @@ import pickle
 
 data_dir = os.getenv('OPENSHIFT_DATA_DIR')
 logfile = os.path.join(data_dir, 'logfile.log')
-logging.basicConfig(filename=logfile, level=logging.DEBUG)
+logging.basicConfig(filename=logfile, level=logging.INFO)
 
 repo_dir = os.getenv('OPENSHIFT_REPO_DIR')
 
@@ -55,9 +55,15 @@ input_template = jinja2.Template('''
             <input type="text" name="zipcodes" value="^[90]"><br><br>
 
             Enter where you are searching a known job title or want to use keywords.<br>
-            Keywords typically runs much faster though have diverse job title returns.<br>
+            Keywords somteims runs faster though have diverse job title returns.<br>
+            Try both keyword and title search to get a diverse idea of the skills<br>
+            being sought after.<br>
 
-            <input type="text" name="type_" value="title"><br><br>
+            <select name="type_">
+                <option value='title'>title</option>
+                <option value='keywords'>Keywords</option>
+            </select>
+            <br><br>
 
             <input type="submit" value="Submit" name="submit">
         </form>
@@ -222,22 +228,16 @@ def run_analysis():
         df.to_csv(get_sess()['df_file'], index=False)
         # save titles for later
         titles = df['jobtitle'].unique().tolist()
+        list_of_titles = '<br>'.join(titles)
 
         count, kw = ind.vectorizer(df['summary'], n_min=2, max_features=50)
-
-        list_of_titles = '<br>'.join(titles)
 
         script, div = get_plot_comp(kw, count, df, 'kws')
         return "%s\n%s\n\n%s" %(script, div, list_of_titles)
 
-    except ValueError:
-        logging.info("vectorizer found no words")
-        return "no keywords found"
-
     except Exception, err:
-        print err
-        logging.error(err)
-        raise
+        logging.info("error: %s" % err)
+        return err
 
 @app.route('/radius/', methods=['post'])
 def radius():
