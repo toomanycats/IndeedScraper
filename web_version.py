@@ -232,7 +232,7 @@ def run_analysis():
         df = ind.df
 
         # save df for additional analysis
-        df.to_csv(get_sess()['df_file'], index=False)
+        df.to_csv(get_sess()['df_file'], index=False, encoding='utf-8')
         # save titles for later
         titles = df['jobtitle'].unique().tolist()
         list_of_titles = '<br>'.join(titles)

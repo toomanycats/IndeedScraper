@@ -31,10 +31,10 @@ class Indeed(object):
     def __init__(self, query_type):
         repo_dir = os.getenv("OPENSHIFT_REPO_DIR")
         self.query_type = query_type
-        self.num_urls = 1000
+        self.num_urls = 10
         self.add_loc = None
         self.stop_words = None
-        self.num_samp = 100
+        self.num_samp = 1000
         self.zip_code_file = os.path.join(repo_dir, 'us_postal_codes.csv')
         self.df = pd.DataFrame(columns=['url', 'job_key', 'summary', 'summary_stem', 'city', 'zipcode', 'jobtitle'])
         self.config_path = os.path.join(repo_dir, "tokens.cfg")
@@ -245,7 +245,7 @@ class Indeed(object):
         if content is None:
             return
 
-        content = content.decode("ascii", "ignore").encode("ascii")
+        content = content.decode("utf-8", "ignore")
         soup = BeautifulSoup(content, 'html.parser')
 
         try:
@@ -402,7 +402,7 @@ class Indeed(object):
         words_in_radius = []
 
         for string in series:
-            test = string.decode("ascii", "ignore").encode("ascii")
+            test = string.decode("utf-8", "ignore")
             test = tokenize.word_tokenize(test)
             test = self.len_tester(test)
             test = np.array(test)
