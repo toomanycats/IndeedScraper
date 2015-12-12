@@ -101,14 +101,14 @@ output_template = jinja2.Template("""
 ></script>
 <body>
 
+    <h1>Keyword Frequency of Bigrams</h1>
+    <div id="chart">Collecting data could take several minutes...</div>
+
     <form  id=radius action="/radius/"  method="post">
         Explore around the radius of a word across all posts. The default is five words in front and in back. <br>
         <input type="text" name="word" placeholder="experience"><br>
         <input type="submit" value="Submit" name="submit">
     </form>
-
-    <h1>Keyword Frequency of Bigrams</h1>
-    <div id="chart">Collecting data could take several minutes...</div>
 
 </body>
 </html>
@@ -216,7 +216,7 @@ def get_plot_comp(kw, count, df, title_key):
 @app.route('/run_analysis/')
 def run_analysis():
     try:
-        pdb.set_trace()
+        #pdb.set_trace()
         logging.info("starting run_analysis %s" % time.strftime("%H:%M:%S") )
         ind = indeed_scrape.Indeed(query_type=get_sess()['type_'])
         ind.query = get_sess()['kws']
@@ -257,6 +257,8 @@ def run_analysis():
                           'cities_div':city_div,
                           'titles':list_of_titles
                           }
+
+        return output
 
     except Exception, err:
         logging.info("error: %s" % err)
