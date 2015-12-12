@@ -3,6 +3,7 @@
 # Author : Daniel Cuneo
 # Creation Date : 11-21-2015
 ######################################
+import pdb
 import uuid #for random strints
 import time
 import logging
@@ -26,10 +27,6 @@ if data_dir is None:
 log_dir = os.getenv('OPENSHIFT_LOG_DIR')
 if log_dir is None:
     log_dir = os.getenv("PWD")
-
-repo_dir = os.getenv('OPENSHIFT_REPO_DIR')
-if repo_dir is None:
-    repo_dir = os.getenv("PWD")
 
 logfile = os.path.join(log_dir, 'python.log')
 logging.basicConfig(filename=logfile, level=logging.INFO)
@@ -104,15 +101,14 @@ output_template = jinja2.Template("""
 ></script>
 <body>
 
-    <h1>Keyword Frequency of Bigrams</h1>
-    <div id="chart">Collecting data could take several minutes...</div>
-
-    <br><br><br>
     <form  id=radius action="/radius/"  method="post">
         Explore around the radius of a word across all posts. The default is five words in front and in back. <br>
         <input type="text" name="word" placeholder="experience"><br>
         <input type="submit" value="Submit" name="submit">
     </form>
+
+    <h1>Keyword Frequency of Bigrams</h1>
+    <div id="chart">Collecting data could take several minutes...</div>
 
 </body>
 </html>
@@ -220,6 +216,7 @@ def get_plot_comp(kw, count, df, title_key):
 @app.route('/run_analysis/')
 def run_analysis():
     try:
+        pdb.set_trace()
         logging.info("starting run_analysis %s" % time.strftime("%H:%M:%S") )
         ind = indeed_scrape.Indeed(query_type=get_sess()['type_'])
         ind.query = get_sess()['kws']
@@ -233,14 +230,33 @@ def run_analysis():
 
         # save df for additional analysis
         df.to_csv(get_sess()['df_file'], index=False, encoding='utf-8')
-        # save titles for later
+
         titles = df['jobtitle'].unique().tolist()
         list_of_titles = '<br>'.join(titles)
 
         count, kw = ind.vectorizer(df['summary'], n_min=2, n_max=2, max_features=50)
-
         script, div = get_plot_comp(kw, count, df, 'kws')
-        return "%s\n%s\n\n%s" %(script, div, list_of_titles)
+
+        # plot the cities
+        df_city = pd.DataFrame({'kw':df['city'], 'count':df['city'].count()})
+        cities_p = plot_fig(df_city, df_city.shape[0] , 'Count of Cities in the Analysis.')
+        city_script, city_div = components(cities_p)
+
+        output = """
+%(kw_script)s
+%(kw_div)s
+
+%(cities_script)s
+%(cities_div)s
+
+%(titles)s
+"""
+        output = output %{'kw_script':script,
+                          'kw_div':div,
+                          'cities_script':city_script,
+                          'cities_div':city_div,
+                          'titles':list_of_titles
+                          }
 
     except Exception, err:
         logging.info("error: %s" % err)
