@@ -42,6 +42,7 @@ class Indeed(object):
         self.df = pd.DataFrame(columns=['url', 'job_key', 'summary', 'summary_stem', 'city', 'zipcode', 'jobtitle'])
         self.config_path = os.path.join(repo_dir, "tokens.cfg")
         self.query = None
+        self.title = None
         self.locations = None
         self.radius = 1
 
@@ -72,10 +73,7 @@ class Indeed(object):
         pub = 'publisher=%(pub_id)s'
         chan = '&chnl=%(channel_name)s'
         loc = '&l=%(loc)s'
-        if self.query_type == 'title':
-            query = '&q=title%%3A%%28%(query)s%%29'
-        else:
-            query = '&q=%(query)s'
+        query = self.format_query()
         start = '&start=0'
         frm = '&fromage=60'
         limit = '&limit=25'
@@ -91,12 +89,25 @@ class Indeed(object):
 
         logging.debug("api string: %s" % self.api)
 
+    def format_keywords(self, string):
+        kws = "+".join(self._split_on_spaces(string))
+        return kws
+
     def format_query(self):
         logging.debug("query: %s" % self.query)
+
         if self.query_type == 'title':
-            self.form_query = "+".join(self._split_on_spaces(self.query))
+            return '&q=title%%3A%%28%(query)s%%29'
+
         elif self.query_type == 'keywords':
-            self.form_query = "+".join(self._split_on_spaces(self.query))
+            return '&q=%(query)s'
+
+        elif self.query_type == 'kw_and_title':
+            if self.title is None:
+                raise ValueError, "no title set"
+
+            return '&q=%(kws)s+title%%3A%%28%(title)s%%29'
+
         else:
             raise Exception, "not a recogized type"
 
@@ -181,12 +192,11 @@ class Indeed(object):
                     continue
 
     def get_url(self, location):
-        '''method good for use with MapReduce'''
 
         api = self.api %{'pub_id':self.pub_id,
                          'loc':location,
                          'channel_name':self.channel_name,
-                         'query':self.form_query,
+                         'query':self.format_keywords(self.query),
                          'radius':self.radius
                         }
 
@@ -316,7 +326,6 @@ class Indeed(object):
         save-on-quit feature more usable, the locations are shuffled prior to
         getting the content.'''
 
-        self.format_query()
         self.load_config()
         self.build_api_string()
         self.add_stop_words()
