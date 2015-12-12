@@ -145,7 +145,7 @@ def plot_fig(df, num, kws):
             title=title_string,
             title_text_font_size='15',
             color='blue',
-            xlabel="keywords",
+            xlabel="",
             ylabel="Count",
             width=1100,
             height=500)
