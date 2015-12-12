@@ -20,12 +20,19 @@ import json
 import pickle
 
 data_dir = os.getenv('OPENSHIFT_DATA_DIR')
+if data_dir is None:
+    data_dir = os.getenv('PWD')
+
 log_dir = os.getenv('OPENSHIFT_LOG_DIR')
+if log_dir is None:
+    log_dir = os.getenv("PWD")
+
+repo_dir = os.getenv('OPENSHIFT_REPO_DIR')
+if repo_dir is None:
+    repo_dir = os.getenv("PWD")
 
 logfile = os.path.join(log_dir, 'python.log')
 logging.basicConfig(filename=logfile, level=logging.INFO)
-
-repo_dir = os.getenv('OPENSHIFT_REPO_DIR')
 
 session_file = os.path.join(data_dir, 'df_dir', 'session_file.pck')
 
@@ -136,7 +143,6 @@ radius_template = jinja2.Template('''
 ''')
 
 app = Flask(__name__)
-app.secret_key = str(uuid.uuid4())
 
 def plot_fig(df, num, kws):
 
@@ -156,7 +162,6 @@ def plot_fig(df, num, kws):
 
 @app.route('/')
 def get_keywords():
-    app.secret_key = str(uuid.uuid4())
     logging.info("running app:%s" % time.strftime("%d-%m-%Y:%H:%M:%S"))
 
     return input_template.render()
@@ -220,7 +225,7 @@ def run_analysis():
         ind.query = get_sess()['kws']
         ind.stop_words = "and"
         ind.add_loc = get_sess()['zips']
-        ind.num_samp = 0 # num additional random zipcodes
+        ind.num_samp = 1000 # num additional random zipcodes
         ind.num_urls = int(get_sess()['num_urls'])
         ind.main()
 
