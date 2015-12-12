@@ -237,7 +237,7 @@ def run_analysis():
         titles = df['jobtitle'].unique().tolist()
         list_of_titles = '<br>'.join(titles)
 
-        count, kw = ind.vectorizer(df['summary'], n_min=2, max_features=50)
+        count, kw = ind.vectorizer(df['summary'], n_min=2, n_max=2, max_features=50)
 
         script, div = get_plot_comp(kw, count, df, 'kws')
         return "%s\n%s\n\n%s" %(script, div, list_of_titles)
@@ -260,7 +260,7 @@ def radius():
 
     words = ind.find_words_in_radius(series, kw, radius=5)
     try:
-        count, kw = ind.vectorizer(words, max_features=50, n_min=1)
+        count, kw = ind.vectorizer(words, max_features=50, n_min=1, n_max=2)
     except ValueError:
         return "The key word was not found in the top 50."
 

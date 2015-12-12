@@ -42,6 +42,14 @@ class Indeed(object):
         self.locations = None
         self.radius = 1
 
+    def _decode(self, string):
+        try:
+            string = string.decode("utf-8", "ignore").encode("utf-8", "ignore")
+            return string
+
+        except Exception:
+            return string
+
     def _split_on_spaces(self, string):
         ob = re.compile('\s+')
         return ob.split(string.strip())
@@ -152,7 +160,7 @@ class Indeed(object):
                 self.df.loc[ind, 'job_key'] = item[3]
                 content = self.parse_content(item[0])
                 self.df.loc[ind, 'summary'] = content
-                #self.df.loc[ind, 'summary_stem'] = self.stemmer_(content)
+                self.df.loc[ind, 'summary_stem'] = self.stemmer_(content)
                 ind += 1
                 logging.debug("index increase: %i" % ind)
 
@@ -233,6 +241,7 @@ class Indeed(object):
         if string is None:
             return None
 
+        string = self._decode(string)
         words = toker(string)
         words = self.len_tester(words)
         words = map(stemmer.stem, words)
@@ -240,34 +249,27 @@ class Indeed(object):
         return " ".join(words)
 
     def parse_content(self, url):
-        content = self.get_content(url)
-
-        if content is None:
-            return
-
-        content = content.decode("utf-8", "ignore")
-        soup = BeautifulSoup(content, 'html.parser')
-
         try:
+            content = self.get_content(url)
+
+            if content is None:
+                return
+
+            content = self._decode(content)
+            soup = BeautifulSoup(content, 'html.parser')
+
             summary = soup.find('span', {'summary'})
 
-        except AttributeError:
-            #TODO: dealing with no summary class
-            logging.info('summary returned None')
-            return None
-            #summary = soup.find_all('span')
-
-        skills = summary.find_all("li")
-
-        try:
+            skills = summary.find_all("li")
             output = [item.get_text() for item in skills]
 
-        except AttributeError:
-            return None
+            if len(output) > 0:
+                return " ".join(output).replace('\n', '')
+            else:
+                return None
 
-        if len(output) > 0:
-            return " ".join(output).replace('\n', '')
-        else:
+        except Exception, err:
+            logging.error(err)
             return None
 
     def parse_zipcode_beg(self):
@@ -321,13 +323,13 @@ class Indeed(object):
 
         self.get_city_url_content_stem()
 
-    def vectorizer(self, corpus, max_features=200, max_df=0.8, min_df=0.1, n_min=2):
+    def vectorizer(self, corpus, max_features=200, max_df=0.8, min_df=0.1, n_min=2, n_max=3):
         vectorizer = CountVectorizer(max_features=max_features,
                                     max_df=max_df,
                                     min_df=min_df,
                                     lowercase=True,
                                     stop_words=self.stop_words,
-                                    ngram_range=(n_min, 3),
+                                    ngram_range=(n_min, n_max),
                                     analyzer='word',
                                     decode_error='ignore',
                                     strip_accents='unicode'
