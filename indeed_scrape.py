@@ -246,7 +246,7 @@ class Indeed(object):
             return
 
         content = content.decode("ascii", "ignore").encode("ascii")
-        soup = BeautifulSoup(content, 'parser.html')
+        soup = BeautifulSoup(content, 'html.parser')
 
         try:
             summary = soup.find('span', {'summary'})
