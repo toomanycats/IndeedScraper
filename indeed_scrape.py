@@ -103,11 +103,11 @@ class Indeed(object):
         elif self.query_type == 'keywords':
             return '&q=%(query)s'
 
-        elif self.query_type == 'kw_and_title':
-            if self.title is None:
-                raise ValueError, "no title set"
-
-            return '&q=%(kws)s+title%%3A%%28%(title)s%%29'
+        elif self.query_type == 'keywords_title':
+            raise NotImplementedError, "not implemented yet"
+            #if self.title is None:
+            #    raise ValueError, "no title set"
+            #return '&q=%(kws)s+title%%3A%%28%(title)s%%29'
 
         else:
             raise Exception, "not a recogized type"

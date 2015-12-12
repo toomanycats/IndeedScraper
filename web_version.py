@@ -177,7 +177,7 @@ def plot_fig(df, num, kws):
             color='blue',
             xlabel="",
             ylabel="Count",
-            width=1100,
+            width=1500,
             height=500)
 
     return p
