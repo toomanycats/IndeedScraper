@@ -8,7 +8,7 @@ import uuid #for random strints
 import time
 import logging
 import pandas as pd
-from flask import Flask, request
+from flask import Flask, request, redirect, url_for, jsonify
 import indeed_scrape
 import jinja2
 from bokeh.embed import components
@@ -32,6 +32,31 @@ logfile = os.path.join(log_dir, 'python.log')
 logging.basicConfig(filename=logfile, level=logging.INFO)
 
 session_file = os.path.join(data_dir, 'df_dir', 'session_file.pck')
+
+error_template = jinja2.Template('''
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>error page</title>
+    <meta charset="UTF-8">
+</head>
+
+<body>
+<strong>
+Sorry, but an error occured in the program. <br>
+This app is still a work in progress. <br><br>
+
+<li> Please check that your inputs are reasonable. </li>
+<li> Sometimes job titles are not found or keywords are not common enough.</li>
+</strong>
+
+<br><br>
+{{ error }}
+<br><br>
+
+</body>
+</html>
+''')
 
 input_template = jinja2.Template('''
 <!DOCTYPE html>
@@ -68,6 +93,7 @@ input_template = jinja2.Template('''
             <select name="type_">
                 <option value='title'>title</option>
                 <option value='keywords'>Keywords</option>
+                <option value='keywords_title'>Keywords and Title</option>
             </select>
             <br><br>
 
@@ -156,46 +182,44 @@ def plot_fig(df, num, kws):
 
     return p
 
+@app.errorhandler(500)
+def internal_error(error):
+    return error_template.render(error=error)
+
 @app.route('/')
 def get_keywords():
     logging.info("running app:%s" % time.strftime("%d-%m-%Y:%H:%M:%S"))
-
     return input_template.render()
 
 @app.route('/get_data/', methods=['post'])
 def get_data():
-    try:
-        logging.info("starting get_data: %s" % time.strftime("%H:%M:%S"))
+    logging.info("starting get_data: %s" % time.strftime("%H:%M:%S"))
 
-        type_ = request.form['type_']
-        kws = request.form['kw']
-        zips = request.form['zipcodes']
-        num_urls = int(request.form['num'])
+    type_ = request.form['type_']
+    kws = request.form['kw']
+    zips = request.form['zipcodes']
+    num_urls = int(request.form['num'])
 
-        df_file = os.path.join(data_dir,  'df_dir', mk_random_string())
-        logging.info("session file path: %s" % df_file)
+    df_file = os.path.join(data_dir,  'df_dir', mk_random_string())
+    logging.info("session file path: %s" % df_file)
 
 
-        put_to_sess({'type_':type_,
-                     'kws':kws,
-                     'zips':zips,
-                     'num_urls':num_urls,
-                     'df_file':df_file
-                     })
+    put_to_sess({'type_':type_,
+                    'kws':kws,
+                    'zips':zips,
+                    'num_urls':num_urls,
+                    'df_file':df_file
+                    })
 
-        logging.info("df file path: %s" % df_file)
-        logging.info("type:%s" %  type_)
-        logging.info("key words:%s" % kws)
-        logging.info("zipcode regex:%s" % zips)
-        logging.info("number urls:%s" % num_urls)
+    logging.info("df file path: %s" % df_file)
+    logging.info("type:%s" %  type_)
+    logging.info("key words:%s" % kws)
+    logging.info("zipcode regex:%s" % zips)
+    logging.info("number urls:%s" % num_urls)
 
-        html = output_template.render()
+    html = output_template.render()
 
-        return encode_utf8(html)
-
-    except Exception, err:
-        logging.error(err)
-        raise
+    return encode_utf8(html)
 
 def get_plot_comp(kw, count, df, title_key):
         count = count.toarray().sum(axis=0)
@@ -215,34 +239,35 @@ def get_plot_comp(kw, count, df, title_key):
 
 @app.route('/run_analysis/')
 def run_analysis():
-    try:
-        #pdb.set_trace()
-        logging.info("starting run_analysis %s" % time.strftime("%H:%M:%S") )
-        ind = indeed_scrape.Indeed(query_type=get_sess()['type_'])
-        ind.query = get_sess()['kws']
-        ind.stop_words = "and"
-        ind.add_loc = get_sess()['zips']
-        ind.num_samp = 1000 # num additional random zipcodes
-        ind.num_urls = int(get_sess()['num_urls'])
-        ind.main()
 
-        df = ind.df
+    #pdb.set_trace()
+    logging.info("starting run_analysis %s" % time.strftime("%H:%M:%S") )
+    ind = indeed_scrape.Indeed(query_type=get_sess()['type_'])
+    ind.query = get_sess()['kws']
+    ind.stop_words = "and"
+    ind.add_loc = get_sess()['zips']
+    ind.num_samp = 1000 # num additional random zipcodes
+    ind.num_urls = int(get_sess()['num_urls'])
+    ind.zip_code_error_limit = 1000
+    ind.main()
 
-        # save df for additional analysis
-        df.to_csv(get_sess()['df_file'], index=False, encoding='utf-8')
+    df = ind.df
 
-        titles = df['jobtitle'].unique().tolist()
-        list_of_titles = '<br>'.join(titles)
+    # save df for additional analysis
+    df.to_csv(get_sess()['df_file'], index=False, encoding='utf-8')
 
-        count, kw = ind.vectorizer(df['summary'], n_min=2, n_max=2, max_features=50)
-        script, div = get_plot_comp(kw, count, df, 'kws')
+    titles = df['jobtitle'].unique().tolist()
+    list_of_titles = '<br>'.join(titles)
 
-        # plot the cities
-        df_city = pd.DataFrame({'kw':df['city'], 'count':df['city'].count()})
-        cities_p = plot_fig(df_city, df_city.shape[0] , 'Count of Cities in the Analysis.')
-        city_script, city_div = components(cities_p)
+    count, kw = ind.vectorizer(df['summary'], n_min=2, n_max=2, max_features=50)
+    script, div = get_plot_comp(kw, count, df, 'kws')
 
-        output = """
+    # plot the cities
+    df_city = pd.DataFrame({'kw':df['city'], 'count':df['city'].count()})
+    cities_p = plot_fig(df_city, df_city.shape[0] , 'Count of Cities in the Analysis.')
+    city_script, city_div = components(cities_p)
+
+    output = """
 %(kw_script)s
 %(kw_div)s
 
@@ -251,18 +276,15 @@ def run_analysis():
 
 %(titles)s
 """
-        output = output %{'kw_script':script,
-                          'kw_div':div,
-                          'cities_script':city_script,
-                          'cities_div':city_div,
-                          'titles':list_of_titles
-                          }
+    output = output %{'kw_script':script,
+                        'kw_div':div,
+                        'cities_script':city_script,
+                        'cities_div':city_div,
+                        'titles':list_of_titles
+                        }
 
-        return output
+    return output
 
-    except Exception, err:
-        logging.info("error: %s" % err)
-        return err
 
 @app.route('/radius/', methods=['post'])
 def radius():
@@ -295,7 +317,6 @@ def put_to_sess(values):
 
 def get_sess():
     return pickle.load(open(session_file, 'rb'))
-
 
 if __name__ == "__main__":
     app.run()

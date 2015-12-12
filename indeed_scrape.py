@@ -34,6 +34,7 @@ logging = logging.getLogger(__name__)
 class Indeed(object):
     def __init__(self, query_type):
         self.query_type = query_type
+        self.zip_code_error_limit = 1000
         self.num_urls = 10
         self.add_loc = None
         self.stop_words = None
@@ -130,6 +131,7 @@ class Indeed(object):
         df = self.df.dropna(subset=['summary'])
         count = df.url.count()
         logging.info("df count: %i" % count)
+
         if count  >= self.num_urls:
             return True, count
         else:
@@ -155,8 +157,14 @@ class Indeed(object):
     def get_city_url_content_stem(self):
         ind = 0
         prev_count = 0
+        count = 0
 
         for zip_ind, zipcode in enumerate(self.locations):
+            logging.debug("zip ind: %i" % zip_ind)
+            if count == 0 and zip_ind == self.zip_code_error_limit:
+                error_string = "Your query hasn't found a match in %s zip codes." % self.zip_code_error_limit
+                raise Exception, error_string
+
             url_city_title = self.get_url(zipcode)
             if url_city_title is None:
                 logging.debug("url: None found")
@@ -178,6 +186,7 @@ class Indeed(object):
                 ind += 1
                 logging.debug("index increase: %i" % ind)
 
+                # periodic check
                 if np.mod(zip_ind, 2) == 0:
                     end_bool, count = self.end_url_loop()
                     if end_bool:
