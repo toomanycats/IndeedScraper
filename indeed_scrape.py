@@ -211,11 +211,11 @@ class Indeed(object):
             return content
 
         except urllib2.HTTPError, err:
-            logging.debug("get content:%s" % err)
+            logging.error("get content:%s" % err)
             return None
 
         except Exception, err:
-            logging.debug("get content:%s" % err)
+            logging.error("get content:%s" % err)
             return None
 
     def len_tester(self, word_list):
@@ -243,13 +243,10 @@ class Indeed(object):
         content = self.get_content(url)
 
         if content is None:
-            return None
+            return
 
-        try:
-            content = content.encode('ascii', 'ignore')
-            soup = BeautifulSoup(content, 'lxml')
-        except Exception, err:
-            return  None
+        content = content.decode("ascii", "ignore").encode("ascii")
+        soup = BeautifulSoup(content, 'lxml')
 
         try:
             summary = soup.find('span', {'summary'})
@@ -405,7 +402,7 @@ class Indeed(object):
         words_in_radius = []
 
         for string in series:
-            test = string.decode('ascii', 'ignore')
+            test = string.decode("ascii", "ignore").encode("ascii")
             test = tokenize.word_tokenize(test)
             test = self.len_tester(test)
             test = np.array(test)
