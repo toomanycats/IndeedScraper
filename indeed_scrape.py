@@ -3,8 +3,8 @@
 # Author : Daniel Cuneo
 # Creation Date : 11-05-2015
 ######################################
+import codecs
 import re
-import pdb
 import ConfigParser
 import logging
 import json
@@ -245,8 +245,11 @@ class Indeed(object):
         if content is None:
             return None
 
-        content = content.decode("ascii", "ignore")
-        soup = BeautifulSoup(content, 'lxml')
+        try:
+            content = content.encode('ascii', 'ignore')
+            soup = BeautifulSoup(content, 'lxml')
+        except Exception, err:
+            return  None
 
         try:
             summary = soup.find('span', {'summary'})
