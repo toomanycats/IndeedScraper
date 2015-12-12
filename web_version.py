@@ -20,7 +20,9 @@ import json
 import pickle
 
 data_dir = os.getenv('OPENSHIFT_DATA_DIR')
-logfile = os.path.join(data_dir, 'logfile.log')
+log_dir = os.getenv('OPENSHIFT_LOG_DIR')
+
+logfile = os.path.join(log_dir, 'python.log')
 logging.basicConfig(filename=logfile, level=logging.INFO)
 
 repo_dir = os.getenv('OPENSHIFT_REPO_DIR')
