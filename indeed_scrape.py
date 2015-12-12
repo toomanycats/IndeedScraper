@@ -25,11 +25,14 @@ import os
 toker = tokenize.word_tokenize
 stemmer = stem.SnowballStemmer('english')
 
+repo_dir = os.getenv("OPENSHIFT_REPO_DIR")
+if repo_dir is None:
+    repo_dir = os.getenv("PWD")
+
 logging = logging.getLogger(__name__)
 
 class Indeed(object):
     def __init__(self, query_type):
-        repo_dir = os.getenv("OPENSHIFT_REPO_DIR")
         self.query_type = query_type
         self.num_urls = 10
         self.add_loc = None
