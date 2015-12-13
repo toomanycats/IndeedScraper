@@ -33,6 +33,57 @@ logging.basicConfig(filename=logfile, level=logging.INFO)
 
 session_file = os.path.join(data_dir, 'df_dir', 'session_file.pck')
 
+cities_template = jinja2.Template('''
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>cities</title>
+    <meta charset="UTF-8">
+</head>
+
+<body>
+{{ div }}
+{{ script }}
+</body>
+</html>
+''')
+
+title_template = jinja2.Template('''
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style>
+    table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    th, td {
+        text-align: left;
+        padding: 8px;
+    }
+
+    tr:nth-child(even){background-color: #f2f2f2}
+
+    th {
+        background-color: #4CAF50;
+        color: white;
+    }
+    </style>
+</head>
+
+<body>
+    <table>
+    <tr>
+        <th>Job Title From Posting</th>
+    </tr>
+        {{ rows }}
+    </table>
+
+</body>
+</html>
+''')
+
 stem_template= jinja2.Template('''
 <!DOCTYPE html>
 <html lang="en">
@@ -153,11 +204,16 @@ output_template = jinja2.Template("""
     <script type="text/javascript">
         $(document).ready(function() {
             $("#chart").load("/run_analysis", function() {
-                $("#stem").slideToggle("slow")
-                })
+                $("#stem").slideToggle("slow", function() {
+                    $("#titles").slideToggle("slow", function() {
+                        $("#radius").slideToggle("slow", function() {
+                            $("#cities").slideToggle("slow")
+                            });
+                        });
+                    });
+                });
             });
     </script>
-
 </head>
 
 <link
@@ -172,16 +228,26 @@ output_template = jinja2.Template("""
     <h1>Keyword Frequency of Bigrams</h1>
     <div id="chart">Collecting data could take several minutes...</div>
 
-    <form  id=radius action="/radius/"  method="post">
+    <br><br>
+
+    <div id=stem style="display: none">
+    <a href="/stem/"> Use Stemmed Keywords </a>
+    </div>
+
+    <br><br>
+
+    <div id=titles style="display: none">
+    <a href="/titles/"> Show Job Titles </a>
+    </div>
+
+    <br><br>
+
+    <form  id=radius action="/radius/"  method="post" style="display: none">
         Explore around the radius of a word across all posts.<br>
         The default is five words in front and in back. <br>
         <input type="text" name="word" placeholder="experience"><br>
         <input type="submit" value="Submit" name="submit">
     </form>
-
-    <div id=stem style="display: none">
-    <a href="/stem/"> Use Stemmed Keyword </a>
-    </div>
 
 </body>
 </html>
@@ -284,6 +350,30 @@ def get_plot_comp(kw, count, df, title_key):
 
         return script, div
 
+@app.route('/titles/')
+def plot_titles():
+    df_file = get_sess()['df_file']
+    df = pd.read_csv(df_file)
+
+    titles = df['jobtitle'].unique().tolist()
+    row = '<tr><td>%s</td></tr>'
+    rows = ''
+    for t in titles:
+        rows += row % t
+
+    return title_template.render(rows=rows)
+
+@app.route('/cities/')
+def plot_cities():
+    count = df.groupby("city").count()['url']# plot fun uses 'kw'
+    cities = df['city'].unique()
+    df_city = pd.DataFrame({'kw':cities, 'count':count})
+    num_posts = df.shape[0]
+    cities_p = plot_fig(df_city, num_posts, 'Count of Cities in the Analysis.')
+    script, div = components(cities_p)
+
+    return cities_template.render(div=div, script=script)
+
 @app.route('/run_analysis/')
 def run_analysis():
 
@@ -303,38 +393,18 @@ def run_analysis():
     # save df for additional analysis
     df.to_csv(get_sess()['df_file'], index=False, encoding='utf-8')
 
-    titles = df['jobtitle'].unique().tolist()
-    list_of_titles = '<br>'.join(titles)
-    list_of_titles += '<br><br>'
 
     count, kw = ind.vectorizer(df['summary'], n_min=2, n_max=2, max_features=50)
     script, div = get_plot_comp(kw, count, df, 'kws')
 
-    # plot the cities
-    count = df.groupby("city").count()['url']# plot fun uses 'kw'
-    cities = df['city'].unique()
-    df_city = pd.DataFrame({'kw':cities, 'count':count})
-    num_posts = df.shape[0]
-    cities_p = plot_fig(df_city, num_posts, 'Count of Cities in the Analysis.')
-    city_script, city_div = components(cities_p)
 
     output = """
-%(kw_script)s
 %(kw_div)s
-
-%(cities_script)s
-%(cities_div)s
-
-%(titles)s
+%(kw_script)s
 """
-    output = output %{'kw_script':script,
-                        'kw_div':div,
-                        'cities_script':city_script,
-                        'cities_div':city_div,
-                        'titles':list_of_titles
-                        }
-
-    return output
+    return output %{'kw_script':script,
+                    'kw_div':div
+                    }
 
 @app.route('/radius/', methods=['post'])
 def radius():
@@ -366,6 +436,9 @@ def stem():
     summary_stem = df['summary_stem']
 
     ind = indeed_scrape.Indeed("kw")
+    ind.stop_words = "and"
+    ind.add_stop_words()
+
     count, kw = ind.vectorizer(summary_stem, n_min=2, n_max=2, max_features=50)
     script, div = get_plot_comp(kw, count, df, 'kws')
 
