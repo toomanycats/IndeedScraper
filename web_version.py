@@ -33,6 +33,26 @@ logging.basicConfig(filename=logfile, level=logging.INFO)
 
 session_file = os.path.join(data_dir, 'df_dir', 'session_file.pck')
 
+stem_template= jinja2.Template('''
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>stemmed results</title>
+    <meta charset="UTF-8">
+    <link href="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.css"
+          rel="stylesheet" type="text/css">
+
+    <script src="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.js"></script>
+</head>
+
+<body>
+{{ div }}
+
+{{ script }}
+</body>
+</html>
+''')
+
 error_template = jinja2.Template('''
 <!DOCTYPE html>
 <html lang="en">
@@ -67,18 +87,21 @@ input_template = jinja2.Template('''
 </head>
 
 <body>
-        <h1>indeed.com job openings skill scraper</h1>
-        The main purpose of this app is to figure out either what skills you need for <br>
-        a given field, or, what keywords to use in your resume or LinkedIn summary.<br><br>
+        <h1>indeed.com job openings skill scraper</h1> The main purpose of this
+        app is to figure out either what skills you need for <br> a given
+        field, or, what keywords to use in your resume or LinkedIn
+        summary.<br><br>
 
-        There's no real analysis done for you at this point, so be creative with what <br>
-        you learn here.<br><br>
+        There's no real analysis done for you at this point, so be creative
+        with what <br> you learn here.<br><br>
 
 
         <form action="/get_data/"  method="POST">
 
-            <h2>Enter <strong>job title keywords</strong> you normally use to search for openings on indeed.com</h2>
-            The scraper will use the "in title" mode or the "keyword" mode, of indeed's search engine. Care has been<br>
+            <h2>Enter <strong>job title keywords</strong> you normally use to
+            search for openings on indeed.com</h2> The scraper will use the "in
+            title" mode or the "keyword" mode, of indeed's search engine. Care
+            has been<br>
             taken not to allow duplicate job postings. <br><br>
 
             Depending on how many posting you enter, it can take a long time to complete. <br>
@@ -90,17 +113,21 @@ input_template = jinja2.Template('''
 
             <input type="text" name="num" value="50"><br><br>
 
-            For now, the zipcodes are regular expression based. If you don't know what that means<br>
-            use the default below. This default will search zipcodes that begin with a 9 or a 0,<br>
-            which is East and West coasts.NOTE: a random sampling of 1000 zip codes is also included <br>
-            to round out the results. This maynot actually be helpful.<br><br>
+            For now, the zipcodes are regular expression based. If you don't
+            know what that means<br> use the default below. This default will
+            search zipcodes that begin with a 9 or a 0,<br> which is East and
+            West coasts.NOTE: a random sampling of 1000 zip codes is also
+            included <br> to round out the results. This maynot actually be
+            helpful.<br><br>
 
             <input type="text" name="zipcodes" value="^[90]"><br><br>
 
-            Select whether you want to use the keyword or title mode. I suggest trying out <br>
-            both. The uniqued list of job titles will be dsiplayed with the results so that you can<br>
-            determine if the keywords were appropriate or not. You also learn something about the fields <br>
-            which use the skills you are providing as search terms.<br><br>
+            Select whether you want to use the keyword or title mode. I suggest
+            trying out <br> both. The uniqued list of job titles will be
+            dsiplayed with the results so that you can<br> determine if the
+            keywords were appropriate or not. You also learn something about
+            the fields <br> which use the skills you are providing as search
+            terms.<br><br>
 
 
             <select name="type_">
@@ -125,7 +152,9 @@ output_template = jinja2.Template("""
 
     <script type="text/javascript">
         $(document).ready(function() {
-            $("#chart").load("/run_analysis")
+            $("#chart").load("/run_analysis", function() {
+                $("#stem").slideToggle("slow")
+                })
             });
     </script>
 
@@ -144,10 +173,15 @@ output_template = jinja2.Template("""
     <div id="chart">Collecting data could take several minutes...</div>
 
     <form  id=radius action="/radius/"  method="post">
-        Explore around the radius of a word across all posts. The default is five words in front and in back. <br>
+        Explore around the radius of a word across all posts.<br>
+        The default is five words in front and in back. <br>
         <input type="text" name="word" placeholder="experience"><br>
         <input type="submit" value="Submit" name="submit">
     </form>
+
+    <div id=stem style="display: none">
+    <a href="/stem/"> Use Stemmed Keyword </a>
+    </div>
 
 </body>
 </html>
@@ -271,13 +305,17 @@ def run_analysis():
 
     titles = df['jobtitle'].unique().tolist()
     list_of_titles = '<br>'.join(titles)
+    list_of_titles += '<br><br>'
 
     count, kw = ind.vectorizer(df['summary'], n_min=2, n_max=2, max_features=50)
     script, div = get_plot_comp(kw, count, df, 'kws')
 
     # plot the cities
-    df_city = pd.DataFrame({'kw':df['city'], 'count':df['city'].count()})
-    cities_p = plot_fig(df_city, df_city.shape[0] , 'Count of Cities in the Analysis.')
+    count = df.groupby("city").count()['url']# plot fun uses 'kw'
+    cities = df['city'].unique()
+    df_city = pd.DataFrame({'kw':cities, 'count':count})
+    num_posts = df.shape[0]
+    cities_p = plot_fig(df_city, num_posts, 'Count of Cities in the Analysis.')
     city_script, city_div = components(cities_p)
 
     output = """
@@ -297,7 +335,6 @@ def run_analysis():
                         }
 
     return output
-
 
 @app.route('/radius/', methods=['post'])
 def radius():
@@ -319,6 +356,21 @@ def radius():
 
     script, div = get_plot_comp(kw, count, df, 'radius_kw')
     return radius_template.render(div=div, script=script)
+
+@app.route('/stem/')
+def stem():
+    logging.info("running stem")
+
+    df_file = get_sess()['df_file']
+    df = pd.read_csv(df_file)
+    summary_stem = df['summary_stem']
+
+    ind = indeed_scrape.Indeed("kw")
+    count, kw = ind.vectorizer(summary_stem, n_min=2, n_max=2, max_features=50)
+    script, div = get_plot_comp(kw, count, df, 'kws')
+
+    page = stem_template.render(script=script, div=div)
+    return encode_utf8(page)
 
 def mk_random_string():
     random_string = str(uuid.uuid4()) + ".csv"
