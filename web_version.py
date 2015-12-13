@@ -39,6 +39,10 @@ cities_template = jinja2.Template('''
 <head>
     <title>cities</title>
     <meta charset="UTF-8">
+    <link href="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.css"
+          rel="stylesheet" type="text/css">
+
+    <script src="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.js"></script>
 </head>
 
 <body>
@@ -205,14 +209,14 @@ output_template = jinja2.Template("""
         $(document).ready(function() {
             $("#chart").load("/run_analysis", function() {
                 $("#stem").slideToggle("slow", function() {
-                    $("#titles").slideToggle("slow", function() {
-                        $("#radius").slideToggle("slow", function() {
-                            $("#cities").slideToggle("slow")
+                    $("#cities").slideToggle("slow", function() {
+                        $("#titles").slideToggle("slow", function() {
+                            $("#radius").slideToggle("slow");
+                                });
                             });
                         });
                     });
                 });
-            });
     </script>
 </head>
 
@@ -232,6 +236,12 @@ output_template = jinja2.Template("""
 
     <div id=stem style="display: none">
     <a href="/stem/"> Use Stemmed Keywords </a>
+    </div>
+
+    <br><br>
+
+    <div id=cities style="display: none">
+    <a href="/cities/"> Show Cities </a>
     </div>
 
     <br><br>
@@ -356,23 +366,34 @@ def plot_titles():
     df = pd.read_csv(df_file)
 
     titles = df['jobtitle'].unique().tolist()
-    row = '<tr><td>%s</td></tr>'
-    rows = ''
+    row = u'<tr><td>%s</td></tr>'
+    rows = u''
     for t in titles:
-        rows += row % t
+        try: # sometimes encoding fails
+            rows += row % t.encode("utf-8", "ignore")
+        except Exception, err:
+            logging.error("title error:%s" % err)
 
-    return title_template.render(rows=rows)
+    page = title_template.render(rows=rows)
+    return encode_utf8(page)
 
 @app.route('/cities/')
 def plot_cities():
-    count = df.groupby("city").count()['url']# plot fun uses 'kw'
-    cities = df['city'].unique()
-    df_city = pd.DataFrame({'kw':cities, 'count':count})
-    num_posts = df.shape[0]
-    cities_p = plot_fig(df_city, num_posts, 'Count of Cities in the Analysis.')
-    script, div = components(cities_p)
+    df_file = get_sess()['df_file']
+    df = pd.read_csv(df_file)
 
-    return cities_template.render(div=div, script=script)
+    count = df.groupby("city").count()['url']
+    cities = count.index.tolist()
+    num_posts = df.shape[0]
+
+    df_city = pd.DataFrame({'kw':cities, 'count':count})
+
+    p = plot_fig(df_city, num_posts, 'Posts Per City in the Analysis.')
+    script, div = components(p)
+
+    page = cities_template.render(div=div, script=script)
+
+    return encode_utf8(page)
 
 @app.route('/run_analysis/')
 def run_analysis():
