@@ -68,27 +68,40 @@ input_template = jinja2.Template('''
 
 <body>
         <h1>indeed.com job openings skill scraper</h1>
+        The main purpose of this app is to figure out either what skills you need for <br>
+        a given field, or, what keywords to use in your resume or LinkedIn summary.<br><br>
+
+        There's no real analysis done for you at this point, so be creative with what <br>
+        you learn here.<br><br>
+
 
         <form action="/get_data/"  method="POST">
 
             <h2>Enter <strong>job title keywords</strong> you normally use to search for openings on indeed.com</h2>
-            The scraper will use the "in title" mode of indeed's search engine. Care has been<br>
-            taken to not allow duplicates. Depending on how many posting you enter, it can take<br>
-            a long time to complete. Start with the default then go higher.<br>
+            The scraper will use the "in title" mode or the "keyword" mode, of indeed's search engine. Care has been<br>
+            taken not to allow duplicate job postings. <br><br>
+
+            Depending on how many posting you enter, it can take a long time to complete. <br>
+            Start with the default then go higher.<br><br>
+
             <input type="text" name="kw" placeholder="data science"><br><br>
 
-             The number of job postings to scrape.<br>
+            The number of job postings to scrape.<br><br>
+
             <input type="text" name="num" value="50"><br><br>
 
             For now, the zipcodes are regular expression based. If you don't know what that means<br>
-            use the default below. This default will search zipcodes that begin with a 9 and a 0,<br>
-            which is East and West coasts.<br>
+            use the default below. This default will search zipcodes that begin with a 9 or a 0,<br>
+            which is East and West coasts.NOTE: a random sampling of 1000 zip codes is also included <br>
+            to round out the results. This maynot actually be helpful.<br><br>
+
             <input type="text" name="zipcodes" value="^[90]"><br><br>
 
-            Enter where you are searching a known job title or want to use keywords.<br>
-            Keywords somteims runs faster though have diverse job title returns.<br>
-            Try both keyword and title search to get a diverse idea of the skills<br>
-            being sought after.<br>
+            Select whether you want to use the keyword or title mode. I suggest trying out <br>
+            both. The uniqued list of job titles will be dsiplayed with the results so that you can<br>
+            determine if the keywords were appropriate or not. You also learn something about the fields <br>
+            which use the skills you are providing as search terms.<br><br>
+
 
             <select name="type_">
                 <option value='title'>title</option>
