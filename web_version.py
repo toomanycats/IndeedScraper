@@ -4,6 +4,7 @@
 # Creation Date : 11-21-2015
 ######################################
 import pdb
+import GrammarParser
 import uuid #for random strints
 import time
 import logging
@@ -19,6 +20,8 @@ import os
 import numpy as np
 import json
 import pickle
+
+gram_parser = GrammarParser.GrammarParser()
 
 data_dir = os.getenv('OPENSHIFT_DATA_DIR')
 if data_dir is None:
@@ -480,6 +483,22 @@ def stem():
     ind.add_stop_words()
 
     count, kw = ind.vectorizer(summary_stem, n_min=2, n_max=2, max_features=50)
+    script, div = get_plot_comp(kw, count, df, 'kws')
+
+    page = stem_template.render(script=script, div=div)
+    return encode_utf8(page)
+
+@app.route('/grammar/')
+def grammar_parser():
+    logging.info("running grammar parser")
+
+    df_file = get_sess()['df_file']
+    df = pd.read_csv(df_file)
+    docs = df['full_text']
+
+    docs = map(gram_parser.main, docs)
+
+    count, kw = ind.vectorizer(docs, n_min=2, n_max=2, max_features=50)
     script, div = get_plot_comp(kw, count, df, 'kws')
 
     page = stem_template.render(script=script, div=div)
