@@ -405,7 +405,7 @@ def plot_titles():
     df_file = get_sess()['df_file']
     df = pd.read_csv(df_file)
 
-    grp = df.groupby("jobtitle").count()
+    grp = df.groupby("jobtitle").count().sort("url", ascending=False)
     cities = grp.index.tolist()
     counts = grp['city'] # any key will do here
 
@@ -413,8 +413,11 @@ def plot_titles():
     rows = u''
 
     for cty, cnt in zip(cities, counts):
-        cty = cty.encode("utf-8", "ignore")
-        rows += row % (cty, cnt)
+        try:
+            cty = cty.encode("utf-8", "ignore")
+            rows += row % (cty, cnt)
+        except:
+           continue
 
     page = title_template.render(rows=rows)
     return encode_utf8(page)
@@ -455,7 +458,6 @@ def run_analysis():
 
     # save df for additional analysis
     df.to_csv(get_sess()['df_file'], index=False, encoding='utf-8')
-
 
     count, kw = ind.vectorizer(df['summary'], n_min=2, n_max=2, max_features=60)
     script, div = get_plot_comp(kw, count, df, 'kws')
