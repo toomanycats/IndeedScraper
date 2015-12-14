@@ -205,7 +205,7 @@ input_template = jinja2.Template('''
 
             <select name="type_">
                 <option value='title'>title</option>
-                <option value='keywords'>Keywords</option>
+                <option value='keywords'>keywords</option>
                 <option value='keywords_title'>Keywords and Title</option>
             </select>
             <br><br>
@@ -449,7 +449,7 @@ def run_analysis():
     ind.query = get_sess()['kws']
     ind.stop_words = stop_words
     ind.add_loc = get_sess()['zips']
-    ind.num_samp = 1000 # num additional random zipcodes
+    ind.num_samp = 0 # num additional random zipcodes
     ind.num_urls = int(get_sess()['num_urls'])
     ind.zip_code_error_limit = 1000
     ind.main()
@@ -459,7 +459,8 @@ def run_analysis():
     # save df for additional analysis
     df.to_csv(get_sess()['df_file'], index=False, encoding='utf-8')
 
-    count, kw = ind.vectorizer(df['summary'], n_min=2, n_max=2, max_features=60)
+    count, kw = ind.vectorizer(df['summary'], n_min=2, n_max=2, max_features=40,
+            max_df=compute_max_df(get_sess()['type_']))
     script, div = get_plot_comp(kw, count, df, 'kws')
 
 
@@ -485,9 +486,10 @@ def radius():
 
     words = ind.find_words_in_radius(series, kw, radius=5)
     try:
-        count, kw = ind.vectorizer(words, max_features=60, n_min=1, n_max=2)
+        count, kw = ind.vectorizer(words, max_features=40, n_min=1, n_max=2,
+               max_df=compute_max_df(get_sess()['type_']))
     except ValueError:
-        return "The key word was not found in the top 50."
+        return "The key word was not found in the corpus build from search term."
 
     script, div = get_plot_comp(kw, count, df, 'radius_kw')
     return radius_template.render(div=div, script=script)
@@ -504,7 +506,8 @@ def stem():
     ind.stop_words = stop_words
     ind.add_stop_words()
 
-    count, kw = ind.vectorizer(summary_stem, n_min=2, n_max=2, max_features=60)
+    count, kw = ind.vectorizer(summary_stem, n_min=2, n_max=2, max_features=40,
+            max_df=compute_max_df(get_sess()['type_']))
     script, div = get_plot_comp(kw, count, df, 'kws')
 
     page = stem_template.render(script=script, div=div)
@@ -523,7 +526,8 @@ def grammar_parser():
     ind.add_stop_words()
 
     ind = indeed_scrape.Indeed("kw")
-    count, kw = ind.vectorizer(docs, n_min=1, n_max=1, max_features=60)
+    count, kw = ind.vectorizer(docs, n_min=1, n_max=1, max_features=40,
+            max_df=compute_max_df(get_sess()['type_']))
 
     script, div = get_plot_comp(kw, count, df, 'kws')
 
@@ -540,6 +544,16 @@ def put_to_sess(values):
 
 def get_sess():
     return pickle.load(open(session_file, 'rb'))
+
+def compute_max_df(type_):
+    #TODO: make a function and use interpolate to get values
+    if type_ == 'keywords':
+        return 0.80
+    elif type_ == 'title':
+        return 0.70
+    else:
+        raise ValueError, "type not understood"
+
 
 if __name__ == "__main__":
     app.run()
