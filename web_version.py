@@ -337,7 +337,7 @@ def plot_fig(df, num, kws):
     p = Bar(df, 'kw',
             values='count',
             title=title_string,
-            title_text_font_size='15',
+            title_text_font_size='20',
             color='blue',
             xlabel="",
             ylabel="Count",
