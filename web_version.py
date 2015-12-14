@@ -98,7 +98,7 @@ title_template = jinja2.Template('''
 <body>
     <table>
     <tr>
-        <th>Job Title From Posting</th>
+        <th>Job Title From Posting</th><th>Count</th>
     </tr>
         {{ rows }}
     </table>
