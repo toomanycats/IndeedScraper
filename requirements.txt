@@ -4,4 +4,3 @@ beautifulsoup4==4.4.1
 nltk==3.0.2
 flask==0.10.1
 bokeh==0.10.0
-matplotlib==1.4.3
