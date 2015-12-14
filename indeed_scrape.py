@@ -129,7 +129,7 @@ class Indeed(object):
     def end_url_loop(self):
         df = self.df.dropna(subset=['summary'])
         count = df.url.count()
-        logging.info("df count: %i" % count)
+        logging.debug("df count: %i" % count)
 
         if count  >= self.num_urls:
             return True, count
@@ -149,7 +149,7 @@ class Indeed(object):
             pass
 
         prev_count = count
-        logging.info("radius:%i" % self.radius)
+        logging.debug("radius:%i" % self.radius)
 
         return prev_count
 
@@ -197,8 +197,8 @@ class Indeed(object):
                         return
                     else:
                         prev_count = self.compute_radius(count, prev_count)
-                        logging.info("index: %i" % ind)
-                        logging.info("count: %i" % prev_count)
+                        logging.debug("index: %i" % ind)
+                        logging.debug("count: %i" % prev_count)
 
                 else:
                     continue
