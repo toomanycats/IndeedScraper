@@ -3,6 +3,7 @@
 # Author : Daniel Cuneo
 # Creation Date : 11-05-2015
 ######################################
+import GrammarParser
 import codecs
 import re
 import ConfigParser
@@ -21,6 +22,8 @@ from nltk import stem
 from nltk import tokenize
 import re
 import os
+
+grammar = GrammarParser.GrammarParser()
 
 toker = tokenize.word_tokenize
 stemmer = stem.SnowballStemmer('english')
@@ -162,7 +165,7 @@ class Indeed(object):
         for zip_ind, zipcode in enumerate(self.locations):
             logging.debug("zip ind: %i" % zip_ind)
             if count == 0 and zip_ind == self.zip_code_error_limit:
-                error_string = "Your query hasn't found a match in %s zip codes." % self.zip_code_error_limit
+                error_string = "Your query isnt' matching."
                 raise Exception, error_string
 
             url_city_title = self.get_url(zipcode)
@@ -175,14 +178,15 @@ class Indeed(object):
                 if item[3] in self.df['job_key']:
                     logging.debug("duplicate job key:%s" % item[3])
                     continue
+                content, full_text = self.parse_content(item[0])
                 self.df.loc[ind, 'zipcode'] = str(zipcode)
                 self.df.loc[ind, 'url'] = item[0]
                 self.df.loc[ind, 'city'] = item[1]
                 self.df.loc[ind, 'jobtitle'] = item[2]
                 self.df.loc[ind, 'job_key'] = item[3]
-                content = self.parse_content(item[0])
                 self.df.loc[ind, 'summary'] = content
                 self.df.loc[ind, 'summary_stem'] = self.stemmer_(content)
+                self.df.loc[ind, 'full_text'] = grammar(full_text)
                 ind += 1
                 logging.debug("index increase: %i" % ind)
 
@@ -281,14 +285,16 @@ class Indeed(object):
             soup = BeautifulSoup(content, 'html.parser')
 
             summary = soup.find('span', {'summary'})
+            full_text= soup.findAll(text=True)
 
             skills = summary.find_all("li")
             output = [item.get_text() for item in skills]
 
             if len(output) > 0:
-                return " ".join(output).replace('\n', '')
+                parsed = " ".join(output).replace('\n', '')
+                return parsed, full_text
             else:
-                return None
+                return None, None
 
         except Exception, err:
             logging.error(err)
