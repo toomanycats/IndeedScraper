@@ -179,17 +179,20 @@ class Indeed(object):
                 if item[3] in self.df['job_key']:
                     logging.debug("duplicate job key:%s" % item[3])
                     continue
-                content, full_text = self.parse_content(item[0])
-                self.df.loc[ind, 'zipcode'] = str(zipcode)
-                self.df.loc[ind, 'url'] = item[0]
-                self.df.loc[ind, 'city'] = item[1]
-                self.df.loc[ind, 'jobtitle'] = item[2]
-                self.df.loc[ind, 'job_key'] = item[3]
-                self.df.loc[ind, 'summary'] = content
-                self.df.loc[ind, 'summary_stem'] = self.stemmer_(content)
-                self.df.loc[ind, 'full_text'] = grammar.main(full_text)
-                ind += 1
-                logging.debug("index increase: %i" % ind)
+                try:
+                    content, full_text = self.parse_content(item[0])
+                    self.df.loc[ind, 'zipcode'] = str(zipcode)
+                    self.df.loc[ind, 'url'] = item[0]
+                    self.df.loc[ind, 'city'] = item[1]
+                    self.df.loc[ind, 'jobtitle'] = item[2]
+                    self.df.loc[ind, 'job_key'] = item[3]
+                    self.df.loc[ind, 'summary'] = content
+                    self.df.loc[ind, 'summary_stem'] = self.stemmer_(content)
+                    self.df.loc[ind, 'full_text'] = grammar.main(full_text)
+                    ind += 1
+                    logging.debug("index increase: %i" % ind)
+                except:
+                    pass
 
                 # periodic check
                 if np.mod(zip_ind, 2) == 0:

@@ -244,13 +244,13 @@ output_template = jinja2.Template("""
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 
     <script type="text/javascript">
-        $(document).ready(function() {
+        $(function() {
             $("#chart").load("/run_analysis", function() {
                 $("#stem").slideToggle("slow", function() {
                     $("#cities").slideToggle("slow", function() {
                         $("#titles").slideToggle("slow", function() {
-                            $("#radius").slideToggle("slow", function () {
-                                $("#grammar").slideToggle("slow");
+                           $("#grammar").slideToggle("slow", function () {
+                                $("#radius").slideToggle("slow")
                                 });
                             });
                         });
@@ -292,6 +292,11 @@ output_template = jinja2.Template("""
 
     <br><br>
 
+    <div id=grammar style="display: none">
+    <a href="/grammar/"> Keywords from Entire Posts </a>
+    </div>
+    <br><br>
+
     <form  id=radius action="/radius/"  method="post" style="display: none">
         Explore around the radius of a word across all posts.<br>
         The default is five words in front and in back. <br>
@@ -299,11 +304,6 @@ output_template = jinja2.Template("""
         <input type="submit" value="Submit" name="submit">
     </form>
 
-    <br><br>
-
-    <div id=grammar style="display: none">
-    <a href="/grammar/"> Keywords from Entire Posts </a>
-    </div>
 
 </body>
 </html>
@@ -334,6 +334,8 @@ radius_template = jinja2.Template('''
 ''')
 
 app = Flask(__name__)
+
+stop_words = 'religion sex disibility veteran status sexual orientation and'
 
 def plot_fig(df, num, kws):
 
@@ -411,14 +413,16 @@ def plot_titles():
     df_file = get_sess()['df_file']
     df = pd.read_csv(df_file)
 
-    titles = df['jobtitle'].unique().tolist()
-    row = u'<tr><td>%s</td></tr>'
+    grp = df.groupby("jobtitle").count()
+    cities = grp.index.tolist()
+    counts = grp['city'] # any key will do here
+
+    row = u'<tr><td>%s</td><td>%s</td></tr>'
     rows = u''
-    for t in titles:
-        try: # sometimes encoding fails
-            rows += row % t.encode("utf-8", "ignore")
-        except Exception, err:
-            logging.error("title error:%s" % err)
+
+    for cty, cnt in zip(cities, counts):
+        cty = cty.encode("utf-8", "ignore")
+        rows += row % (cty, cnt)
 
     page = title_template.render(rows=rows)
     return encode_utf8(page)
@@ -448,7 +452,7 @@ def run_analysis():
     logging.info("starting run_analysis %s" % time.strftime("%H:%M:%S") )
     ind = indeed_scrape.Indeed(query_type=get_sess()['type_'])
     ind.query = get_sess()['kws']
-    ind.stop_words = "and"
+    ind.stop_words = stop_words
     ind.add_loc = get_sess()['zips']
     ind.num_samp = 1000 # num additional random zipcodes
     ind.num_urls = int(get_sess()['num_urls'])
@@ -461,7 +465,7 @@ def run_analysis():
     df.to_csv(get_sess()['df_file'], index=False, encoding='utf-8')
 
 
-    count, kw = ind.vectorizer(df['summary'], n_min=2, n_max=2, max_features=50)
+    count, kw = ind.vectorizer(df['summary'], n_min=2, n_max=2, max_features=60)
     script, div = get_plot_comp(kw, count, df, 'kws')
 
 
@@ -482,12 +486,12 @@ def radius():
     df = pd.read_csv(get_sess()['df_file'])
     series = df['summary']
     ind = indeed_scrape.Indeed('kw')
-    ind.stop_words = "and"
+    ind.stop_words = stop_words
     ind.add_stop_words()
 
     words = ind.find_words_in_radius(series, kw, radius=5)
     try:
-        count, kw = ind.vectorizer(words, max_features=50, n_min=1, n_max=2)
+        count, kw = ind.vectorizer(words, max_features=60, n_min=1, n_max=2)
     except ValueError:
         return "The key word was not found in the top 50."
 
@@ -503,10 +507,10 @@ def stem():
     summary_stem = df['summary_stem']
 
     ind = indeed_scrape.Indeed("kw")
-    ind.stop_words = "and"
+    ind.stop_words = stop_words
     ind.add_stop_words()
 
-    count, kw = ind.vectorizer(summary_stem, n_min=2, n_max=2, max_features=50)
+    count, kw = ind.vectorizer(summary_stem, n_min=2, n_max=2, max_features=60)
     script, div = get_plot_comp(kw, count, df, 'kws')
 
     page = stem_template.render(script=script, div=div)
@@ -520,8 +524,12 @@ def grammar_parser():
     df = pd.read_csv(df_file)
     docs = df['full_text']
 
+    ind = indeed_scrape.Indeed('kw')
+    ind.stop_words = stop_words
+    ind.add_stop_words()
+
     ind = indeed_scrape.Indeed("kw")
-    count, kw = ind.vectorizer(docs, n_min=3, n_max=3, max_features=20)
+    count, kw = ind.vectorizer(docs, n_min=1, n_max=1, max_features=60)
 
     script, div = get_plot_comp(kw, count, df, 'kws')
 
