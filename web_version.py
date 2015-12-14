@@ -3,7 +3,6 @@
 # Author : Daniel Cuneo
 # Creation Date : 11-21-2015
 ######################################
-import pdb
 import uuid #for random strints
 import time
 import logging
@@ -249,9 +248,7 @@ output_template = jinja2.Template("""
                 $("#stem").slideToggle("slow", function() {
                     $("#cities").slideToggle("slow", function() {
                         $("#titles").slideToggle("slow", function() {
-                           $("#grammar").slideToggle("slow", function () {
-                                $("#radius").slideToggle("slow")
-                                });
+                            $("#radius").slideToggle("slow")
                             });
                         });
                     });
@@ -290,11 +287,6 @@ output_template = jinja2.Template("""
     <a href="/titles/"> Show Job Titles </a>
     </div>
 
-    <br><br>
-
-    <div id=grammar style="display: none">
-    <a href="/grammar/"> Keywords from Entire Posts </a>
-    </div>
     <br><br>
 
     <form  id=radius action="/radius/"  method="post" style="display: none">

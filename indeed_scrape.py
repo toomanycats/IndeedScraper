@@ -3,8 +3,7 @@
 # Author : Daniel Cuneo
 # Creation Date : 11-05-2015
 ######################################
-import pdb
-import GrammarParser
+#import GrammarParser
 import codecs
 import re
 import ConfigParser
@@ -24,7 +23,7 @@ from nltk import tokenize
 import re
 import os
 
-grammar = GrammarParser.GrammarParser()
+#grammar = GrammarParser.GrammarParser()
 
 toker = tokenize.word_tokenize
 stemmer = stem.SnowballStemmer('english')
@@ -188,7 +187,7 @@ class Indeed(object):
                     self.df.loc[ind, 'job_key'] = item[3]
                     self.df.loc[ind, 'summary'] = content
                     self.df.loc[ind, 'summary_stem'] = self.stemmer_(content)
-                    self.df.loc[ind, 'full_text'] = grammar.main(full_text)
+                    #self.df.loc[ind, 'full_text'] = grammar.main(full_text)
                     ind += 1
                     logging.debug("index increase: %i" % ind)
                 except:
