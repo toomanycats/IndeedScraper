@@ -13,10 +13,6 @@ import pandas as pd
 import urllib2
 from bs4 import BeautifulSoup
 from sklearn.feature_extraction.text import CountVectorizer, ENGLISH_STOP_WORDS
-from sklearn.metrics.pairwise import cosine_distances
-from sklearn.cluster import KMeans
-from sklearn.metrics import euclidean_distances
-import matplotlib.pyplot as plt
 import numpy as np
 from nltk import stem
 from nltk import tokenize
@@ -369,65 +365,6 @@ class Indeed(object):
         features = vectorizer.get_feature_names()
 
         return matrix, features
-
-    def plot_sorted_subsection(self, fea, mat, start, end):
-        '''Plot the next n highest counts in sorted order from n to m'''
-
-        m = mat.toarray().sum(axis=0)
-
-        ind_sort = np.argsort(m)
-        m = m[ind_sort]
-
-        f = np.array(fea)
-        f = f[ind_sort]
-
-        range_ = end - start
-        if range_ < 0:
-            raise ValueError
-
-        x = np.arange(range_)
-
-        plt.xticks(x, f, rotation=90, fontsize=14)
-        plt.bar(x, m[start:end], align='center')
-
-    def plot_features(self, features, matrix):
-        x = np.arange(len(features))
-        tot = np.array(matrix.sum(axis=0))
-        tot = np.squeeze(tot)
-
-        plt.bar(x, tot, align='center', alpha=0.5)
-        plt.xticks(x, features, rotation='vertical', fontsize=15)
-        plt.grid(True)
-        plt.xlim(-1, len(x))
-
-        plt.ylabel("Counts", fontsize=15)
-        string = "Key Word Count: %i Features" %len(features)
-        plt.title(string,  fontsize=15)
-        plt.tight_layout()
-
-        plt.show()
-
-    def cluster(self, matrix):
-
-        #cos_dist = cosine_distances(matrix)
-        euc_dist = euclidean_distances(matrix)
-
-        km = KMeans(n_clusters=3,
-                    #init='random',
-                    init='k-means++',
-                    n_init=100,
-                    max_iter=1000,
-                    tol=1e-7,
-                    precompute_distances=False,
-                    verbose=0,
-                    random_state=1,
-                    copy_x=True,
-                    n_jobs=1
-                    )
-
-        assignments = km.fit_predict(euc_dist)
-
-        return assignments
 
     def find_words_in_radius(self, series, keyword, radius):
 
