@@ -4,6 +4,7 @@
 # Creation Date : 11-21-2015
 ######################################
 import uuid #for random strints
+import subprocess
 import time
 import logging
 import pandas as pd
@@ -403,7 +404,7 @@ def get_plot_comp(kw, count, df, title_key):
 @app.route('/titles/')
 def plot_titles():
     df_file = get_sess()['df_file']
-    df = pd.read_csv(df_file)
+    df = load_csv()
 
     grp = df.groupby("jobtitle").count().sort("url", ascending=False)
     cities = grp.index.tolist()
@@ -425,7 +426,7 @@ def plot_titles():
 @app.route('/cities/')
 def plot_cities():
     df_file = get_sess()['df_file']
-    df = pd.read_csv(df_file)
+    df = load_csv()
 
     count = df.groupby("city").count()['url']
     cities = count.index.tolist()
@@ -442,25 +443,25 @@ def plot_cities():
 
 @app.route('/run_analysis/')
 def run_analysis():
-
+    sess_dict = get_sess()
     #pdb.set_trace()
     logging.info("starting run_analysis %s" % time.strftime("%H:%M:%S") )
-    ind = indeed_scrape.Indeed(query_type=get_sess()['type_'])
-    ind.query = get_sess()['kws']
+    ind = indeed_scrape.Indeed(query_type=sess_dict['type_'])
+    ind.query = sess_dict['kws']
     ind.stop_words = stop_words
-    ind.add_loc = get_sess()['zips']
+    ind.add_loc = sess_dict['zips']
     ind.num_samp = 0 # num additional random zipcodes
-    ind.num_urls = int(get_sess()['num_urls'])
+    ind.num_urls = int(sess_dict['num_urls'])
     ind.zip_code_error_limit = 1000
     ind.main()
 
     df = ind.df
 
     # save df for additional analysis
-    df.to_csv(get_sess()['df_file'], index=False, encoding='utf-8')
+    save_to_csv(df)
 
     count, kw = ind.vectorizer(df['summary'], n_min=2, n_max=2, max_features=40,
-            max_df=compute_max_df(get_sess()['type_']))
+            max_df=compute_max_df(sess_dict['type_']))
     script, div = get_plot_comp(kw, count, df, 'kws')
 
 
@@ -474,11 +475,11 @@ def run_analysis():
 
 @app.route('/radius/', methods=['post'])
 def radius():
-
+    sess_dict = get_sess()
     kw = request.form['word']
     logging.info("radius key word:%s" % kw)
 
-    df = pd.read_csv(get_sess()['df_file'])
+    df = load_csv()
     series = df['summary']
     ind = indeed_scrape.Indeed('kw')
     ind.stop_words = stop_words
@@ -487,7 +488,7 @@ def radius():
     words = ind.find_words_in_radius(series, kw, radius=5)
     try:
         count, kw = ind.vectorizer(words, max_features=40, n_min=1, n_max=2,
-               max_df=compute_max_df(get_sess()['type_']))
+               max_df=compute_max_df(sess_dict['type_']))
     except ValueError:
         return "The key word was not found in the corpus build from search term."
 
@@ -497,9 +498,9 @@ def radius():
 @app.route('/stem/')
 def stem():
     logging.info("running stem")
-
-    df_file = get_sess()['df_file']
-    df = pd.read_csv(df_file)
+    sess_dict = get_sess()
+    df_file = sess_dict['df_file']
+    df = load_csv()
     summary_stem = df['summary_stem']
 
     ind = indeed_scrape.Indeed("kw")
@@ -507,7 +508,7 @@ def stem():
     ind.add_stop_words()
 
     count, kw = ind.vectorizer(summary_stem, n_min=2, n_max=2, max_features=40,
-            max_df=compute_max_df(get_sess()['type_']))
+            max_df=compute_max_df(sess_dict['type_']))
     script, div = get_plot_comp(kw, count, df, 'kws')
 
     page = stem_template.render(script=script, div=div)
@@ -516,9 +517,9 @@ def stem():
 @app.route('/grammar/')
 def grammar_parser():
     logging.info("running grammar parser")
-
-    df_file = get_sess()['df_file']
-    df = pd.read_csv(df_file)
+    sess_dict = get_sess()
+    df_file = sess_dict['df_file']
+    df = load_csv()
     docs = df['full_text']
 
     ind = indeed_scrape.Indeed('kw')
@@ -527,7 +528,7 @@ def grammar_parser():
 
     ind = indeed_scrape.Indeed("kw")
     count, kw = ind.vectorizer(docs, n_min=1, n_max=1, max_features=40,
-            max_df=compute_max_df(get_sess()['type_']))
+            max_df=compute_max_df(sess_dict['type_']))
 
     script, div = get_plot_comp(kw, count, df, 'kws')
 
@@ -554,6 +555,54 @@ def compute_max_df(type_):
     else:
         raise ValueError, "type not understood"
 
+def load_csv():
+    sess_dict = get_sess()
+    df_file = _ungzip(sess_dict['df_file'])
+    df = pd.read_csv(df_file)
+
+    return df
+
+def save_to_csv(df):
+    sess_dict = get_sess()
+    df.to_csv(sess_dict['df_file'], index=False, quoting=1, encoding='utf-8')
+    df_file =  _gzip(sess_dict['df_file'])
+
+    #re write the pickle file with gz ext for df_file
+    sess_dict['df_file'] = df_file
+    put_to_sess(sess_dict)
+
+def _call_shell(cmd):
+    logging.debug('command line used: %s' %cmd)
+
+    process = subprocess.Popen(cmd, shell=True,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE)
+
+    out, err = process.communicate()
+    errcode = process.returncode
+
+    logging.debug('Shell call output: %s' %out)
+
+    return out
+
+def _ungzip(File, force=True):
+    split_list = os.path.splitext(File)
+    if split_list[-1] != '.gz':
+        return File
+
+    if force is True:
+        cmd = 'gunzip -f %s' %File
+    else:
+        cmd = 'gunzip %s' %File
+
+    _call_shell(cmd)
+    return split_list[0]
+
+def _gzip(File):
+    cmd = 'gzip %s' %File
+    _call_shell(cmd)
+
+    return File + '.gz'
 
 if __name__ == "__main__":
     app.run()
