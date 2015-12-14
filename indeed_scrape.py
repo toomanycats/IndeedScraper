@@ -3,6 +3,7 @@
 # Author : Daniel Cuneo
 # Creation Date : 11-05-2015
 ######################################
+import pdb
 import GrammarParser
 import codecs
 import re
@@ -153,7 +154,7 @@ class Indeed(object):
             pass
 
         prev_count = count
-        logging.info("radius change:%i" % self.radius)
+        logging.info("radius:%i" % self.radius)
 
         return prev_count
 
@@ -186,7 +187,7 @@ class Indeed(object):
                 self.df.loc[ind, 'job_key'] = item[3]
                 self.df.loc[ind, 'summary'] = content
                 self.df.loc[ind, 'summary_stem'] = self.stemmer_(content)
-                self.df.loc[ind, 'full_text'] = grammar(full_text)
+                self.df.loc[ind, 'full_text'] = grammar.main(full_text)
                 ind += 1
                 logging.debug("index increase: %i" % ind)
 
@@ -199,7 +200,7 @@ class Indeed(object):
                     else:
                         prev_count = self.compute_radius(count, prev_count)
                         logging.info("index: %i" % ind)
-                        logging.info("count marker: %i" % prev_count)
+                        logging.info("count: %i" % prev_count)
 
                 else:
                     continue
@@ -285,16 +286,16 @@ class Indeed(object):
             soup = BeautifulSoup(content, 'html.parser')
 
             summary = soup.find('span', {'summary'})
-            full_text= soup.findAll(text=True)
 
             skills = summary.find_all("li")
             output = [item.get_text() for item in skills]
 
-            if len(output) > 0:
-                parsed = " ".join(output).replace('\n', '')
-                return parsed, full_text
-            else:
+            if len(output) == 0:
                 return None, None
+            else:
+                parsed = " ".join(output).replace('\n', '')
+
+                return parsed, summary.get_text()
 
         except Exception, err:
             logging.error(err)

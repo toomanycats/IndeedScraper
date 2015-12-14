@@ -4,7 +4,6 @@
 # Creation Date : 11-21-2015
 ######################################
 import pdb
-import GrammarParser
 import uuid #for random strints
 import time
 import logging
@@ -21,8 +20,6 @@ import numpy as np
 import json
 import pickle
 
-gram_parser = GrammarParser.GrammarParser()
-
 data_dir = os.getenv('OPENSHIFT_DATA_DIR')
 if data_dir is None:
     data_dir = os.getenv('PWD')
@@ -35,6 +32,25 @@ logfile = os.path.join(log_dir, 'python.log')
 logging.basicConfig(filename=logfile, level=logging.INFO)
 
 session_file = os.path.join(data_dir, 'df_dir', 'session_file.pck')
+
+grammar_template = jinja2.Template('''
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>grammar</title>
+    <meta charset="UTF-8">
+    <link href="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.css"
+          rel="stylesheet" type="text/css">
+
+    <script src="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.js"></script>
+</head>
+
+<body>
+{{ div }}
+{{ script }}
+</body>
+</html>
+''')
 
 cities_template = jinja2.Template('''
 <!DOCTYPE html>
@@ -233,12 +249,14 @@ output_template = jinja2.Template("""
                 $("#stem").slideToggle("slow", function() {
                     $("#cities").slideToggle("slow", function() {
                         $("#titles").slideToggle("slow", function() {
-                            $("#radius").slideToggle("slow");
+                            $("#radius").slideToggle("slow", function () {
+                                $("#grammar").slideToggle("slow");
                                 });
                             });
                         });
                     });
                 });
+            });
     </script>
 </head>
 
@@ -280,6 +298,12 @@ output_template = jinja2.Template("""
         <input type="text" name="word" placeholder="experience"><br>
         <input type="submit" value="Submit" name="submit">
     </form>
+
+    <br><br>
+
+    <div id=grammar style="display: none">
+    <a href="/grammar/"> Keywords from Entire Posts </a>
+    </div>
 
 </body>
 </html>
@@ -496,12 +520,12 @@ def grammar_parser():
     df = pd.read_csv(df_file)
     docs = df['full_text']
 
-    docs = map(gram_parser.main, docs)
+    ind = indeed_scrape.Indeed("kw")
+    count, kw = ind.vectorizer(docs, n_min=3, n_max=3, max_features=20)
 
-    count, kw = ind.vectorizer(docs, n_min=2, n_max=2, max_features=50)
     script, div = get_plot_comp(kw, count, df, 'kws')
 
-    page = stem_template.render(script=script, div=div)
+    page = grammar_template.render(script=script, div=div)
     return encode_utf8(page)
 
 def mk_random_string():
