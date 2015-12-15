@@ -158,60 +158,67 @@ input_template = jinja2.Template('''
 <head>
     <title>indeed skill scraper</title>
     <meta charset="UTF-8">
+    <style>
+    p {
+        margin: 0.5cm 0.5cm 0.2cm 6cm;
+      }
+    li {
+      padding-left: 6cm;
+       }
+      </style>
 </head>
 
 <body>
-        <h1>indeed.com job openings skill scraper</h1> The main purpose of this
-        app is to figure out either what skills you need for <br> a given
-        field, or, what keywords to use in your resume or LinkedIn
-        summary.<br><br>
+        <center><img src=static/dir_media_300.png alt="Sample Keyword Output" style="width:1200px;height:425px;"></center><br>
+        <center><h1>Indeed Job Posting Scraper</h1></center>
+        <p> The main purpose of this app is to:</p>
+        <li> Quantify the skills you need for a given field </li>
+        <li> Empiricaly determine keywords to use in your resume or other digital presence.</li>
 
-        There's no real analysis done for you at this point, so be creative
-        with what <br> you learn here.<br><br>
+        <p>There's no comprehensive analysis done for you at this point, so be creative
+        with what you learn here.</p>
 
 
         <form action="/get_data/"  method="POST">
 
-            <h2>Enter <strong>job title keywords</strong> you normally use to
-            search for openings on indeed.com</h2> The scraper will use the "in
-            title" mode or the "keyword" mode, of indeed's search engine. Care
-            has been<br>
-            taken not to allow duplicate job postings. <br><br>
+            <center><h2>Enter <strong>job title keywords</strong> you normally use to search for openings on indeed.com</h2></center>
 
-            Depending on how many posting you enter, it can take a long time to complete. <br>
-            Start with the default then go higher.<br><br>
+            <p>The scraper will use the "in title" mode or the "keyword" mode,
+            of indeed's search engine. Care has been taken not to allow
+            duplicate job postings.</p>
 
-            <input type="text" name="kw" placeholder="data science"><br><br>
+            <p>Enter your keywords here.</p>
+            <p><input type="text" name="kw" placeholder="data science"></p>
 
-            The number of job postings to scrape.<br><br>
+            <p>Depending on how many posting you enter, it can take a long time
+            to complete. Start with the default then go higher.</p>
 
-            <input type="text" name="num" value="50"><br><br>
+            <p>The number of job postings to scrape.
+            <input type="text" name="num" value="50"></p>
 
-            For now, the zipcodes are regular expression based. If you don't
+            <p>For now, the zipcodes are regular expression based. If you don't
             know what that means<br> use the default below. This default will
-            search zipcodes that begin with a 9 or a 0,<br> which is East and
+            search zipcodes that begin with a 9 or a 0, which is East and
             West coasts.NOTE: a random sampling of 1000 zip codes is also
-            included <br> to round out the results. This maynot actually be
-            helpful.<br><br>
+            included to round out the results. This maynot actually be
+            helpful.</p>
 
-            <input type="text" name="zipcodes" value="^[90]"><br><br>
+            <p> <input type="text" name="zipcodes" value="^[90]"></p>
 
-            Select whether you want to use the keyword or title mode. I suggest
+            <p>Select whether you want to use the keyword or title mode. I suggest
             trying out <br> both. The uniqued list of job titles will be
-            dsiplayed with the results so that you can<br> determine if the
+            dsiplayed with the results so that you can determine if the
             keywords were appropriate or not. You also learn something about
-            the fields <br> which use the skills you are providing as search
-            terms.<br><br>
+            the fields  which use the skills you are providing as search
+            terms.</p>
 
-
-            <select name="type_">
+            <p><select name="type_">
                 <option value='title'>title</option>
                 <option value='keywords'>keywords</option>
                 <option value='keywords_title'>Keywords and Title</option>
-            </select>
-            <br><br>
+            </p>
 
-            <input type="submit" value="Submit" name="submit">
+            <p><input type="submit" value="Submit" name="submit"></p>
         </form>
 
 <!-- Start of StatCounter Code for Default Guide -->
