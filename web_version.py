@@ -385,7 +385,7 @@ radius_template = jinja2.Template('''
 
 app = Flask(__name__)
 
-stop_words = 'religion sex disibility veteran status sexual orientation and'
+stop_words = 'religion sex disibility veteran status sexual orientation and, work ability'
 
 def plot_fig(df, num, kws):
 
@@ -619,7 +619,9 @@ def load_csv():
     df_file = _ungzip(sess_dict['df_file'])
     df = pd.read_csv(df_file)
 
-    _gzip(sess_dict['df_file'])
+    df_file = _gzip(sess_dict['df_file'])
+    sess_dict['df_file'] = df_file
+    put_to_sess(sess_dict)
 
     return df
 
