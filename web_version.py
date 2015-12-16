@@ -117,6 +117,10 @@ stem_template= jinja2.Template('''
             font-family:"Verdana";
             font-size:150%
         }
+
+        li {
+        padding-left: 6cm;
+        }
     </style>
     <title>stemmed results</title>
     <meta charset="UTF-8">
@@ -133,13 +137,13 @@ stem_template= jinja2.Template('''
 {{ script }}
 
 <p>All the words in the sample have been reduced to their "stems". <br> That
-is, the siffixs have been removed,
+is, the siffixs have been removed,</p>
 
 <li>working</li>
 <li>works</li>
 <li>worked</li>
 
-are counted the same, as "work". <br>
+<p>are counted the same, as "work". <br>
 Addionally, the bar graph shows only single keywords, known as Mono-grams.</p>
 
 </body>
