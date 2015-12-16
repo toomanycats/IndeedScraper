@@ -245,16 +245,19 @@ input_template = jinja2.Template('''
             <p>The number of job postings to scrape.
             <input type="text" name="num" value="50"></p>
 
-            <p>For now, the zipcodes are regular expression based. If you don't
-            know what that means use the default below. This default will
-            search zipcodes that begin with  9 or  0, which is East and
-            West coasts.</p>
+            <p>The search area can be West, East, or both coasts. I'll add mid
+            west very soon.</p>
 
             <p>A random sampling of 1000 zip codes is also
             included to round out the results. This maynot actually be
             helpful.</p>
 
-            <p><input type="text" name="zipcodes" value="^[90]"></p>
+            <p><select name="area">
+                <option value='wc'>West Coast</option>
+                <option value='ec'>East Coast</option>
+                <option value='both'>Both Coasts</option>
+                </select>
+            </p>
 
             <p>Select whether you want to use the keyword or title mode. I suggest
             trying out both. The uniqued list of job titles will be
@@ -266,6 +269,7 @@ input_template = jinja2.Template('''
             <p><select name="type_">
                 <option value='title'>title</option>
                 <option value='keywords'>keywords</option>
+                </select>
             </p>
 
             <p><input type="submit" value="Submit" name="submit"></p>
@@ -418,12 +422,14 @@ def get_data():
 
     type_ = request.form['type_']
     kws = request.form['kw']
-    zips = request.form['zipcodes']
+    area = request.form['area']
     num_urls = int(request.form['num'])
+
+    key = {'ec':'^0', 'wc':'^9', 'both':'^[09]'}
+    zips = key[area]
 
     df_file = os.path.join(data_dir,  'df_dir', mk_random_string())
     logging.info("session file path: %s" % df_file)
-
 
     put_to_sess({'type_':type_,
                     'kws':kws,
@@ -482,7 +488,6 @@ def plot_titles():
 
 @app.route('/cities/')
 def plot_cities():
-    df_file = get_sess()['df_file']
     df = load_csv()
 
     count = df.groupby("city").count()['url']
@@ -497,7 +502,6 @@ def plot_cities():
     page = cities_template.render(div=div, script=script)
 
     return encode_utf8(page)
-
 @app.route('/run_analysis/')
 def run_analysis():
     sess_dict = get_sess()
@@ -577,7 +581,6 @@ def stem():
 def grammar_parser():
     logging.info("running grammar parser")
     sess_dict = get_sess()
-    df_file = sess_dict['df_file']
     df = load_csv()
     docs = df['full_text']
 
@@ -633,9 +636,7 @@ def load_csv():
     df_file = _ungzip(sess_dict['df_file'])
     df = pd.read_csv(df_file)
 
-    df_file = _gzip(sess_dict['df_file'])
-    sess_dict['df_file'] = df_file
-    put_to_sess(sess_dict)
+    _gzip(sess_dict['df_file'])
 
     return df
 
@@ -663,17 +664,14 @@ def _call_shell(cmd):
     return out
 
 def _ungzip(File, force=True):
-    split_list = os.path.splitext(File)
-    if split_list[-1] != '.gz':
-        return File
-
     if force is True:
         cmd = 'gunzip -f %s' %File
     else:
         cmd = 'gunzip %s' %File
 
     _call_shell(cmd)
-    return split_list[0]
+
+    return File.replace('.gz', '')
 
 def _gzip(File):
     cmd = 'gzip %s' %File
