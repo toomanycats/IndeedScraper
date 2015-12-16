@@ -518,7 +518,7 @@ def run_analysis():
     save_to_csv(df)
 
     count, kw = ind.vectorizer(df['summary'], n_min=2, n_max=2, max_features=40,
-            max_df=compute_max_df(sess_dict['type_']))
+            max_df=compute_max_df(sess_dict['type_'], sess_dict['num_urls']))
     script, div = get_plot_comp(kw, count, df, 'kws')
 
 
@@ -547,7 +547,7 @@ def radius():
 
     try:
         count, kw = ind.vectorizer(words, max_features=40, n_min=1, n_max=1,
-               max_df=compute_max_df(sess_dict['type_']))
+               max_df=compute_max_df(sess_dict['type_'], sess_dict['num_urls']))
     except ValueError:
         return "The key word was not found in the corpus built from search term."
 
@@ -567,7 +567,7 @@ def stem():
     ind.add_stop_words()
 
     count, kw = ind.vectorizer(summary_stem, n_min=1, n_max=1, max_features=40,
-            max_df=compute_max_df(sess_dict['type_']))
+            max_df=compute_max_df(sess_dict['type_'], sess_dict['num_urls']))
     script, div = get_plot_comp(kw, count, df, 'kws')
 
     page = stem_template.render(script=script, div=div)
@@ -587,7 +587,7 @@ def grammar_parser():
 
     ind = indeed_scrape.Indeed("kw")
     count, kw = ind.vectorizer(docs, n_min=1, n_max=1, max_features=40,
-            max_df=compute_max_df(sess_dict['type_']))
+            max_df=compute_max_df(sess_dict['type_'], sess_dict['num_urls']))
 
     script, div = get_plot_comp(kw, count, df, 'kws')
 
@@ -605,14 +605,28 @@ def put_to_sess(values):
 def get_sess():
     return pickle.load(open(session_file, 'rb'))
 
-def compute_max_df(type_):
+def compute_max_df(type_, num_samp):
     #TODO: make a function and use interpolate to get values
     if type_ == 'keywords':
-        return 0.80
+        base = 0.80
+
     elif type_ == 'title':
-        return 0.70
+        base = 0.70
+
     else:
         raise ValueError, "type not understood"
+
+    if num_samp < 175:
+        return base
+
+    elif num_samp > 175 and num_samp < 300:
+        return (0.55 / base) * base
+
+    elif num_samp > 300:
+        return (0.45 / base) * base
+
+    else:
+        raise ValueError, "num samples has an error"
 
 def load_csv():
     sess_dict = get_sess()
