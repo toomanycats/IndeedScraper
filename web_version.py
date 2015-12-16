@@ -330,7 +330,7 @@ output_template = jinja2.Template("""
     <br><br>
 
     <div id=stem style="display: none">
-    <a href="/stem/"> Use Stemmed Keywords </a>
+    <a href="/stem/">Single Word Analysis</a>
     </div>
 
     <br><br>
@@ -537,14 +537,16 @@ def radius():
     logging.info("radius key word:%s" % kw)
 
     df = load_csv()
-    series = df['summary']
     ind = indeed_scrape.Indeed('kw')
     ind.stop_words = stop_words
     ind.add_stop_words()
+    ind.df = df
 
-    words = ind.find_words_in_radius(series, kw, radius=7)
+    words = ind.build_corpus_from_sent(kw)
+    words = ind.find_words_in_radius(words, kw, 5)
+
     try:
-        count, kw = ind.vectorizer(words, max_features=40, n_min=1, n_max=2,
+        count, kw = ind.vectorizer(words, max_features=40, n_min=1, n_max=1,
                max_df=compute_max_df(sess_dict['type_']))
     except ValueError:
         return "The key word was not found in the corpus built from search term."

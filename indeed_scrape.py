@@ -18,6 +18,7 @@ from nltk import stem
 from nltk import tokenize
 import re
 import os
+import pdb
 
 #grammar = GrammarParser.GrammarParser()
 
@@ -371,7 +372,10 @@ class Indeed(object):
         words_in_radius = []
 
         for string in series:
-            test = string.decode("utf-8", "ignore")
+            try:
+                test = string.decode("utf-8", "ignore")
+            except:
+                continue
             test = tokenize.word_tokenize(test)
             test = self.len_tester(test)
             test = np.array(test)
@@ -403,6 +407,22 @@ class Indeed(object):
                 src_range_tot = np.hstack((src_range_tot, src_range))
 
             return np.unique(src_range_tot)
+
+    def build_corpus_from_sent(self, keyword):
+        #pdb.set_trace()
+        documents = self.df['summary'].apply(lambda x: x.decode("utf-8", "ignore"))
+        corpus = []
+        for doc in documents:
+            corpus.extend(tokenize.sent_tokenize(doc))
+
+        new = []
+        obj = re.compile(keyword, re.I)
+
+        for sentence in corpus:
+            if obj.search(sentence):
+                new.append(sentence)
+
+        return new
 
 
 if __name__ == "__main__":
