@@ -127,13 +127,20 @@ stem_template= jinja2.Template('''
 </head>
 
 <body>
-<p>All the words in the sample have been reduced to their "stems". That is, the
-siffixs have been removed. "skills", "skilled", and "skill" are counted the
-same.Addionally, the bar graph shows only single keywords, Mono-grams.</p>
 
 {{ div }}
 
 {{ script }}
+
+<p>All the words in the sample have been reduced to their "stems". <br> That
+is, the siffixs have been removed,
+
+<li>working</li>
+<li>works</li>
+<li>worked</li>
+
+are counted the same, as "work". <br>
+Addionally, the bar graph shows only single keywords, known as Mono-grams.</p>
 
 </body>
 </html>
@@ -495,7 +502,7 @@ def run_analysis():
     ind.add_loc = sess_dict['zips']
     ind.num_samp = 0 # num additional random zipcodes
     ind.num_urls = int(sess_dict['num_urls'])
-    ind.zip_code_error_limit = 1000
+    ind.zip_code_error_limit = 2000
     ind.main()
 
     df = ind.df
