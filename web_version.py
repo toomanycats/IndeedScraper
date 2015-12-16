@@ -138,7 +138,7 @@ stem_template= jinja2.Template('''
 {{ script }}
 
 <p>All the words in the sample have been reduced to their "stems". <br> That
-is, the siffixs have been removed,</p>
+is, the suffixes have been removed,</p>
 
 <li>working</li>
 <li>works</li>
@@ -542,12 +542,12 @@ def radius():
     ind.stop_words = stop_words
     ind.add_stop_words()
 
-    words = ind.find_words_in_radius(series, kw, radius=5)
+    words = ind.find_words_in_radius(series, kw, radius=7)
     try:
         count, kw = ind.vectorizer(words, max_features=40, n_min=1, n_max=2,
                max_df=compute_max_df(sess_dict['type_']))
     except ValueError:
-        return "The key word was not found in the corpus build from search term."
+        return "The key word was not found in the corpus built from search term."
 
     script, div = get_plot_comp(kw, count, df, 'radius_kw')
     return radius_template.render(div=div, script=script)
