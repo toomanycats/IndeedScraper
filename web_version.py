@@ -610,6 +610,8 @@ def load_csv():
     df_file = _ungzip(sess_dict['df_file'])
     df = pd.read_csv(df_file)
 
+    _gzip(sess_dict['df_file'])
+
     return df
 
 def save_to_csv(df):
