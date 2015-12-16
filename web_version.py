@@ -111,6 +111,13 @@ stem_template= jinja2.Template('''
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <style>
+        p {
+            margin: 0.5cm 0.5cm 0.2cm 6cm;
+            font-family:"Verdana";
+            font-size:150%
+        }
+    </style>
     <title>stemmed results</title>
     <meta charset="UTF-8">
     <link href="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.css"
@@ -120,9 +127,14 @@ stem_template= jinja2.Template('''
 </head>
 
 <body>
+<p>All the words in the sample have been reduced to their "stems". That is, the
+siffixs have been removed. "skills", "skilled", and "skill" are counted the
+same.Addionally, the bar graph shows only single keywords, Mono-grams.</p>
+
 {{ div }}
 
 {{ script }}
+
 </body>
 </html>
 ''')
@@ -538,7 +550,7 @@ def stem():
     ind.stop_words = stop_words
     ind.add_stop_words()
 
-    count, kw = ind.vectorizer(summary_stem, n_min=2, n_max=2, max_features=40,
+    count, kw = ind.vectorizer(summary_stem, n_min=1, n_max=1, max_features=40,
             max_df=compute_max_df(sess_dict['type_']))
     script, div = get_plot_comp(kw, count, df, 'kws')
 
