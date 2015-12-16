@@ -119,7 +119,8 @@ stem_template= jinja2.Template('''
         }
 
         li {
-        padding-left: 6cm;
+        padding-left: 8cm;
+        font-size:150%
         }
     </style>
     <title>stemmed results</title>
@@ -179,8 +180,10 @@ input_template = jinja2.Template('''
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>indeed skill scraper</title>
+    <title>indeed job posting skill scraper</title>
     <meta charset="UTF-8">
+    <meta name="description" content="Provide statistics on the keywords used in job postings the cities they are from and the job titles." />
+    <meata name="robots" content="index, follow" />
     <style>
     p {
         margin: 0.5cm 0.5cm 0.2cm 6cm;
@@ -188,7 +191,8 @@ input_template = jinja2.Template('''
         font-size:150%
       }
     li {
-      padding-left: 6cm;
+        padding-left: 8cm;
+        font-size:150%
        }
       </style>
 
@@ -219,9 +223,9 @@ input_template = jinja2.Template('''
         <center><img src=static/dir_media_300.png alt="Sample Keyword Output" style="width:1200px;height:425px;"></center><br>
         <center><h1>Indeed Job Posting Scraper</h1></center>
         <p> The main purpose of this app is to:</p>
-        <li> Quantify the skills you need for a given field </li>
-        <li> Empiricaly determine keywords to use in your resume or other digital presence.</li>
-
+            <li>Provide statistics on the keywords used in job postings</li>
+            <li>Group the cities they are from</li>
+            <li>Report the job titles searched</li>
         <p>There's no comprehensive analysis done for you at this point, so be creative
         with what you learn here.</p>
 
