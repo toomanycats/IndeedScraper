@@ -161,6 +161,8 @@ input_template = jinja2.Template('''
     <style>
     p {
         margin: 0.5cm 0.5cm 0.2cm 6cm;
+        font-family:"Verdana";
+        font-size:150%
       }
     li {
       padding-left: 6cm;
