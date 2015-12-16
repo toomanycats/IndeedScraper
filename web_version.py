@@ -266,7 +266,6 @@ input_template = jinja2.Template('''
             <p><select name="type_">
                 <option value='title'>title</option>
                 <option value='keywords'>keywords</option>
-                <option value='keywords_title'>Keywords and Title</option>
             </p>
 
             <p><input type="submit" value="Submit" name="submit"></p>
