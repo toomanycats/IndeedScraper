@@ -166,6 +166,28 @@ input_template = jinja2.Template('''
       padding-left: 6cm;
        }
       </style>
+
+    <style>
+    html {
+            background: url(static/background.jpg) no-repeat center center fixed;
+            -webkit-background-size: cover;
+            -moz-background-size: cover;
+            -o-background-size: cover;
+            background-size: cover;
+            color: #e5ffff;
+         }
+    </style>
+
+    <style>
+    body {
+            background: url('static/med_dir_300.png') no-repeat fixed;
+            -webkit-background-size: contain;
+            -moz-background-size: contain;
+            -o-background-size: contain;
+            background-size: contain;
+          }
+    </style>
+
 </head>
 
 <body>
