@@ -205,14 +205,12 @@ input_template = jinja2.Template('''
 
         <form action="/get_data/"  method="POST">
 
-            <center><h2>Enter <strong>job title keywords</strong> you normally use to search for openings on indeed.com</h2></center>
-
-            <p>The scraper will use the "in title" mode or the "keyword" mode,
+            <p>The scraper can use the "in title" mode or the "keyword" mode,
             of indeed's search engine. Care has been taken not to allow
-            duplicate job postings.</p>
+            duplicate job postings. <strong>Note:</strong>Keyword searching is
+            typically much faster.</p>
 
-            <p>Enter your keywords here.</p>
-            <p><input type="text" name="kw" placeholder="data science"></p>
+            <p>Enter your keywords here <input type="text" name="kw" placeholder="data science"></p>
 
             <p>Depending on how many posting you enter, it can take a long time
             to complete. Start with the default then go higher.</p>
@@ -221,17 +219,19 @@ input_template = jinja2.Template('''
             <input type="text" name="num" value="50"></p>
 
             <p>For now, the zipcodes are regular expression based. If you don't
-            know what that means<br> use the default below. This default will
-            search zipcodes that begin with a 9 or a 0, which is East and
-            West coasts.NOTE: a random sampling of 1000 zip codes is also
+            know what that means use the default below. This default will
+            search zipcodes that begin with  9 or  0, which is East and
+            West coasts.</p>
+
+            <p>A random sampling of 1000 zip codes is also
             included to round out the results. This maynot actually be
             helpful.</p>
 
-            <p> <input type="text" name="zipcodes" value="^[90]"></p>
+            <p><input type="text" name="zipcodes" value="^[90]"></p>
 
             <p>Select whether you want to use the keyword or title mode. I suggest
-            trying out <br> both. The uniqued list of job titles will be
-            dsiplayed with the results so that you can determine if the
+            trying out both. The uniqued list of job titles will be
+            displayed with the results so that you can determine if the
             keywords were appropriate or not. You also learn something about
             the fields  which use the skills you are providing as search
             terms.</p>
