@@ -76,26 +76,46 @@ title_template = jinja2.Template('''
 <html lang="en">
 <head>
     <style>
-    table {
-        border-collapse: collapse;
-        width: 100%;
-    }
+        p {
+            margin: 0.2cm 0.5cm 0.1cm 1cm;
+            font-family:"Verdana";
+            font-size:110%
+        }
 
-    th, td {
-        text-align: left;
-        padding: 8px;
-    }
+        li {
+        padding-left: 2cm;
+        font-size:110%
+        }
 
-    tr:nth-child(even){background-color: #f2f2f2}
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
 
-    th {
-        background-color: #4CAF50;
-        color: white;
-    }
+        th, td {
+            text-align: left;
+            padding: 8px;
+        }
+
+        tr:nth-child(even){background-color: #f2f2f2}
+
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
     </style>
 </head>
 
 <body>
+    <p>The table below is a list of the job titles that formed the search
+    results. This table can provide some insights:</p>
+
+    <p>Keyword Search: </p>
+    <li>More unique titles is a measure of how your keywords track across domains.</li>
+
+    <p>Title Search:</p>
+    <li>More unique titles is a measure of how your job role tracks across domains.</li>
+
     <table>
     <tr>
         <th>Job Title From Posting</th><th>Count</th>
@@ -182,7 +202,7 @@ input_template = jinja2.Template('''
 <head>
     <title>indeed job posting skill scraper</title>
     <meta charset="UTF-8">
-    <meta name="description" content="Provide statistics on the keywords used in job postings the cities they are from and the job titles." />
+    <meta name="description" content="Provide statistics on the keywords used in job postings Group the cities they are from Report the job titles searched." />
     <meata name="robots" content="index, follow" />
     <style>
     p {
@@ -553,7 +573,7 @@ def radius():
         count, kw = ind.vectorizer(words, max_features=40, n_min=1, n_max=1,
                max_df=compute_max_df(sess_dict['type_'], sess_dict['num_urls']))
     except ValueError:
-        return "The key word was not found in the corpus built from search term."
+        return "The body of words compiled did not contain substantially repeated terms."
 
     script, div = get_plot_comp(kw, count, df, 'radius_kw')
     return radius_template.render(div=div, script=script)
