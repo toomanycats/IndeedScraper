@@ -674,7 +674,7 @@ def compute_max_df(type_, num_samp):
 def to_sql():
     sess_dict = get_sess()
 
-    reference = pd.DataFrame({'input':sess_dict['kws'],
+    reference = pd.DataFrame({'keyword':sess_dict['kws'],
                               'df_file':sess_dict['df_file']
                              }, index=[0])
 
