@@ -22,6 +22,10 @@ import json
 import pickle
 import ConfigParser
 
+mysql_ip = os.getenv("OPENSHIFT_MYSQL_DB_HOST")
+if mysql_ip is None:
+    mysql_ip = '127.0.0.1'
+
 repo_dir = os.getenv("OPENSHIFT_REPO_DIR")
 if repo_dir is None:
     repo_dir = os.getenv("PWD")
@@ -35,8 +39,8 @@ if log_dir is None:
     log_dir = os.getenv("PWD")
 
 config_parser = ConfigParser.RawConfigParser()
-config_parser.read(self.config_path)
 config_path = os.path.join(repo_dir, "tokens.cfg")
+config_parser.read(config_path)
 
 logfile = os.path.join(log_dir, 'python.log')
 logging.basicConfig(filename=logfile, level=logging.INFO)
@@ -668,12 +672,12 @@ def to_sql():
 
     reference = pd.DataFrame({'input':sess_dict['kws'],
                               'df_file':sess_dict['df_file']
-                             })
+                             }, index=[0])
 
     id =  config_parser.get("sql", "id")
     passwd = config_parser.get("sql", "passwd")
 
-    conn_string = "mysql://%s:%s@127.0.0.1/test" %(id, passwd)
+    conn_string = "mysql://%s:%s@%s/test" %(id, passwd, mysql_ip)
     sql_engine = sqlalchemy.create_engine(conn_string)
     reference.to_sql(con=sql_engine, if_exists='append')
 
