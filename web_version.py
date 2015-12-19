@@ -20,7 +20,14 @@ import os
 import numpy as np
 import json
 import pickle
-import ConfigParser
+
+sql_username = os.getenv("OPENSHIFT_MYSQL_DB_USERNAME")
+if sql_username is None:
+    sql_username = 'root'
+
+sql_password = os.getenv("OPENSHIFT_MYSQL_DB_PASSWORD")
+if sql_password is None:
+    sql_password = 'test'
 
 mysql_ip = os.getenv("OPENSHIFT_MYSQL_DB_HOST")
 if mysql_ip is None:
@@ -38,9 +45,6 @@ log_dir = os.getenv('OPENSHIFT_LOG_DIR')
 if log_dir is None:
     log_dir = os.getenv("PWD")
 
-config_parser = ConfigParser.RawConfigParser()
-config_path = os.path.join(repo_dir, "tokens.cfg")
-config_parser.read(config_path)
 
 logfile = os.path.join(log_dir, 'python.log')
 logging.basicConfig(filename=logfile, level=logging.INFO)
@@ -674,12 +678,9 @@ def to_sql():
                               'df_file':sess_dict['df_file']
                              }, index=[0])
 
-    id =  config_parser.get("sql", "id")
-    passwd = config_parser.get("sql", "passwd")
-
-    conn_string = "mysql://%s:%s@%s/test" %(id, passwd, mysql_ip)
+    conn_string = "mysql://%s:%s@%s/indeed" %(sql_username, sql_password, mysql_ip)
     sql_engine = sqlalchemy.create_engine(conn_string)
-    reference.to_sql(con=sql_engine, if_exists='append')
+    reference.to_sql(name='test', con=sql_engine, if_exists='append', index=False)
 
 def load_csv():
     sess_dict = get_sess()
