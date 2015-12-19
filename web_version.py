@@ -550,6 +550,7 @@ def run_analysis():
 
     # save df for additional analysis
     save_to_csv(df)
+    to_sql()
 
     count, kw = ind.vectorizer(df['summary'], n_min=2, n_max=2, max_features=40,
             max_df=compute_max_df(sess_dict['type_'], sess_dict['num_urls']))
@@ -664,7 +665,6 @@ def compute_max_df(type_, num_samp):
 
 def to_sql():
     sess_dict = get_sess()
-    df = load_csv(sess_dict['df_file'])
 
     reference = pd.DataFrame({'input':sess_dict['kws'],
                               'df_file':sess_dict['df_file']
