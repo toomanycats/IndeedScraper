@@ -34,6 +34,7 @@ logging = logging.getLogger(__name__)
 class Indeed(object):
     def __init__(self, query_type):
         self.query_type = query_type
+        self.delta_zero = 0
         self.zip_code_error_limit = 1000
         self.num_urls = 10
         self.add_loc = None
@@ -129,7 +130,7 @@ class Indeed(object):
         return locations
 
     def end_url_loop(self):
-        df = self.df.dropna(subset=['summary'])
+        df = self.df.dropna(subset=['summary']).drop_duplicates(subset=['job_key'])
         count = df.url.count()
         logging.debug("df count: %i" % count)
 
@@ -143,6 +144,7 @@ class Indeed(object):
 
         if  delta_cnt == 0:
             self.radius += 20
+            self.delta_zero += 1
 
         elif delta_cnt  > 2 and self.radius > 10:
             self.radius = int(self.radius / 10) + 1
@@ -173,7 +175,7 @@ class Indeed(object):
 
             for item in url_city_title:
                 # avoid dupes
-                if item[3] in self.df['job_key']:
+                if self.df['job_key'].isin([item[3]]).any():
                     logging.debug("duplicate job key:%s" % item[3])
                     continue
                 try:
@@ -195,8 +197,11 @@ class Indeed(object):
                 if np.mod(zip_ind, 2) == 0:
                     end_bool, count = self.end_url_loop()
                     if end_bool:
-                        self.df = self.df.dropna(subset=['summary'])
+                        self.df = self.df.dropna(subset=['summary']).drop_duplicates(subset=['job_key'])
                         return
+                    elif self.delta_zero >= 20 and self.radius >= 2000:
+                        # early return b/c not finding enough matches
+                            return
                     else:
                         prev_count = self.compute_radius(count, prev_count)
                         logging.debug("index: %i" % ind)
