@@ -674,7 +674,9 @@ def compute_max_df(type_, num_samp):
 def to_sql():
     sess_dict = get_sess()
 
-    reference = pd.DataFrame({'keyword':sess_dict['kws'],
+    norm_keywords = indeed_scrape.Indeed._split_on_spaces(sess_dict['kws'])
+    norm_keywords = " ".join(norm_keywords)
+    reference = pd.DataFrame({'keyword':norm_keywords,
                               'df_file':sess_dict['df_file']
                              }, index=[0])
 
