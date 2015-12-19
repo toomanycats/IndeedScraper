@@ -682,7 +682,7 @@ def to_sql():
 
     conn_string = "mysql://%s:%s@%s/indeed" %(sql_username, sql_password, mysql_ip)
     sql_engine = sqlalchemy.create_engine(conn_string)
-    reference.to_sql(name='test', con=sql_engine, if_exists='append', index=False)
+    reference.to_sql(name='data', con=sql_engine, if_exists='append', index=False)
 
 def load_csv():
     sess_dict = get_sess()
