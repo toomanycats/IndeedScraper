@@ -3,6 +3,7 @@
 # Author : Daniel Cuneo
 # Creation Date : 11-21-2015
 ######################################
+import sqlalchemy
 import uuid #for random strints
 import subprocess
 import time
@@ -19,6 +20,11 @@ import os
 import numpy as np
 import json
 import pickle
+import ConfigParser
+
+repo_dir = os.getenv("OPENSHIFT_REPO_DIR")
+if repo_dir is None:
+    repo_dir = os.getenv("PWD")
 
 data_dir = os.getenv('OPENSHIFT_DATA_DIR')
 if data_dir is None:
@@ -27,6 +33,10 @@ if data_dir is None:
 log_dir = os.getenv('OPENSHIFT_LOG_DIR')
 if log_dir is None:
     log_dir = os.getenv("PWD")
+
+config_parser = ConfigParser.RawConfigParser()
+config_parser.read(self.config_path)
+config_path = os.path.join(repo_dir, "tokens.cfg")
 
 logfile = os.path.join(log_dir, 'python.log')
 logging.basicConfig(filename=logfile, level=logging.INFO)
@@ -441,7 +451,7 @@ def get_data():
     logging.info("starting get_data: %s" % time.strftime("%H:%M:%S"))
 
     type_ = request.form['type_']
-    kws = request.form['kw']
+    kws = request.form['kw'].lower()
     area = request.form['area']
     num_urls = int(request.form['num'])
 
@@ -543,6 +553,7 @@ def run_analysis():
 
     count, kw = ind.vectorizer(df['summary'], n_min=2, n_max=2, max_features=40,
             max_df=compute_max_df(sess_dict['type_'], sess_dict['num_urls']))
+
     script, div = get_plot_comp(kw, count, df, 'kws')
 
 
@@ -650,6 +661,21 @@ def compute_max_df(type_, num_samp):
 
     else:
         raise ValueError, "num samples has an error"
+
+def to_sql():
+    sess_dict = get_sess()
+    df = load_csv(sess_dict['df_file'])
+
+    reference = pd.DataFrame({'input':sess_dict['kws'],
+                              'df_file':sess_dict['df_file']
+                             })
+
+    id =  config_parser.get("sql", "id")
+    passwd = config_parser.get("sql", "passwd")
+
+    conn_string = "mysql://%s:%s@127.0.0.1/test" %(id, passwd)
+    sql_engine = sqlalchemy.create_engine(conn_string)
+    reference.to_sql(con=sql_engine, if_exists='append')
 
 def load_csv():
     sess_dict = get_sess()
