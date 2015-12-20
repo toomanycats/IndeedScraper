@@ -260,23 +260,16 @@ input_template = jinja2.Template('''
 
 <body>
         <center><img src=static/dir_media_300.png alt="Sample Keyword Output" style="width:1200px;height:425px;"></center><br>
-        <center><h1>Indeed Job Posting Scraper</h1></center>
-        <p> The main purpose of this app is to:</p>
-            <li>Provide statistics on the keywords used in job postings</li>
-            <li>Group the cities they are from</li>
-            <li>Report the job titles searched</li>
-        <p>There's no comprehensive analysis done for you at this point, so be creative
-        with what you learn here.</p>
+        <center><h1>Keyword Counter</h1></center>
+        <p>When hunting for jobs it's important to have keywords in your resume on
+        on your social media, that alert automated talent management to your presence.</p>
 
 
         <form action="/get_data/"  method="POST">
 
             <p>The scraper can use the "in title" mode or the "keyword" mode,
-            of indeed's search engine. Care has been taken not to allow
-            duplicate job postings. <strong>Note:</strong>Keyword searching is
-            typically much faster.</p>
 
-            <p>Enter your keywords here <input type="text" name="kw" placeholder="data science"></p>
+            <p>Enter your keywords here <input type="text" name="kw" placeholder="data science" spellcheck="true"></p>
 
             <p>The number of job postings to scrape.</p>
 
