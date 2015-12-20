@@ -46,11 +46,10 @@ class Indeed(object):
         self.query = None
         self.title = None
         self.locations = None
-        self.radius = 1
 
     def _decode(self, string):
         try:
-            string = string.decode("utf-8", "ignore").encode("utf-8", "ignore")
+            string = string.decode("unicode_escape").encode("ascii", "ignore")
             return string
 
         except Exception:
@@ -77,18 +76,17 @@ class Indeed(object):
         chan = '&chnl=%(channel_name)s'
         loc = '&l=%(loc)s'
         query = self.format_query()
-        start = '&start=0'
-        frm = '&fromage=600'
-        limit = '&limit=100'
+        start = '&start=%(start)s'
+        frm = '&fromage=360'
+        limit = '&limit=200'
         site = '&st=jobsite'
         format = '&format=json'
         filter = '&filter=1'
         country = '&co=us'
-        radius = '&radius=%(radius)s'
         suffix = '&userip=1.2.3.4&useragent=Mozilla/%%2F4.0%%28Firefox%%29&v=2'
 
         self.api = prefix + pub + chan + loc + query + start + frm + limit + \
-                   site + format + country + radius + filter + suffix
+                   site + format + country + filter + suffix
 
         logging.debug("api string: %s" % self.api)
 
@@ -121,98 +119,39 @@ class Indeed(object):
         self.pub_id = config_parser.get("id", "pub_id")
         self.channel_name = config_parser.get("channel", "channel_name")
 
-    def load_zipcodes(self):
-        '''loads the zip code file and returnes a list of zip codes'''
-        self.df_zip = pd.read_csv(self.zip_code_file, dtype=str)
-        self.df_zip.dropna(inplace=True, how='all')
+    def get_data(self, ind, start):
+        data, num_res, end = self.get_url(start)
+        num_res = int(num_res)
+        end = int(end)
 
-    def end_url_loop(self, zip_ind):
-        df = self.df.dropna(subset=['summary']).drop_duplicates(subset=['job_key'])
-        count = df.url.count()
-        logging.debug("df count: %i" % count)
+        for item in data:
+            try:
+                content, full_text = self.parse_content(item[0])
+                self.df.loc[ind, 'url'] = item[0]
+                self.df.loc[ind, 'city'] = item[1]
+                self.df.loc[ind, 'jobtitle'] = item[2]
+                self.df.loc[ind, 'job_key'] = item[3]
+                self.df.loc[ind, 'summary'] = content
+                self.df.loc[ind, 'summary_stem'] = self.stemmer_(content)
+                #self.df.loc[ind, 'full_text'] = grammar.main(full_text)
+                ind += 1
 
-        if count  >= self.num_urls:
-            logging.info("ending reached count")
-            return True, count
+                logging.debug("index: %i" % ind)
 
+            except:
+                pass
+
+        if end < num_res and end < self.num_urls:
+            self.get_data(ind, end)
         else:
-            return False, count
+            return
 
-    def count_dupes(self, count, prev_count, num_dupes):
-        delta_cnt = count - prev_count
-
-        if  delta_cnt == 0:
-            num_dupes += 1
-
-        return num_dupes
-
-    def get_city_url_content_stem(self):
-        ind = 0
-        prev_count = 0
-        count = 0
-        num_dupes = 0
-
-        for zip_ind, zipcode in enumerate(self.locations):
-            logging.debug("zip ind: %i" % zip_ind)
-
-            if count == 0 and zip_ind == self.zip_code_error_limit:
-                error_string = "Your query isnt' matching."
-                raise Exception, error_string
-
-            prev_count = count
-
-            # periodic check
-            if np.mod(zip_ind, 10) == 0:
-                end_bool, count = self.end_url_loop(zip_ind)
-                if end_bool:
-                    self.df = self.df.dropna(subset=['summary'])
-                    # cheap insurance
-                    self.df.drop_duplicates(subset=['job_key'], inplace=True)
-                    return
-                else:
-                    num_dupes = self.count_dupes(count, prev_count, num_dupes)
-                    if num_dupes > 100:
-                        logging.info("num dupes reached:%i" % num_dupes)
-                        return
-
-            url_city_title = self.get_url(zipcode)
-            if url_city_title is None:
-                logging.debug("url: None found")
-                continue
-
-            for item in url_city_title:
-                if item[4] == 0:
-                    continue
-                # avoid dupes
-                if self.df['job_key'].isin([item[3]]).any():
-                    logging.debug("duplicate job key:%s" % item[3])
-                    continue
-                try:
-                    content, full_text = self.parse_content(item[0])
-                    self.df.loc[ind, 'url'] = item[0]
-                    self.df.loc[ind, 'city'] = item[1]
-                    self.df.loc[ind, 'jobtitle'] = item[2]
-                    self.df.loc[ind, 'job_key'] = item[3]
-                    self.df.loc[ind, 'summary'] = content
-                    self.df.loc[ind, 'summary_stem'] = self.stemmer_(content)
-                    #self.df.loc[ind, 'full_text'] = grammar.main(full_text)
-                    ind += 1
-
-                    logging.debug("index: %i" % ind)
-                    logging.debug("count: %i" % count)
-                    logging.debug("index increase: %i" % ind)
-
-                except:
-                    pass
-
-
-    def get_url(self, location):
-
+    def get_url(self, start):
         api = self.api %{'pub_id':self.pub_id,
-                         'loc':location,
+                         'loc':'nationwide',
                          'channel_name':self.channel_name,
                          'query':self.format_keywords(self.query),
-                         'radius':self.radius
+                         'start':start
                         }
 
         logging.debug("full api:%s" % api)
@@ -222,8 +161,7 @@ class Indeed(object):
             data = json.loads(response.read())
             response.close()
 
-            urls = []
-            urls.extend([(item['url'], item['city'], item['jobtitle'], item['jobkey'], data['totalResults'])  for item in data['results']])
+            results = [(item['url'], item['city'], item['jobtitle'], item['jobkey'])  for item in data['results']]
 
         except urllib2.HTTPError, err:
             logging.debug("get url: %s" % err)
@@ -233,7 +171,7 @@ class Indeed(object):
             logging.debug("get url: %s" % err)
             return None
 
-        return urls
+        return results, data['totalResults'], data['end']
 
     def get_content(self, url):
         if url is None:
@@ -285,6 +223,9 @@ class Indeed(object):
 
             content = self._decode(content)
             soup = BeautifulSoup(content, 'html.parser')
+            # in case li fails
+            for obj in soup(['script', 'style']):
+                obj.extract()
 
             summary = soup.find('span', {'summary'})
             skills = summary.find_all("li")
@@ -328,21 +269,6 @@ class Indeed(object):
 
         return zips.tolist()
 
-    def handle_locations(self):
-        '''main method for setting up the locations for the API call'''
-        locations = []
-        self.load_zipcodes()
-        for regex in self.add_loc: #list of regex
-            for loc in self.parse_zipcode_beg(regex):
-                locations.append(loc)
-
-        other_loc = self.df_zip['Postal Code'].sample(self.num_samp).tolist()
-        locations.extend(other_loc)
-        locations = np.unique(locations)
-        np.random.shuffle(locations)
-
-        return locations
-
     def save_data(self):
 
         self.df.drop_duplicates(subset=['url'], inplace=True)
@@ -353,18 +279,10 @@ class Indeed(object):
                         encoding='utf-8')
 
     def main(self):
-        '''Run all the steps to collect data and produce a bi-gram
-        bar plot of the keyword counts. Terminating the program execution
-        with control C, will save whatever data was collected. To make this
-        save-on-quit feature more usable, the locations are shuffled prior to
-        getting the content.'''
-
         self.load_config()
         self.build_api_string()
         self.add_stop_words()
-        self.locations = self.handle_locations()
-
-        self.get_city_url_content_stem()
+        self.get_data(ind=0, start=0)
 
     def vectorizer(self, corpus, max_features=200, max_df=0.8, min_df=0.1, n_min=2, n_max=3):
         vectorizer = CountVectorizer(max_features=max_features,

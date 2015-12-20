@@ -48,7 +48,7 @@ if log_dir is None:
 
 
 logfile = os.path.join(log_dir, 'python.log')
-logging.basicConfig(filename=logfile, level=logging.INFO)
+logging.basicConfig(filename=logfile, level=logging.DEBUG)
 
 session_file = os.path.join(data_dir, 'df_dir', 'session_file.pck')
 
@@ -278,32 +278,13 @@ input_template = jinja2.Template('''
 
             <p>Enter your keywords here <input type="text" name="kw" placeholder="data science"></p>
 
-            <p>Depending on how many posting you enter, it can take a long time
-            to complete. I suggest starting low and working up.</p>
-            <li>titles typically max out less than 50 unique</li>
-            <li>keywords will go generally go higher</li>
-
             <p>The number of job postings to scrape.</p>
 
             <p><select name="num">
                 <option value=10>10</option>
-                <option value=25>25</option>
                 <option value=50>50</option>
                 <option value=100>100</option>
-                </select>
-            </p>
-
-            <p>The search area can be West, East, or both coasts. I'll add mid
-            west very soon.</p>
-
-            <p>A random sampling of 1000 zip codes is also
-            included to round out the results. This maynot actually be
-            helpful.</p>
-
-            <p><select name="area">
-                <option value='wc'>West Coast</option>
-                <option value='ec'>East Coast</option>
-                <option value='both'>Both Coasts</option>
+                <option value=200>200</option>
                 </select>
             </p>
 
@@ -470,7 +451,6 @@ def get_data():
 
     type_ = request.form['type_']
     kws = request.form['kw'].lower()
-    area = request.form['area']
     num_urls = int(request.form['num'])
 
     df_file = os.path.join(data_dir,  'df_dir', mk_random_string())
@@ -480,7 +460,6 @@ def get_data():
                  'kws':kws,
                  'num_urls':num_urls,
                  'df_file':df_file,
-                 'area':area
                  })
 
     logging.info("df file path: %s" % df_file)
@@ -554,22 +533,11 @@ def run_analysis():
     ind.query = sess_dict['kws']
     ind.stop_words = stop_words
     ind.num_urls = int(sess_dict['num_urls'])
-    ind.zip_code_error_limit = 1600
-    ind.num_samp = 0
 
-    if sess_dict['area'] == 'wc':
-        regex = ['^(94)', '^(98)', '^(97)', '^(90)','^(92)']
-    elif sess_dict['area'] == 'ec':
-        regex = ['^(10)', '^(02)', '^(07)', '^(20)']
-    elif sess_dict['area'] == 'both':
-        regex = ['^(94)', '^(98)', '^(97)', '^(90)','^(92)', '^(10)', '^(02)',
-                '^(07)', '^(20)' ]
-    else:
-        raise Exception, "area not understood"
-
-    ind.add_loc = regex
     ind.main()
     df = ind.df
+    # cheap insurance
+    df = df.dropna(how='all').drop_duplicates('job_key')
 
     # save df for additional analysis
     save_to_csv(df)
