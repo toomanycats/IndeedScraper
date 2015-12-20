@@ -219,9 +219,9 @@ input_template = jinja2.Template('''
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>indeed job posting skill scraper</title>
+    <title>keyword counter optimizer</title>
     <meta charset="UTF-8">
-    <meta name="description" content="Provide statistics on the keywords used in job postings Group the cities they are from Report the job titles searched." />
+    <meta name="description" content="Optimize Your Resume and Social Media Keywords, Provide statistics on the keywords used in job postings Group the cities they are from Report the job titles searched." />
     <meata name="robots" content="index, follow" />
     <style>
     p {
@@ -233,9 +233,7 @@ input_template = jinja2.Template('''
         padding-left: 8cm;
         font-size:150%
        }
-      </style>
 
-    <style>
     html {
             background: url(static/background.jpg) no-repeat center center fixed;
             -webkit-background-size: cover;
@@ -244,9 +242,7 @@ input_template = jinja2.Template('''
             background-size: cover;
             color: #e5ffff;
          }
-    </style>
 
-    <style>
     body {
             background: url('static/med_dir_300.png') no-repeat fixed;
             -webkit-background-size: contain;
@@ -260,18 +256,13 @@ input_template = jinja2.Template('''
 
 <body>
         <center><img src=static/dir_media_300.png alt="Sample Keyword Output" style="width:1200px;height:425px;"></center><br>
-        <center><h1>Keyword Counter</h1></center>
-        <p>When hunting for jobs it's important to have keywords in your resume on
-        on your social media, that alert automated talent management to your presence.</p>
-
+        <center><h1>Optimize Your Keywords for Resumes and LinkedIn</h1></center>
 
         <form action="/get_data/"  method="POST">
 
-            <p>The scraper can use the "in title" mode or the "keyword" mode,
+        <p>Enter your keywords here <input type="text" name="kw" placeholder="data science" spellcheck="true"></p>
 
-            <p>Enter your keywords here <input type="text" name="kw" placeholder="data science" spellcheck="true"></p>
-
-            <p>The number of job postings to scrape.</p>
+            <p>The number of job postings to examine</p>
 
             <p><select name="num">
                 <option value=10>10</option>
@@ -322,7 +313,7 @@ output_template = jinja2.Template("""
 <!DOCTYPE html>
 <html lang="en-US">
 <head>
-    <title>indeed skill scraper results</title>
+    <title>keyword counter results</title>
     <meta charset="UTF-8">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 
