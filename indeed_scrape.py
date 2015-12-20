@@ -41,7 +41,7 @@ class Indeed(object):
         self.stop_words = None
         self.num_samp = 1000
         self.zip_code_file = os.path.join(repo_dir, 'us_postal_codes.csv')
-        self.df = pd.DataFrame(columns=['url', 'job_key', 'summary', 'summary_stem', 'city', 'zipcode', 'jobtitle'])
+        self.df = pd.DataFrame(columns=['url', 'job_key', 'summary', 'summary_stem', 'city', 'jobtitle'])
         self.config_path = os.path.join(repo_dir, "tokens.cfg")
         self.query = None
         self.title = None
@@ -249,16 +249,6 @@ class Indeed(object):
             logging.debug("soup didn't parse anything")
             logging.error(err)
             return None
-
-    def parse_zipcode_beg(self, regex):
-        '''locs are zipcode prefixes, like:902, provided as string'''
-        pat = '^%s' % regex
-        obj = re.compile(pat)
-
-        self.df_zip['include'] = self.df_zip['Postal Code'].apply(lambda x: 1 if obj.match(x) else 0)
-        zips = self.df_zip[self.df_zip['include']==1]['Postal Code']
-
-        return zips.tolist()
 
     def save_data(self):
 

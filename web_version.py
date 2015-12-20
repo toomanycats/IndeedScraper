@@ -48,7 +48,7 @@ if log_dir is None:
 
 
 logfile = os.path.join(log_dir, 'python.log')
-logging.basicConfig(filename=logfile, level=logging.DEBUG)
+logging.basicConfig(filename=logfile, level=logging.INFO)
 
 session_file = os.path.join(data_dir, 'df_dir', 'session_file.pck')
 
@@ -529,7 +529,7 @@ def run_analysis():
     ind.main()
     df = ind.df
     # cheap insurance
-    df = df.dropna(subset=['summary', 'url']).drop_duplicates('job_key')
+    df = df.dropna('summary').drop_duplicates('job_key')
 
     # save df for additional analysis
     save_to_csv(df)
