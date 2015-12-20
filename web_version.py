@@ -341,8 +341,8 @@ output_template = jinja2.Template("""
 ></script>
 <body>
 
-    <h1>Keyword Frequency of Bigrams</h1>
-    <div id="chart">Collecting data could take several minutes...</div>
+    <h1>Frequency of Keyword Pairs</h1>
+    <div id="chart">Collecting data...</div>
 
     <br><br>
 
@@ -502,8 +502,16 @@ def plot_cities():
     num_posts = df.shape[0]
 
     df_city = pd.DataFrame({'kw':cities, 'count':count})
+    df_city.sort('count', ascending=False, inplace=True)
+    df_city.reset_index(inplace=True)
 
-    p = plot_fig(df_city, num_posts, 'Posts Per City in the Analysis.')
+    n = df_city.shape[0]
+    if n > 20:
+        end = 20
+    else:
+        end = n
+
+    p = plot_fig(df_city.loc[0:end,:], num_posts, 'Posts Per City in the Analysis:Top 20')
     script, div = components(p)
 
     page = cities_template.render(div=div, script=script)
