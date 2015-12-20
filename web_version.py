@@ -20,6 +20,7 @@ import os
 import numpy as np
 import json
 import pickle
+import pdb
 
 sql_username = os.getenv("OPENSHIFT_MYSQL_DB_USERNAME")
 if sql_username is None:
@@ -278,10 +279,19 @@ input_template = jinja2.Template('''
             <p>Enter your keywords here <input type="text" name="kw" placeholder="data science"></p>
 
             <p>Depending on how many posting you enter, it can take a long time
-            to complete. Start with the default then go higher.</p>
+            to complete. I suggest starting low and working up.</p>
+            <li>titles typically max out less than 50 unique</li>
+            <li>keywords will go generally go higher</li>
 
-            <p>The number of job postings to scrape.
-            <input type="text" name="num" value="50"></p>
+            <p>The number of job postings to scrape.</p>
+
+            <p><select name="num">
+                <option value=10>10</option>
+                <option value=25>25</option>
+                <option value=50>50</option>
+                <option value=100>100</option>
+                </select>
+            </p>
 
             <p>The search area can be West, East, or both coasts. I'll add mid
             west very soon.</p>
@@ -463,23 +473,19 @@ def get_data():
     area = request.form['area']
     num_urls = int(request.form['num'])
 
-    key = {'ec':'^0', 'wc':'^9', 'both':'^[09]'}
-    zips = key[area]
-
     df_file = os.path.join(data_dir,  'df_dir', mk_random_string())
     logging.info("session file path: %s" % df_file)
 
     put_to_sess({'type_':type_,
-                    'kws':kws,
-                    'zips':zips,
-                    'num_urls':num_urls,
-                    'df_file':df_file
-                    })
+                 'kws':kws,
+                 'num_urls':num_urls,
+                 'df_file':df_file,
+                 'area':area
+                 })
 
     logging.info("df file path: %s" % df_file)
     logging.info("type:%s" %  type_)
     logging.info("key words:%s" % kws)
-    logging.info("zipcode regex:%s" % zips)
     logging.info("number urls:%s" % num_urls)
 
     html = output_template.render()
@@ -543,17 +549,26 @@ def plot_cities():
 @app.route('/run_analysis/')
 def run_analysis():
     sess_dict = get_sess()
-    #pdb.set_trace()
     logging.info("starting run_analysis %s" % time.strftime("%H:%M:%S") )
     ind = indeed_scrape.Indeed(query_type=sess_dict['type_'])
     ind.query = sess_dict['kws']
     ind.stop_words = stop_words
-    ind.add_loc = sess_dict['zips']
-    ind.num_samp = 0 # num additional random zipcodes
     ind.num_urls = int(sess_dict['num_urls'])
-    ind.zip_code_error_limit = 2000
-    ind.main()
+    ind.zip_code_error_limit = 1600
+    ind.num_samp = 0
 
+    if sess_dict['area'] == 'wc':
+        regex = ['^(94)', '^(98)', '^(97)', '^(90)','^(92)']
+    elif sess_dict['area'] == 'ec':
+        regex = ['^(10)', '^(02)', '^(07)', '^(20)']
+    elif sess_dict['area'] == 'both':
+        regex = ['^(94)', '^(98)', '^(97)', '^(90)','^(92)', '^(10)', '^(02)',
+                '^(07)', '^(20)' ]
+    else:
+        raise Exception, "area not understood"
+
+    ind.add_loc = regex
+    ind.main()
     df = ind.df
 
     # save df for additional analysis

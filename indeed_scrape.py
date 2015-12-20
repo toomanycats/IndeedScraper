@@ -35,7 +35,7 @@ class Indeed(object):
     def __init__(self, query_type):
         self.query_type = query_type
         self.delta_zero = 0
-        self.zip_code_error_limit = 1000
+        self.zip_code_error_limit = 300
         self.num_urls = 10
         self.add_loc = None
         self.stop_words = None
@@ -78,17 +78,17 @@ class Indeed(object):
         loc = '&l=%(loc)s'
         query = self.format_query()
         start = '&start=0'
-        frm = '&fromage=60'
-        limit = '&limit=25'
+        frm = '&fromage=600'
+        limit = '&limit=100'
         site = '&st=jobsite'
         format = '&format=json'
-        sort = '&sort=0'
+        filter = '&filter=1'
         country = '&co=us'
         radius = '&radius=%(radius)s'
         suffix = '&userip=1.2.3.4&useragent=Mozilla/%%2F4.0%%28Firefox%%29&v=2'
 
         self.api = prefix + pub + chan + loc + query + start + frm + limit + \
-                   site + format + country + sort + radius + suffix
+                   site + format + country + radius + filter + suffix
 
         logging.debug("api string: %s" % self.api)
 
@@ -125,48 +125,55 @@ class Indeed(object):
         '''loads the zip code file and returnes a list of zip codes'''
         self.df_zip = pd.read_csv(self.zip_code_file, dtype=str)
         self.df_zip.dropna(inplace=True, how='all')
-        locations = self.df_zip['Postal Code'].dropna(how='any')
 
-        return locations
-
-    def end_url_loop(self):
+    def end_url_loop(self, zip_ind):
         df = self.df.dropna(subset=['summary']).drop_duplicates(subset=['job_key'])
         count = df.url.count()
         logging.debug("df count: %i" % count)
 
         if count  >= self.num_urls:
+            logging.info("ending reached count")
             return True, count
+
         else:
             return False, count
 
-    def compute_radius(self, count, prev_count):
+    def count_dupes(self, count, prev_count, num_dupes):
         delta_cnt = count - prev_count
 
         if  delta_cnt == 0:
-            self.radius += 20
-            self.delta_zero += 1
+            num_dupes += 1
 
-        elif delta_cnt  > 2 and self.radius > 10:
-            self.radius = int(self.radius / 10) + 1
-
-        else:
-            pass
-
-        prev_count = count
-        logging.debug("radius:%i" % self.radius)
-
-        return prev_count
+        return num_dupes
 
     def get_city_url_content_stem(self):
         ind = 0
         prev_count = 0
         count = 0
+        num_dupes = 0
 
         for zip_ind, zipcode in enumerate(self.locations):
             logging.debug("zip ind: %i" % zip_ind)
+
             if count == 0 and zip_ind == self.zip_code_error_limit:
                 error_string = "Your query isnt' matching."
                 raise Exception, error_string
+
+            prev_count = count
+
+            # periodic check
+            if np.mod(zip_ind, 10) == 0:
+                end_bool, count = self.end_url_loop(zip_ind)
+                if end_bool:
+                    self.df = self.df.dropna(subset=['summary'])
+                    # cheap insurance
+                    self.df.drop_duplicates(subset=['job_key'], inplace=True)
+                    return
+                else:
+                    num_dupes = self.count_dupes(count, prev_count, num_dupes)
+                    if num_dupes > 100:
+                        logging.info("num dupes reached:%i" % num_dupes)
+                        return
 
             url_city_title = self.get_url(zipcode)
             if url_city_title is None:
@@ -174,13 +181,14 @@ class Indeed(object):
                 continue
 
             for item in url_city_title:
+                if item[4] == 0:
+                    continue
                 # avoid dupes
                 if self.df['job_key'].isin([item[3]]).any():
                     logging.debug("duplicate job key:%s" % item[3])
                     continue
                 try:
                     content, full_text = self.parse_content(item[0])
-                    self.df.loc[ind, 'zipcode'] = str(zipcode)
                     self.df.loc[ind, 'url'] = item[0]
                     self.df.loc[ind, 'city'] = item[1]
                     self.df.loc[ind, 'jobtitle'] = item[2]
@@ -189,26 +197,14 @@ class Indeed(object):
                     self.df.loc[ind, 'summary_stem'] = self.stemmer_(content)
                     #self.df.loc[ind, 'full_text'] = grammar.main(full_text)
                     ind += 1
+
+                    logging.debug("index: %i" % ind)
+                    logging.debug("count: %i" % count)
                     logging.debug("index increase: %i" % ind)
+
                 except:
                     pass
 
-                # periodic check
-                if np.mod(zip_ind, 2) == 0:
-                    end_bool, count = self.end_url_loop()
-                    if end_bool:
-                        self.df = self.df.dropna(subset=['summary']).drop_duplicates(subset=['job_key'])
-                        return
-                    elif self.delta_zero >= 20 and self.radius >= 2000:
-                        # early return b/c not finding enough matches
-                            return
-                    else:
-                        prev_count = self.compute_radius(count, prev_count)
-                        logging.debug("index: %i" % ind)
-                        logging.debug("count: %i" % prev_count)
-
-                else:
-                    continue
 
     def get_url(self, location):
 
@@ -227,7 +223,7 @@ class Indeed(object):
             response.close()
 
             urls = []
-            urls.extend([ (item['url'], item['city'], item['jobtitle'], item['jobkey']) for item in data['results']])
+            urls.extend([(item['url'], item['city'], item['jobtitle'], item['jobkey'], data['totalResults'])  for item in data['results']])
 
         except urllib2.HTTPError, err:
             logging.debug("get url: %s" % err)
@@ -291,24 +287,40 @@ class Indeed(object):
             soup = BeautifulSoup(content, 'html.parser')
 
             summary = soup.find('span', {'summary'})
-
             skills = summary.find_all("li")
+
             output = [item.get_text() for item in skills]
 
-            if len(output) == 0:
-                return None, None
-            else:
+            if len(output) > 0:
                 parsed = " ".join(output).replace('\n', '')
 
-                return parsed, summary.get_text()
+            else:
+                # has a summary class but no li
+                logging.debug("soup didn't parse summary li:%s" % url)
+                output = summary.get_text()
+                output = [item for item in output.split("\n")]
+
+                if len(output) > 0:
+                    parsed = " ".join(output).replace("\n", "")
+
+                else:
+                    output = soup.find_all("li")
+                    output = [item.get_text() for item in output]
+                    if len(output) > 0:
+                        parsed = " ".join(output).replace("\n", "")
+                    else:
+                        logging.debug("soup didn't parse anything")
+                        return None, None
+
+            return parsed, summary.get_text()
 
         except Exception, err:
             logging.error(err)
             return None
 
-    def parse_zipcode_beg(self):
+    def parse_zipcode_beg(self, regex):
         '''locs are zipcode prefixes, like:902, provided as string'''
-        pat = '^%s' % self.add_loc
+        pat = '^%s' % regex
         obj = re.compile(pat)
 
         self.df_zip['include'] = self.df_zip['Postal Code'].apply(lambda x: 1 if obj.match(x) else 0)
@@ -318,16 +330,16 @@ class Indeed(object):
 
     def handle_locations(self):
         '''main method for setting up the locations for the API call'''
-        locations = self.load_zipcodes()
-        locations = locations.sample(self.num_samp).tolist()
-        if self.add_loc is not None:
-            for loc in self.parse_zipcode_beg():
+        locations = []
+        self.load_zipcodes()
+        for regex in self.add_loc: #list of regex
+            for loc in self.parse_zipcode_beg(regex):
                 locations.append(loc)
 
+        other_loc = self.df_zip['Postal Code'].sample(self.num_samp).tolist()
+        locations.extend(other_loc)
         locations = np.unique(locations)
         np.random.shuffle(locations)
-        # if we stop the program and take the avaiable output we'd like it to
-        # be radomly sampled
 
         return locations
 
@@ -350,9 +362,7 @@ class Indeed(object):
         self.load_config()
         self.build_api_string()
         self.add_stop_words()
-        # allow the user to specify locations
-        if self.locations is None:
-            self.locations = self.handle_locations()
+        self.locations = self.handle_locations()
 
         self.get_city_url_content_stem()
 
