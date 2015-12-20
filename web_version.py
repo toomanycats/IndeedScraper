@@ -446,7 +446,8 @@ def get_data():
                  'df_file':df_file,
                  })
 
-    logging.info("df file path: %s" % df_file)
+    logging.info("running get_data:%s" % time.strftime("%d-%m-%Y:%H:%M:%S"))
+    logging.info("df file path: %s :%s" % (df_file, time.strftime("%d-%m-%Y:%H:%M:%S")))
     logging.info("type:%s" %  type_)
     logging.info("key words:%s" % kws)
     logging.info("number urls:%s" % num_urls)
@@ -529,7 +530,7 @@ def run_analysis():
     ind.main()
     df = ind.df
     # cheap insurance
-    df = df.dropna('summary').drop_duplicates('job_key')
+    df = df.dropna(subset=['summary']).drop_duplicates('job_key')
 
     # save df for additional analysis
     save_to_csv(df)
