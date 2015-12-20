@@ -255,7 +255,7 @@ input_template = jinja2.Template('''
 </head>
 
 <body>
-        <center><img src=static/dir_media_300.png alt="Sample Keyword Output" style="width:1200px;height:425px;"></center><br>
+        <center><img src=static/dir_marketing.png alt="Sample Keyword Output" style="width:1200px;height:425px;"></center><br>
         <center><h1>Optimize Your Keywords for Resumes and LinkedIn</h1></center>
 
         <form action="/get_data/"  method="POST">
