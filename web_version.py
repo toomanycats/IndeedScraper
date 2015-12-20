@@ -529,7 +529,7 @@ def run_analysis():
     ind.main()
     df = ind.df
     # cheap insurance
-    df = df.dropna(how='all').drop_duplicates('job_key')
+    df = df.dropna(subset=['summary', 'url']).drop_duplicates('job_key')
 
     # save df for additional analysis
     save_to_csv(df)
