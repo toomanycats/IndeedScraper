@@ -3,7 +3,7 @@
 # Author : Daniel Cuneo
 # Creation Date : 11-05-2015
 ######################################
-#import GrammarParser
+import GrammarParser
 import codecs
 import re
 import ConfigParser
@@ -20,7 +20,7 @@ import re
 import os
 import pdb
 
-#grammar = GrammarParser.GrammarParser()
+grammar = GrammarParser.GrammarParser()
 
 toker = tokenize.word_tokenize
 stemmer = stem.SnowballStemmer('english')
@@ -126,14 +126,13 @@ class Indeed(object):
 
         for item in data:
             try:
-                content, full_text = self.parse_content(item[0])
+                content = self.parse_content(item[0])
                 self.df.loc[ind, 'url'] = item[0]
                 self.df.loc[ind, 'city'] = item[1]
                 self.df.loc[ind, 'jobtitle'] = item[2]
                 self.df.loc[ind, 'job_key'] = item[3]
                 self.df.loc[ind, 'summary'] = content
                 self.df.loc[ind, 'summary_stem'] = self.stemmer_(content)
-                #self.df.loc[ind, 'full_text'] = grammar.main(full_text)
                 ind += 1
 
                 logging.debug("index: %i" % ind)
@@ -224,7 +223,7 @@ class Indeed(object):
             content = self._decode(content)
             soup = BeautifulSoup(content, 'html.parser')
             # in case li fails
-            for obj in soup(['script', 'style']):
+            for obj in soup(['script', 'style', 'meta', 'a']):
                 obj.extract()
 
             summary = soup.find('span', {'summary'})
@@ -236,26 +235,18 @@ class Indeed(object):
                 parsed = " ".join(output).replace('\n', '')
 
             else:
-                # has a summary class but no li
+                # fall back to grammar method on full text
                 logging.debug("soup didn't parse summary li:%s" % url)
-                output = summary.get_text()
+                output = soup.get_text()
                 output = [item for item in output.split("\n")]
 
-                if len(output) > 0:
-                    parsed = " ".join(output).replace("\n", "")
+                parsed = " ".join(output).replace("\n", "")
+                parsed = grammar.main(parsed)
 
-                else:
-                    output = soup.find_all("li")
-                    output = [item.get_text() for item in output]
-                    if len(output) > 0:
-                        parsed = " ".join(output).replace("\n", "")
-                    else:
-                        logging.debug("soup didn't parse anything")
-                        return None, None
-
-            return parsed, summary.get_text()
+            return parsed
 
         except Exception, err:
+            logging.debug("soup didn't parse anything")
             logging.error(err)
             return None
 
@@ -343,7 +334,6 @@ class Indeed(object):
             return np.unique(src_range_tot)
 
     def build_corpus_from_sent(self, keyword):
-        #pdb.set_trace()
         documents = self.df['summary'].apply(lambda x: x.decode("utf-8", "ignore"))
         corpus = []
         for doc in documents:

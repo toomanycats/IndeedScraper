@@ -3,8 +3,8 @@ from nltk.corpus import stopwords
 import nltk
 
 stopwords = stopwords.words('english')
-lemmatizer = nltk.WordNetLemmatizer()
-stemmer_alt = nltk.stem.porter.PorterStemmer()
+#lemmatizer = nltk.WordNetLemmatizer()
+#stemmer_alt = nltk.stem.porter.PorterStemmer()
 
 # Used when tokenizing words
 sentence_re = r'''(?x)      # set flag to allow verbose regexps
@@ -39,8 +39,8 @@ class GrammarParser(object):
     def normalise(self, word):
         """Normalises words to lowercase and stems and lemmatizes it."""
         word = word.lower()
-        word = stemmer_alt.stem_word(word)
-        word = lemmatizer.lemmatize(word)
+        #word = stemmer_alt.stem_word(word)
+        #word = lemmatizer.lemmatize(word)
 
         return word
 
