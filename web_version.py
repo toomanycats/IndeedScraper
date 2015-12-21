@@ -129,11 +129,9 @@ title_template = jinja2.Template('''
     <p>The table below is a list of the job titles that formed the search
     results. This table can provide some insights:</p>
 
-    <p>Keyword Search: </p>
-    <li>More unique titles is a measure of how your keywords track across domains.</li>
-
-    <p>Title Search:</p>
-    <li>More unique titles is a measure of how your job role tracks across domains.</li>
+    <p>More unique titles is a measure of how your keywords/title search terms, track across domains.</p>
+    <li> A zero count for a title, means that the job posting(s) were not analyzed
+    due to formatting concerns. However, the title was found in the search.</li>
 
     <table>
     <tr>
