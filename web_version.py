@@ -56,7 +56,7 @@ grammar_template = jinja2.Template('''
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>grammar</title>
+    <title>analysis of full job posting text</title>
     <meta charset="UTF-8">
     <link href="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.css"
           rel="stylesheet" type="text/css">
@@ -65,6 +65,8 @@ grammar_template = jinja2.Template('''
 </head>
 
 <body>
+<h1>General Language Analysis of the Full Text of All Job Postings</h1>
+
 {{ div }}
 {{ script }}
 </body>
@@ -75,7 +77,7 @@ cities_template = jinja2.Template('''
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>cities</title>
+    <title>Count of job Postings per City: Showing Top 20 Citites</title>
     <meta charset="UTF-8">
     <link href="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.css"
           rel="stylesheet" type="text/css">
@@ -84,6 +86,7 @@ cities_template = jinja2.Template('''
 </head>
 
 <body>
+<h1>Count of job Postings per City: Showing Top 20 Citites</h1>
 {{ div }}
 {{ script }}
 </body>
@@ -169,7 +172,7 @@ stem_template= jinja2.Template('''
 </head>
 
 <body>
-<h1>Frequency of Single Stemmed Keywords</h1>
+<h1>Frequency of Single Keywords:Skills Focused</h1>
 <p>The graph is interactive, scroll up and down to zoom.</p>
 
 {{ div }}
@@ -320,10 +323,12 @@ output_template = jinja2.Template("""
     <script type="text/javascript">
         $(function() {
             $("#chart").load("/run_analysis", function() {
-                $("#stem").slideToggle("slow", function() {
-                    $("#cities").slideToggle("slow", function() {
-                        $("#titles").slideToggle("slow", function() {
-                            $("#radius").slideToggle("slow")
+                $("#stem").slideToggle("fast", function() {
+                    $("#grammar").slideToggle("/grammar/", function() {
+                        $("#cities").slideToggle("fast", function() {
+                            $("#titles").slideToggle("fast", function() {
+                                $("#radius").slideToggle("fast");
+                                });
                             });
                         });
                     });
@@ -341,7 +346,7 @@ output_template = jinja2.Template("""
 ></script>
 <body>
 
-    <h1>Frequency of Keyword Pairs</h1>
+    <h1>Frequency of Keyword Pairs: Skills Focused</h1>
     <div id="chart">Collecting data...</div>
 
     <br><br>
@@ -350,19 +355,24 @@ output_template = jinja2.Template("""
     <a href="/stem/">Single Word Analysis</a>
     </div>
 
+    <br>
+
+    <div id=grammar style="display: none">
+    <a href="/grammar/">Full Text Analysis</a>
+
     <br><br>
 
     <div id=cities style="display: none">
     <a href="/cities/"> Show Cities </a>
     </div>
 
-    <br><br>
+    <br>
 
     <div id=titles style="display: none">
     <a href="/titles/"> Show Job Titles </a>
     </div>
 
-    <br><br>
+    <br>
 
     <form  id=radius action="/radius/"  method="post" style="display: none">
         Explore around the radius of a word across all posts.<br>
@@ -370,7 +380,6 @@ output_template = jinja2.Template("""
         <input type="text" name="word" placeholder="experience"><br>
         <input type="submit" value="Submit" name="submit">
     </form>
-
 
 </body>
 </html>
@@ -414,7 +423,7 @@ def plot_fig(df, num, kws):
             title_text_font_size='20',
             color='blue',
             xlabel="",
-            ylabel="Count",
+            ylabel="Number of Posts Containing Keyword",
             width=1500,
             height=500)
 
@@ -536,7 +545,7 @@ def run_analysis():
     save_to_csv(df)
     to_sql()
 
-    count, kw = ind.vectorizer(df['summary'], n_min=2, n_max=2, max_features=100,
+    count, kw = ind.vectorizer(df['summary'], n_min=2, n_max=2, max_features=60,
             max_df=compute_max_df(sess_dict['type_'], sess_dict['num_urls']))
 
     script, div = get_plot_comp(kw, count, df, 'kws')
@@ -598,15 +607,14 @@ def grammar_parser():
     logging.info("running grammar parser")
     sess_dict = get_sess()
     df = load_csv()
-    docs = df['full_text']
+    df.dropna(subset=['grammar'], inplace=True)
 
     ind = indeed_scrape.Indeed('kw')
     ind.stop_words = stop_words
     ind.add_stop_words()
 
-    ind = indeed_scrape.Indeed("kw")
-    count, kw = ind.vectorizer(docs, n_min=1, n_max=1, max_features=40,
-            max_df=compute_max_df(sess_dict['type_'], sess_dict['num_urls']))
+    count, kw = ind.tfidf_vectorizer(df['grammar'], n_min=2, n_max=3, max_features=30,
+            max_df=0.75, min_df=0.01)
 
     script, div = get_plot_comp(kw, count, df, 'kws')
 

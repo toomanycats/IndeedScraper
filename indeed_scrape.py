@@ -12,7 +12,7 @@ import json
 import pandas as pd
 import urllib2
 from bs4 import BeautifulSoup
-from sklearn.feature_extraction.text import CountVectorizer, ENGLISH_STOP_WORDS
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer, ENGLISH_STOP_WORDS
 import numpy as np
 from nltk import stem
 from nltk import tokenize
@@ -127,17 +127,18 @@ class Indeed(object):
 
         for item in data:
             try:
-                content = self.parse_content(item[0])
-                if content is None:
+                content, soup  = self.get_content(item[0])
+                parsed_content = self.parse_content(content)
+                if parsed_content is None:
                     continue
                 self.df.loc[ind, 'url'] = item[0]
                 self.df.loc[ind, 'city'] = item[1]
                 self.df.loc[ind, 'jobtitle'] = item[2]
                 self.df.loc[ind, 'job_key'] = item[3]
-                self.df.loc[ind, 'summary'] = content
-                self.df.loc[ind, 'summary_stem'] = self.stemmer_(content)
+                self.df.loc[ind, 'summary'] = parsed_content
+                self.df.loc[ind, 'summary_stem'] = self.stemmer_(parsed_content)
+                self.df.loc[ind, 'grammar'] = self.get_grammar_content(content, soup)
                 ind += 1
-
                 logging.debug("index: %i" % ind)
 
             except:
@@ -217,18 +218,19 @@ class Indeed(object):
         return " ".join(words)
 
     def _get_parsed_li(self, soup):
-        result = self._get_li(soup, 'span', 'summary')
+        obj = re.compile(r'summary|description')
+        result = self._get_li(soup, 'span', obj)
         if result:
             return result
         else:
-            result = self._get_li(soup, 'div', 'description')
+            result = self._get_li(soup, 'div', obj)
             if result:
                 return result
             else:
                 return None
 
-    def _get_li(self, soup, div, class_):
-        class_data = soup.find(div, {class_})
+    def _get_li(self, soup, div_, class_):
+        class_data = soup.find(div_, {'class':class_})
         if class_data is not None:
             skills = class_data.find_all("li")
             output = [item.get_text() for item in skills]
@@ -242,13 +244,8 @@ class Indeed(object):
         else:
             return False
 
-    def parse_content(self, url):
+    def parse_content(self, content):
         try:
-            content = self.get_content(url)
-
-            if content is None:
-                return None
-
             content = self._decode(content)
             soup = BeautifulSoup(content, 'html.parser')
 
@@ -258,13 +255,27 @@ class Indeed(object):
 
             parsed = self._get_parsed_li(soup)
 
-            return parsed
+            return parsed, soup
 
         except Exception, err:
             logging.debug("soup didn't parse anything")
             logging.error(err)
             print err
+            return None, None
+
+    def get_grammar_content(self, content):
+        for obj in soup(['li']):
+            obj.extract()
+
+        re_obj = re.compile(r'summary|description')
+        data = soup.find_all(['span', 'div', 'p'], {'class':re_obj})
+        if data is None:
             return None
+
+        text = [item.get_text() for item in data]
+        text = " ".join(text)
+
+        return grammar.main(text)
 
     def save_data(self):
 
@@ -290,7 +301,29 @@ class Indeed(object):
                                     ngram_range=(n_min, n_max),
                                     analyzer='word',
                                     decode_error='ignore',
-                                    strip_accents='unicode'
+                                    strip_accents='unicode',
+                                    binary=True
+                                    )
+
+        matrix = vectorizer.fit_transform(corpus)
+        features = vectorizer.get_feature_names()
+
+        return matrix, features
+
+    def tfidf_vectorizer(self, corpus, max_features=100, max_df=0.8, min_df=0.1, n_min=2, n_max=3):
+        vectorizer = TfidfVectorizer(max_features=max_features,
+                                    max_df=max_df,
+                                    min_df=min_df,
+                                    lowercase=True,
+                                    stop_words=self.stop_words,
+                                    ngram_range=(n_min, n_max),
+                                    analyzer='word',
+                                    decode_error='ignore',
+                                    strip_accents='unicode',
+                                    sublinear_tf=True,
+                                    binary=True,
+                                    use_idf=False,
+                                    norm=None
                                     )
 
         matrix = vectorizer.fit_transform(corpus)
