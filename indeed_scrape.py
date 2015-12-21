@@ -122,29 +122,28 @@ class Indeed(object):
 
     def get_data(self, ind, start):
         data, num_res, end = self.get_url(start)
+        logging.debug("number of results:%i" % num_res)
         num_res = int(num_res)
         end = int(end)
 
         for item in data:
-            try:
-                content, soup  = self.get_content(item[0])
-                parsed_content = self.parse_content(content)
-                if parsed_content is None:
-                    continue
-                self.df.loc[ind, 'url'] = item[0]
-                self.df.loc[ind, 'city'] = item[1]
-                self.df.loc[ind, 'jobtitle'] = item[2]
-                self.df.loc[ind, 'job_key'] = item[3]
-                self.df.loc[ind, 'summary'] = parsed_content
-                self.df.loc[ind, 'summary_stem'] = self.stemmer_(parsed_content)
-                self.df.loc[ind, 'grammar'] = self.get_grammar_content(content, soup)
-                ind += 1
-                logging.debug("index: %i" % ind)
-
-            except:
-                pass
+            content = self.get_content(item[0])
+            parsed_content, soup = self.parse_content(content)
+            if parsed_content is None:
+                logging.debug("parsed content is None")
+                continue
+            self.df.loc[ind, 'url'] = item[0]
+            self.df.loc[ind, 'city'] = item[1]
+            self.df.loc[ind, 'jobtitle'] = item[2]
+            self.df.loc[ind, 'job_key'] = item[3]
+            self.df.loc[ind, 'summary'] = parsed_content
+            self.df.loc[ind, 'summary_stem'] = self.stemmer_(parsed_content)
+            self.df.loc[ind, 'grammar'] = self.get_grammar_content(content, soup)
+            ind += 1
+            logging.debug("index: %i" % ind)
 
         if end < num_res and ind < self.num_urls:
+            logging.debug("calling get_data(), end:%i index:%i" % (end, ind))
             self.get_data(ind, end)
         else:
             return
@@ -263,7 +262,7 @@ class Indeed(object):
             print err
             return None, None
 
-    def get_grammar_content(self, content):
+    def get_grammar_content(self, content, soup):
         for obj in soup(['li']):
             obj.extract()
 

@@ -65,10 +65,13 @@ grammar_template = jinja2.Template('''
 </head>
 
 <body>
-<h1>General Language Analysis of the Full Text of All Job Postings</h1>
+<h1>General Language Analysis</h1> <p>The previous analysis of single and
+double keywords was focused on skills. This treatment tries to avoid
+the bulleted skills and find meaning in the general text.</p>
 
 {{ div }}
 {{ script }}
+
 </body>
 </html>
 ''')
@@ -347,7 +350,7 @@ output_template = jinja2.Template("""
 <body>
 
     <h1>Frequency of Keyword Pairs: Skills Focused</h1>
-    <div id="chart">Collecting data...</div>
+    <div id="chart">Collecting data might take a minute...</div>
 
     <br><br>
 
@@ -358,7 +361,7 @@ output_template = jinja2.Template("""
     <br>
 
     <div id=grammar style="display: none">
-    <a href="/grammar/">Full Text Analysis</a>
+    <a href="/grammar/">Non Skill Analysis</a>
 
     <br><br>
 
@@ -575,7 +578,7 @@ def radius():
     words = ind.find_words_in_radius(words, kw, 5)
 
     try:
-        count, kw = ind.vectorizer(words, max_features=50, n_min=1, n_max=1,
+        count, kw = ind.vectorizer(words, max_features=50, n_min=1, n_max=2,
                max_df=compute_max_df(sess_dict['type_'], sess_dict['num_urls']))
     except ValueError:
         return "The body of words compiled did not contain substantially repeated terms."
