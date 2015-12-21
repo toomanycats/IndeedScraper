@@ -171,6 +171,8 @@ stem_template= jinja2.Template('''
 </head>
 
 <body>
+<h1>Frequency of Single Stemmed Keywords</h1>
+<p>The graph is interactive, scroll up and down to zoom.</p>
 
 {{ div }}
 
