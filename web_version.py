@@ -48,7 +48,7 @@ if log_dir is None:
 
 
 logfile = os.path.join(log_dir, 'python.log')
-logging.basicConfig(filename=logfile, level=logging.INFO)
+logging.basicConfig(filename=logfile, level=logging.DEBUG)
 
 session_file = os.path.join(data_dir, 'df_dir', 'session_file.pck')
 
@@ -402,7 +402,7 @@ radius_template = jinja2.Template('''
 
 app = Flask(__name__)
 
-stop_words = 'religion sex disibility veteran status sexual orientation and, work ability'
+stop_words = 'religion sex disibility veteran status sexual orientation and work ability http https www gender'
 
 def plot_fig(df, num, kws):
 
@@ -536,7 +536,7 @@ def run_analysis():
     save_to_csv(df)
     to_sql()
 
-    count, kw = ind.vectorizer(df['summary'], n_min=2, n_max=2, max_features=40,
+    count, kw = ind.vectorizer(df['summary'], n_min=2, n_max=2, max_features=100,
             max_df=compute_max_df(sess_dict['type_'], sess_dict['num_urls']))
 
     script, div = get_plot_comp(kw, count, df, 'kws')
@@ -566,7 +566,7 @@ def radius():
     words = ind.find_words_in_radius(words, kw, 5)
 
     try:
-        count, kw = ind.vectorizer(words, max_features=40, n_min=1, n_max=1,
+        count, kw = ind.vectorizer(words, max_features=50, n_min=1, n_max=1,
                max_df=compute_max_df(sess_dict['type_'], sess_dict['num_urls']))
     except ValueError:
         return "The body of words compiled did not contain substantially repeated terms."
@@ -586,7 +586,7 @@ def stem():
     ind.stop_words = stop_words
     ind.add_stop_words()
 
-    count, kw = ind.vectorizer(summary_stem, n_min=1, n_max=1, max_features=40,
+    count, kw = ind.vectorizer(summary_stem, n_min=1, n_max=2, max_features=80,
             max_df=compute_max_df(sess_dict['type_'], sess_dict['num_urls']))
     script, div = get_plot_comp(kw, count, df, 'kws')
 
@@ -625,27 +625,20 @@ def get_sess():
     return pickle.load(open(session_file, 'rb'))
 
 def compute_max_df(type_, num_samp):
-    #TODO: make a function and use interpolate to get values
     if type_ == 'keywords':
         base = 0.80
 
     elif type_ == 'title':
-        base = 0.70
+        base = 0.85
 
     else:
         raise ValueError, "type not understood"
 
-    if num_samp < 175:
-        return base
-
-    elif num_samp > 175 and num_samp < 300:
-        return (0.55 / base) * base
-
-    elif num_samp > 300:
-        return (0.45 / base) * base
+    if num_samp < 50:
+        return base + 0.10
 
     else:
-        raise ValueError, "num samples has an error"
+        return base
 
 def to_sql():
     sess_dict = get_sess()

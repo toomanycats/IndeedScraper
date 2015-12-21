@@ -29,7 +29,10 @@ repo_dir = os.getenv("OPENSHIFT_REPO_DIR")
 if repo_dir is None:
     repo_dir = os.getenv("PWD")
 
-logging = logging.getLogger(__name__)
+try:
+    logging = logging.getLogger(__name__)
+except:
+    pass
 
 class Indeed(object):
     def __init__(self, query_type):
@@ -125,6 +128,8 @@ class Indeed(object):
         for item in data:
             try:
                 content = self.parse_content(item[0])
+                if content is None:
+                    continue
                 self.df.loc[ind, 'url'] = item[0]
                 self.df.loc[ind, 'city'] = item[1]
                 self.df.loc[ind, 'jobtitle'] = item[2]
@@ -138,7 +143,7 @@ class Indeed(object):
             except:
                 pass
 
-        if end < num_res and end < self.num_urls:
+        if end < num_res and ind < self.num_urls:
             self.get_data(ind, end)
         else:
             return
@@ -211,41 +216,54 @@ class Indeed(object):
 
         return " ".join(words)
 
+    def _get_parsed_li(self, soup):
+        result = self._get_li(soup, 'span', 'summary')
+        if result:
+            return result
+        else:
+            result = self._get_li(soup, 'div', 'description')
+            if result:
+                return result
+            else:
+                return None
+
+    def _get_li(self, soup, div, class_):
+        class_data = soup.find(div, {class_})
+        if class_data is not None:
+            skills = class_data.find_all("li")
+            output = [item.get_text() for item in skills]
+            output = self.len_tester(output)
+
+            if len(output) > 0:
+                parsed = " ".join(output).replace('\n', '')
+                return parsed
+            else:
+                return class_data.get_text().replace('\n', '')
+        else:
+            return False
+
     def parse_content(self, url):
         try:
             content = self.get_content(url)
 
             if content is None:
-                return
+                return None
 
             content = self._decode(content)
             soup = BeautifulSoup(content, 'html.parser')
-            # in case li fails
-            for obj in soup(['script', 'style', 'meta', 'a']):
+
+            for obj in soup(['script', 'style', 'meta', 'a',
+                             'input', 'img', 'noscript']):
                 obj.extract()
 
-            summary = soup.find('span', {'summary'})
-            skills = summary.find_all("li")
-
-            output = [item.get_text() for item in skills]
-
-            if len(output) > 0:
-                parsed = " ".join(output).replace('\n', '')
-
-            else:
-                # fall back to grammar method on full text
-                logging.debug("soup didn't parse summary li:%s" % url)
-                output = soup.get_text()
-                output = [item for item in output.split("\n")]
-
-                parsed = " ".join(output).replace("\n", "")
-                parsed = grammar.main(parsed)
+            parsed = self._get_parsed_li(soup)
 
             return parsed
 
         except Exception, err:
             logging.debug("soup didn't parse anything")
             logging.error(err)
+            print err
             return None
 
     def save_data(self):

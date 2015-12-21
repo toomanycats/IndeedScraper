@@ -20,7 +20,7 @@ sentence_re = r'''(?x)      # set flag to allow verbose regexps
 
 grammar = r"""
     NBAR:
-        {<NN.*|JJ>*<NN.*>}  # Nouns and Adjectives, terminated with Nouns
+        {<NN|NNS|JJ>*<NN|NNS>}  # Nouns and Adjectives, terminated with Nouns
 
     NP:
         {<NBAR>}
