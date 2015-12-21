@@ -35,12 +35,10 @@ class Indeed(object):
     def __init__(self, query_type):
         self.query_type = query_type
         self.delta_zero = 0
-        self.zip_code_error_limit = 300
         self.num_urls = 10
         self.add_loc = None
         self.stop_words = None
         self.num_samp = 1000
-        self.zip_code_file = os.path.join(repo_dir, 'us_postal_codes.csv')
         self.df = pd.DataFrame(columns=['url', 'job_key', 'summary', 'summary_stem', 'city', 'jobtitle'])
         self.config_path = os.path.join(repo_dir, "tokens.cfg")
         self.query = None
