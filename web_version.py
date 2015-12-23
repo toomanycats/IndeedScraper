@@ -59,6 +59,7 @@ missing_template = jinja2.Template('''
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="stylesheet" href="css/style.css">
     <title>missing keyword analysis</title>
     <meta charset="UTF-8">
     <style>
@@ -86,21 +87,18 @@ missing_template = jinja2.Template('''
         }
     </style>
 
-    <script>
-        function load_file(){
-        var x = document.getElementById("resume.pdf");
-        }
-    </script>
-
 </head>
-<body onload="load_file()">
+<body>
 
-<h1> Upload your resume for an analysi of missing keywords compared with the
+<h1>Upload your resume for an analysis of missing keywords compared with the
 job search results.</h1>
 
 <p>This service will extract the text from your resume and compare it to the list of keywords found in the previous analysis. The output will be the keywords not included in your resume that were found in the job postings.</p>
 
-<input type="file" id="myFile" size="50" onchange="load_file()" action='/missing/'>
+<form action='/missing/' method=POST enctype=multipart/form-data>
+    <input type=file name=File>
+    <input type=submit value=Upload>
+</form>
 
 <br><br>
 
@@ -164,6 +162,7 @@ title_template = jinja2.Template('''
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="stylesheet" href="css/style.css">
     <style>
         p {
             margin: 0.2cm 0.5cm 0.1cm 1cm;
@@ -218,6 +217,7 @@ stem_template= jinja2.Template('''
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="stylesheet" href="css/style.css">
     <style>
         p {
             margin: 0.5cm 0.5cm 0.2cm 6cm;
@@ -696,15 +696,25 @@ def grammar_parser():
     page = grammar_template.render(script=script, div=div)
     return encode_utf8(page)
 
-@app.route('/missing/')
+@app.route('/missing/', methods=['GET', 'POST'])
 def compute_missing_keywords():
-    sess_dict = get_sess()
-    df_file = sess_dict['df_file']
-    #get file path
-    #missing_keywords.main(df_file, resume_path)
-    rows = ''
+    if request.method == "POST":
+        pdb.set_trace()
+        resume_file = request.files['File']
+        logging.info("resume path: %s" % resume_file.filename)
 
-    return rows
+        resume_path = os.path.join(data_dir, resume_file.filename)
+        resume_file.save(resume_path)
+
+        df = load_csv()
+        rows = missing_keywords.main(df['summary'], resume_path)
+
+        _gzip(resume_path)
+
+        return missing_template.render(rows=rows)
+
+    else:
+        return missing_template.render()
 
 def mk_random_string():
     random_string = str(uuid.uuid4()) + ".csv"

@@ -121,7 +121,8 @@ class Indeed(object):
         self.channel_name = config_parser.get("channel", "channel_name")
 
     def _get_count(self):
-        self.count = self.df.dropna(how='any').count()['url']
+        self.df= self.df.dropna(how='any').drop_duplicates(subset=['summary'])
+        self.count = self.df.count()['url']
 
     def get_data(self, ind, start):
         data, num_res, end = self.get_url(start)
