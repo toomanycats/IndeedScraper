@@ -120,11 +120,15 @@ class Indeed(object):
         self.pub_id = config_parser.get("id", "pub_id")
         self.channel_name = config_parser.get("channel", "channel_name")
 
+    def _get_count(self):
+        self.count = self.df.dropna(how='any').count()['url']
+
     def get_data(self, ind, start):
         data, num_res, end = self.get_url(start)
         logging.debug("number of results:%i" % num_res)
         num_res = int(num_res)
         end = int(end)
+        self._get_count()
 
         for item in data:
             content = self.get_content(item[0])
@@ -142,7 +146,7 @@ class Indeed(object):
             ind += 1
             logging.debug("index: %i" % ind)
 
-        if end < num_res and ind < self.num_urls:
+        if end < num_res and ind < self.count:
             logging.debug("calling get_data(), end:%i index:%i" % (end, ind))
             self.get_data(ind, end)
         else:

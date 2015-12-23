@@ -20,7 +20,7 @@ sentence_re = r'''(?x)      # set flag to allow verbose regexps
 
 grammar = r"""
     NBAR:
-        {<NN|NNS|JJ>*<NN|NNS>}  # Nouns and Adjectives, terminated with Nouns
+        {<NN.*|JJ>*<NN>}  # Nouns and Adjectives, terminated with Nouns
 
     NP:
         {<NBAR>}
@@ -39,7 +39,7 @@ class GrammarParser(object):
     def normalise(self, word):
         """Normalises words to lowercase and stems and lemmatizes it."""
         word = word.lower()
-        word = stemmer_alt.stem_word(word)
+        #word = stemmer_alt.stem_word(word)
         #word = lemmatizer.lemmatize(word)
 
         return word

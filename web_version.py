@@ -20,7 +20,9 @@ import os
 import numpy as np
 import json
 import pickle
+import compare
 import pdb
+
 
 sql_username = os.getenv("OPENSHIFT_MYSQL_DB_USERNAME")
 if sql_username is None:
@@ -46,11 +48,70 @@ log_dir = os.getenv('OPENSHIFT_LOG_DIR')
 if log_dir is None:
     log_dir = os.getenv("PWD")
 
+missing_keywords = compare.MissingKeywords()
 
 logfile = os.path.join(log_dir, 'python.log')
 logging.basicConfig(filename=logfile, level=logging.DEBUG)
 
 session_file = os.path.join(data_dir, 'df_dir', 'session_file.pck')
+
+missing_template = jinja2.Template('''
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>missing keyword analysis</title>
+    <meta charset="UTF-8">
+    <style>
+        p {
+            margin: 0.2cm 0.5cm 0.1cm 1cm;
+            font-family:"Verdana";
+            font-size:110%
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 8px;
+        }
+
+        tr:nth-child(even){background-color: #f2f2f2}
+
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+    </style>
+          rel="stylesheet" type="text/css">
+
+</head>
+<body>
+
+<h1> Upload your resume for an analysi of missing keywords compared with the
+job search results.</h1>
+
+<p>This service will extract the text from your resume and compare it to the list of keywords found in the previous analysis. The output will be the keywords not included in your resume that were found in the job postings.</p>
+
+<script>
+var x = document.getElementById("resume.pdf");
+</script>
+
+<br><br>
+
+<h2>Comparison of your resume with the single keyword analysis</h2>
+    <table>
+    <tr>
+        <th>Missing Keywords in Your Resume</th>
+    </tr>
+        {{ rows }}
+    </table>
+
+</body>
+</html>
+''')
 
 grammar_template = jinja2.Template('''
 <!DOCTYPE html>
@@ -330,7 +391,9 @@ output_template = jinja2.Template("""
                     $("#grammar").slideToggle("/grammar/", function() {
                         $("#cities").slideToggle("fast", function() {
                             $("#titles").slideToggle("fast", function() {
-                                $("#radius").slideToggle("fast");
+                                $("#radius").slideToggle("fast", function() {
+                                    $(#"missing").slideToggle("fast")
+                                    });
                                 });
                             });
                         });
@@ -383,6 +446,12 @@ output_template = jinja2.Template("""
         <input type="text" name="word" placeholder="experience"><br>
         <input type="submit" value="Submit" name="submit">
     </form>
+
+    <br>
+
+    <div id=missing style="display: none">
+    <a href="/missing/"> Analyze Your Resume For Missing Keywords</a>
+    </div>
 
 </body>
 </html>
@@ -623,6 +692,12 @@ def grammar_parser():
 
     page = grammar_template.render(script=script, div=div)
     return encode_utf8(page)
+
+@app.route('/missing/')
+def compute_missing_keywords():
+    missing_keywords.main()
+
+    return missing_template.reader(rows)
 
 def mk_random_string():
     random_string = str(uuid.uuid4()) + ".csv"

@@ -1,45 +1,58 @@
 import indeed_scrape
 import GrammarParser
 import subprocess
-import web_version
 import numpy as np
 
 grammar = GrammarParser.GrammarParser()
 ind = indeed_scrape.Indeed('kw')
 
-def run_pdf_to_text(infile, outfile):
-    cmd = "java -jar pdfbox-app-2.0.0-RC2.jar ExtractText %s %s"
-    cmd = cmd % (infile, outfile)
+class MissingKeywords(object):
+    def __init__(self):
+        pass
 
-    process = subprocess.Popen(cmd, shell=True,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE)
+    def run_pdf_to_text(self, infile):
+        cmd = "java -jar pdfbox-app-2.0.0-RC2.jar ExtractText -console %s"
+        cmd = cmd % (infile)
 
-    out, err = process.communicate()
-    errcode = process.returncode
+        process = subprocess.Popen(cmd, shell=True,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
 
-    if err or errcode:
-        print err, errcode
-        raise Exception
+        out, err = process.communicate()
+        errcode = process.returncode
 
-def main():
-    infile = "test.pdf"
-    text_file = "test.txt"
-    sess_dict = web_version.get_sess()
+        if err or errcode:
+            print err, errcode
+            raise Exception
 
+        return out
 
-    run_pdf_to_text(infile, text_file)
-    with open(text_file) as f:
-        text = f.read()
+    def make_table(self, intersection):
+        row = u'<tr><td>%s</td><td>%s</td></tr>'
+        rows = u''
 
-    resume_kw = grammar.main(text)
-    resume_kw = resume_kw.split(' ')
+        for kw in intersection:
+            rows += row % (kw)
 
-    df_file = sess_dict['df_file']
-    df = pd.read_csv(df_file)
+        return rows
 
-    _, kw = ind.vectorizer(df['summary'], max_features=50, n_max=1, max_df=0.70, min_df=0.01)
+    def main(self, docs):
+        infile = "/home/daniel/git_resume/d.cuneo.2015.pdf"
 
-    intersect = np.intersect1d(kw, resume_kw)
+        text = run_pdf_to_text(infile)
+        resume_kw = grammar.main(text)
+        resume_kw = resume_kw.split(' ')
 
-    return intersect
+        # this monogram analysis is not performed in web_version.py
+        # only the stem version when clicked
+        #TODO: perform this analys in web_version and save to pickle
+
+        _, kw = ind.vectorizer(docs, n_min=1, n_max=1, max_features=100,
+                max_df=compute_max_df(sess_dict['type_'], sess_dict['num_urls']))
+
+        intersect = np.intersect1d(kw, resume_kw)
+
+        for word in intersect:
+            resume_kw.remove(word)
+
+        return resume_kw
