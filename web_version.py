@@ -85,19 +85,22 @@ missing_template = jinja2.Template('''
             color: white;
         }
     </style>
-          rel="stylesheet" type="text/css">
+
+    <script>
+        function load_file(){
+        var x = document.getElementById("resume.pdf");
+        }
+    </script>
 
 </head>
-<body>
+<body onload="load_file()">
 
 <h1> Upload your resume for an analysi of missing keywords compared with the
 job search results.</h1>
 
 <p>This service will extract the text from your resume and compare it to the list of keywords found in the previous analysis. The output will be the keywords not included in your resume that were found in the job postings.</p>
 
-<script>
-var x = document.getElementById("resume.pdf");
-</script>
+<input type="file" id="myFile" size="50" onchange="load_file()" action='/missing/'>
 
 <br><br>
 
@@ -392,7 +395,7 @@ output_template = jinja2.Template("""
                         $("#cities").slideToggle("fast", function() {
                             $("#titles").slideToggle("fast", function() {
                                 $("#radius").slideToggle("fast", function() {
-                                    $(#"missing").slideToggle("fast")
+                                    $("#missing").slideToggle("fast");
                                     });
                                 });
                             });
@@ -695,9 +698,13 @@ def grammar_parser():
 
 @app.route('/missing/')
 def compute_missing_keywords():
-    missing_keywords.main()
+    sess_dict = get_sess()
+    df_file = sess_dict['df_file']
+    #get file path
+    #missing_keywords.main(df_file, resume_path)
+    rows = ''
 
-    return missing_template.reader(rows)
+    return rows
 
 def mk_random_string():
     random_string = str(uuid.uuid4()) + ".csv"
