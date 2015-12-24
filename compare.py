@@ -44,8 +44,11 @@ class MissingKeywords(object):
         resume_kw = grammar.main(text)
         resume_kw = resume_kw.split(' ')
 
-        indeed_kws = ind.len_tester(indeed_kws)
-        _, kw = ind.vectorizer(indeed_kws, n_min=1, n_max=1, max_features=60,
+        temp = []
+        for row in indeed_kws:
+            temp.append(grammar.main(row))
+
+        _, kw = ind.vectorizer(temp, n_min=1, n_max=1, max_features=60,
                 max_df=0.65, min_df=0.01)
 
         intersect = np.intersect1d(resume_kw, kw)

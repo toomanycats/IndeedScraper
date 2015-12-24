@@ -705,7 +705,6 @@ def compute_missing_keywords():
 
         df = load_csv()
         rows = missing_keywords.main(resume_path, df['summary'])
-        pdb.set_trace()
 
         _gzip(resume_path)
 

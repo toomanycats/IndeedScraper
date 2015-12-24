@@ -50,7 +50,7 @@ class Indeed(object):
 
     def _decode(self, string):
         try:
-            string = string.encode("ascii", "ignore")
+            string = string.encode('ascii', 'ignore').encode("ascii", "ignore")
             return string
 
         except Exception:
