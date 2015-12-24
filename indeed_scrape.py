@@ -121,7 +121,7 @@ class Indeed(object):
         self.channel_name = config_parser.get("channel", "channel_name")
 
     def _get_count(self):
-        df = self.summary_similarity(self.df)
+        df = self.summary_similarity(self.df, 'summary', 80)
         self.count = df.dropna(subset=['summary'], how='any').drop_duplicates(subset=['summary', 'url', 'job_key']).count()['url']
 
     def get_data(self, ind, start):
@@ -200,10 +200,11 @@ class Indeed(object):
             logging.error("get content:%s" % err)
             return None
 
-    def len_tester(self, word_list):
+    @classmethod
+    def len_tester(self, word_list, thres=3):
         new_list = []
         for word in word_list:
-            if len(word) < 3:
+            if len(word) < thres:
                 continue
             else:
                 new_list.append(word)
@@ -225,6 +226,7 @@ class Indeed(object):
     def _get_parsed_li(self, soup):
         obj = re.compile(r'summary|description')
         result = self._get_li(soup, 'span', obj)
+
         if result:
             return result
         else:
@@ -245,7 +247,8 @@ class Indeed(object):
                 parsed = " ".join(output).replace('\n', '')
                 return parsed
             else:
-                return class_data.get_text().replace('\n', '')
+                corpus = class_data.get_text().replace('\n', '')
+                return grammar.main(corpus)
         else:
             return False
 
@@ -300,7 +303,7 @@ class Indeed(object):
 
         #cheap insurance
         self.df.drop_duplicates(subset=['summary', 'job_key', 'url'], inplace=True)
-        self.df = self.summary_similarity(self.df)
+        self.df = self.summary_similarity(self.df, 'summary', 80)
 
     def vectorizer(self, corpus, max_features=200, max_df=0.8, min_df=0.1, n_min=2, n_max=3):
         vectorizer = CountVectorizer(max_features=max_features,
@@ -397,17 +400,18 @@ class Indeed(object):
 
         return new
 
-    def summary_similarity(self, df):
+    @classmethod
+    def summary_similarity(self, df, column, ratio_thres):
         dup_list = []
 
         for i in range(df.shape[0] - 1):
-            string1 = df.loc[i, 'summary']
+            string1 = df.loc[i, column]
 
             for j in range(i+1, df.shape[0] - 1):
-                string2 = df.loc[j+1, 'summary']
+                string2 = df.loc[j+1, column]
                 ratio = fuzz.ratio(string1, string2)
 
-                if ratio >= 80:
+                if ratio >= ratio_thres:
                     dup_list.append(j)
 
         return df.drop(df.index[dup_list])

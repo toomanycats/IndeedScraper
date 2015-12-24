@@ -46,24 +46,38 @@ class MissingKeywords(object):
 
         return rows
 
-    def main(self, resume_path, indeed_kws):
+    def decode(self, text):
+        try:
+            text = text.encode("ascii", "ignore")
+        except:
+            text = text.decode("utf-8", "ignore").encode("ascii", "ignore")
+        finally:
+            return text
+
+    def _len_tester(self, row):
+            row = row.split(" ")
+            row = indeed_scrape.Indeed.len_tester(row, thres=4)
+            row = " ".join(row)
+
+            return row
+
+    def main(self, resume_path, indeed_summaries):
 
         text = self.pdf_to_text(resume_path)
         resume_kw = grammar.main(text)
         resume_kw = resume_kw.split(' ')
 
-        temp = []
-        for row in indeed_kws:
-            temp.append(grammar.main(row))
+        summaries = map(grammar.main, indeed_summaries)
+        summaries = map(self._len_tester, summaries)
 
-        _, kw = ind.vectorizer(temp, n_min=1, n_max=1, max_features=60,
+        _, job_kw = ind.vectorizer(summaries, n_min=1, n_max=1, max_features=60,
                 max_df=0.65, min_df=0.01)
 
-        intersect = np.intersect1d(resume_kw, kw)
+        intersect = np.intersect1d(resume_kw, job_kw)
 
         for word in intersect:
-            kw.remove(word)
+            job_kw.remove(word)
 
-        rows = self.make_rows(kw)
+        rows = self.make_rows(job_kw)
 
         return rows

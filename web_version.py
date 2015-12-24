@@ -1,4 +1,4 @@
-######################################
+#####################################
 # File Name : web_version.py
 # Author : Daniel Cuneo
 # Creation Date : 11-21-2015
@@ -61,6 +61,8 @@ missing_template = jinja2.Template('''
 <head>
     <link rel="stylesheet" href="css/style.css">
     <title>missing keyword analysis</title>
+    <meta name="description" content="Upload your PDF resume for an analysis of
+    missing keywords compared with the nationwide job postings"</meta>
     <meta charset="UTF-8">
     <style>
         p {
@@ -90,14 +92,12 @@ missing_template = jinja2.Template('''
 </head>
 <body>
 
-<h1>Upload your resume for an analysis of missing keywords compared with the
+<h1>Upload your PDF resume for an analysis of missing keywords compared with the
 job search results.</h1>
 
-<p>This service will extract the text from your resume and compare it to the
-list of keywords found in the previous analysis.</p>
-
-<p>The output will be the keywords not included in your resume that were found
-in the job postings.</p>
+<p>This function will extract the text from your resume and compare it to the
+list of keywords found in the previous analysis. The output will be the
+keywords not included in your resume that were found in the job postings.</p>
 
 <form action='/missing/' method=POST enctype=multipart/form-data>
     <input type=file name=File>
@@ -124,6 +124,11 @@ grammar_template = jinja2.Template('''
 <head>
     <title>analysis of full job posting text</title>
     <meta charset="UTF-8">
+    <style>
+        body {
+            background-color: #caf6f6;
+            }
+    </style>
     <link href="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.css"
           rel="stylesheet" type="text/css">
 
@@ -134,6 +139,9 @@ grammar_template = jinja2.Template('''
 <h1>General Language Analysis</h1> <p>The previous analysis of single and
 double keywords was focused on skills. This treatment tries to avoid
 the bulleted skills and find meaning in the general text.</p>
+
+<br>
+<p><i>The graph is interactive, scroll up and down to zoom</i></p>
 
 {{ div }}
 {{ script }}
@@ -147,6 +155,11 @@ cities_template = jinja2.Template('''
 <html lang="en">
 <head>
     <title>Count of job Postings per City: Showing Top 20 Citites</title>
+    <style>
+        body {
+            background-color: #caf6f6;
+            }
+    </style>
     <meta charset="UTF-8">
     <link href="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.css"
           rel="stylesheet" type="text/css">
@@ -205,6 +218,7 @@ title_template = jinja2.Template('''
     <p>More unique titles is a measure of how your keywords/title search terms, track across domains.</p>
     <li> A zero count for a title, means that the job posting(s) were not analyzed
     due to formatting concerns. However, the title was found in the search.</li>
+    <li>All titles are reduced to lower case and fuzzy matched, so that very similar titles are grouped together</li>
 
     <table>
     <tr>
@@ -233,6 +247,10 @@ stem_template= jinja2.Template('''
         padding-left: 8cm;
         font-size:150%
         }
+
+        body {
+            background-color: #caf6f6;
+        }
     </style>
     <title>stemmed results</title>
     <meta charset="UTF-8">
@@ -244,7 +262,7 @@ stem_template= jinja2.Template('''
 
 <body>
 <h1>Frequency of Single Keywords:Skills Focused</h1>
-<p>The graph is interactive, scroll up and down to zoom.</p>
+<p><i>The graph is interactive, scroll up and down to zoom</i></p>
 
 {{ div }}
 
@@ -257,8 +275,14 @@ is, the suffixes have been removed,</p>
 <li>works</li>
 <li>worked</li>
 
-<p>are counted the same, as "work". <br>
-Addionally, the bar graph shows only single keywords, known as Mono-grams.</p>
+<p>are counted the same, as "work".
+<li>The bar graph shows only single keywords, known as Mono-grams.</li>
+<li>Many words will be reduced, 'requirements', or, 'experience' will look like:
+<p>
+    <li>requir</li>
+    <li>experi</li>
+</p>
+
 
 </body>
 </html>
@@ -296,7 +320,7 @@ input_template = jinja2.Template('''
     <title>keyword counter optimizer</title>
     <meta charset="UTF-8">
     <meta name="description" content="Optimize Your Resume and Social Media Keywords, Provide statistics on the keywords used in job postings Group the cities they are from Report the job titles searched." />
-    <meata name="robots" content="index, follow" />
+    <meta name="robots" content="index, follow" />
     <style>
     p {
         margin: 0.5cm 0.5cm 0.2cm 6cm;
@@ -339,7 +363,7 @@ input_template = jinja2.Template('''
             <p>The number of job postings to examine</p>
 
             <p><select name="num">
-                <option value=10>10</option>
+                <option value=10>10 primarily for testing</option>
                 <option value=50>50</option>
                 <option value=100>100</option>
                 <option value=200>200</option>
@@ -389,6 +413,12 @@ output_template = jinja2.Template("""
 <head>
     <title>keyword counter results</title>
     <meta charset="UTF-8">
+    <style>
+        body {
+            font-size: 125%;
+            background-color: #caf6f6;
+            }
+    </style>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 
     <script type="text/javascript">
@@ -419,29 +449,43 @@ output_template = jinja2.Template("""
 ></script>
 <body>
 
-    <h1>Frequency of Keyword Pairs: Skills Focused</h1>
-    <div id="chart">Collecting data might take a minute...</div>
+    <h1>Frequency of Keyword Pairs</h1>
+    <p><i>The graph is interactive, scroll up and down to zoom</i></p>
+    <p>This analysis uses all the text found in the bullet points. Typically,
+    these are where the hard skills are listed for the applicant.</p>
+    <div id="chart">Collecting data might take a minute or longer.
+    </div>
 
     <br><br>
 
     <div id=stem style="display: none">
+    <p>Also text from bullet points, the analysis below produces single words.</p>
     <a href="/stem/">Single Word Analysis</a>
     </div>
 
     <br>
 
+
     <div id=grammar style="display: none">
+    <p>Not all interesting keywords are contained in the bullet points. This
+    treatment will search the body of the post not including bulleted lists.
+    You may find more soft skills here.</p>
     <a href="/grammar/">Alternate Skill Analysis</a>
+    </div>
 
     <br><br>
 
     <div id=cities style="display: none">
+    <p>A count of the job postings per city.</p>
     <a href="/cities/"> Show Cities </a>
     </div>
 
     <br>
 
     <div id=titles style="display: none">
+    <p> A break down of the job titles returned. This is most useful when using
+    a keyword search on indeed, to make sure your keywords are matching the jobs you
+    want.</p>
     <a href="/titles/"> Show Job Titles </a>
     </div>
 
@@ -457,6 +501,8 @@ output_template = jinja2.Template("""
     <br>
 
     <div id=missing style="display: none">
+    <p>Upload a PDF copy of your resume, and it will be compared with the job
+    posting keyword anaysis.</p>
     <a href="/missing/"> Analyze Your Resume For Missing Keywords</a>
     </div>
 
@@ -468,6 +514,11 @@ radius_template = jinja2.Template('''
 <!DOCTYPE html>
 <html lang="en-US">
 <head>
+    <style>
+        body {
+            background-color: #caf6f6;
+            }
+    </style>
     <title>radius</title>
     <meta charset="UTF-8">
     <link href="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.css"
@@ -480,6 +531,7 @@ radius_template = jinja2.Template('''
 <body>
     <br><br><br>
     <h2>Words found about a 5 word radius.</h2>
+    <p><i>The graph is interactive, scroll up and down to zoom</i></p>
 
     {{ div }}
     {{ script }}
@@ -565,7 +617,11 @@ def plot_titles():
     df_file = get_sess()['df_file']
     df = load_csv()
 
-    grp = df.groupby("jobtitle").count().sort("url", ascending=False)
+    df['jobtitle'] = df['jobtitle'].apply(lambda x:x.lower())
+    ind = indeed_scrape.Indeed
+    title_de_duped = ind.summary_similarity(df, 'jobtitle', 80)
+
+    grp = title_de_duped.groupby("jobtitle").count().sort("url", ascending=False)
     cities = grp.index.tolist()
     counts = grp['city'] # any key will do here
 
