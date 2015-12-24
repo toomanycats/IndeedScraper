@@ -148,7 +148,7 @@ class Indeed(object):
 
         self._get_count()
         if end < num_res and self.count < self.num_urls:
-            logging.debug("calling get_data(), end:%i index:%i" % (end, ind))
+            logging.debug("calling get_data(), end:%i index:%i count:%i" % (end, ind, self.count))
             self.get_data(ind, end)
         else:
             self._get_count()
