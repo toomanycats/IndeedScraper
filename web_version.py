@@ -364,9 +364,9 @@ input_template = jinja2.Template('''
 
             <p><select name="num">
                 <option value=10>10 primarily for testing</option>
-                <option value=50>50</option>
-                <option value=100>100</option>
-                <option value=200>200</option>
+                <option value=50>50 about a minute wait</option>
+                <option value=100>100 could take 10 min. </option>
+                <option value=200>200 will take 10 min. plus</option>
                 </select>
             </p>
 
