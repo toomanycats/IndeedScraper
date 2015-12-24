@@ -427,7 +427,7 @@ output_template = jinja2.Template("""
     <br>
 
     <div id=grammar style="display: none">
-    <a href="/grammar/">Non Skill Analysis</a>
+    <a href="/grammar/">Alternate Skill Analysis</a>
 
     <br><br>
 
