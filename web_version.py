@@ -96,7 +96,7 @@ missing_template = jinja2.Template('''
 job search results.</h1>
 
 <p>This service will extract the text from your resume and compare it to the list of keywords found in the previous analysis. The output will be the keywords not included in your resume that were found in the job postings.</p>
-<p><b>Only PFD's are allowed</b></p>
+<p><b>Only PDF's are allowed</b></p>
 <form action='/missing/' method=POST enctype=multipart/form-data>
     <input type=file name=File>
     <input type=submit value=Upload>
