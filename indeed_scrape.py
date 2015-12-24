@@ -200,10 +200,11 @@ class Indeed(object):
             logging.error("get content:%s" % err)
             return None
 
-    def len_tester(self, word_list):
+    @classmethod
+    def len_tester(self, word_list, thres=3):
         new_list = []
         for word in word_list:
-            if len(word) < 3:
+            if len(word) < thres:
                 continue
             else:
                 new_list.append(word)
@@ -399,6 +400,7 @@ class Indeed(object):
 
         return new
 
+    @classmethod
     def summary_similarity(self, df, column, ratio_thres):
         dup_list = []
 

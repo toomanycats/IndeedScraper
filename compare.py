@@ -43,6 +43,7 @@ class MissingKeywords(object):
         text = self.pdf_to_text(resume_path)
         resume_kw = grammar.main(text)
         resume_kw = resume_kw.split(' ')
+        resume_kw = indeed_scrape.Indeed.len_tester(resume_kw, thres=4)
 
         temp = []
         for row in indeed_kws:

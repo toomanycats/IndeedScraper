@@ -1,4 +1,4 @@
-######################################
+#####################################
 # File Name : web_version.py
 # Author : Daniel Cuneo
 # Creation Date : 11-21-2015
@@ -120,6 +120,11 @@ grammar_template = jinja2.Template('''
 <head>
     <title>analysis of full job posting text</title>
     <meta charset="UTF-8">
+    <style>
+        body {
+            background-color: #caf6f6;
+            }
+    </style>
     <link href="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.css"
           rel="stylesheet" type="text/css">
 
@@ -143,6 +148,11 @@ cities_template = jinja2.Template('''
 <html lang="en">
 <head>
     <title>Count of job Postings per City: Showing Top 20 Citites</title>
+    <style>
+        body {
+            background-color: #caf6f6;
+            }
+    </style>
     <meta charset="UTF-8">
     <link href="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.css"
           rel="stylesheet" type="text/css">
@@ -230,6 +240,10 @@ stem_template= jinja2.Template('''
         padding-left: 8cm;
         font-size:150%
         }
+
+        body {
+            background-color: #caf6f6;
+        }
     </style>
     <title>stemmed results</title>
     <meta charset="UTF-8">
@@ -254,8 +268,14 @@ is, the suffixes have been removed,</p>
 <li>works</li>
 <li>worked</li>
 
-<p>are counted the same, as "work". <br>
-Addionally, the bar graph shows only single keywords, known as Mono-grams.</p>
+<p>are counted the same, as "work".
+<li>The bar graph shows only single keywords, known as Mono-grams.</li>
+<li>Many words will be reduced, 'requirements', or, 'experience' will look like:
+<p>
+    <li>requir</li>
+    <li>experi</li>
+</p>
+
 
 </body>
 </html>
@@ -386,6 +406,12 @@ output_template = jinja2.Template("""
 <head>
     <title>keyword counter results</title>
     <meta charset="UTF-8">
+    <style>
+        body {
+            background-color: #caf6f6;
+            font-size: 125%;
+            }
+    </style>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 
     <script type="text/javascript">
@@ -423,35 +449,34 @@ output_template = jinja2.Template("""
 
     <br><br>
 
-    <p>Also text from bullet points, this time single word analysis.</p>
     <div id=stem style="display: none">
+    <p>Also text from bullet points, the analysis below produces single words.</p>
     <a href="/stem/">Single Word Analysis</a>
     </div>
 
     <br>
 
+
+    <div id=grammar style="display: none">
     <p>Not all interesting keywords are contained in the bullet points. This
     treatment will search the body of the post not including bulleted lists.
     You may find more soft skills here.</p>
-
-    <div id=grammar style="display: none">
     <a href="/grammar/">Alternate Skill Analysis</a>
+    </div>
 
     <br><br>
 
-    <p>A count of the job postings per city.</p>
     <div id=cities style="display: none">
+    <p>A count of the job postings per city.</p>
     <a href="/cities/"> Show Cities </a>
     </div>
 
     <br>
 
-
+    <div id=titles style="display: none">
     <p> A break down of the job titles returned. This is most useful when using
     a keyword search on indeed, to make sure your keywords are matching the jobs you
     want.</p>
-
-    <div id=titles style="display: none">
     <a href="/titles/"> Show Job Titles </a>
     </div>
 
@@ -466,10 +491,9 @@ output_template = jinja2.Template("""
 
     <br>
 
+    <div id=missing style="display: none">
     <p>Upload a PDF copy of your resume, and it will be compared with the job
     posting keyword anaysis.</p>
-
-    <div id=missing style="display: none">
     <a href="/missing/"> Analyze Your Resume For Missing Keywords</a>
     </div>
 
@@ -481,6 +505,11 @@ radius_template = jinja2.Template('''
 <!DOCTYPE html>
 <html lang="en-US">
 <head>
+    <style>
+        body {
+            background-color: #caf6f6;
+            }
+    </style>
     <title>radius</title>
     <meta charset="UTF-8">
     <link href="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.css"
@@ -579,6 +608,7 @@ def plot_titles():
     df = load_csv()
 
     df['jobtitle'] = df['jobtitle'].apply(lambda x:x.lower())
+    ind = indeed_scrape.Indeed
     title_de_duped = ind.summary_similarity(df, 'jobtitle', 80)
 
     grp = title_de_duped.groupby("jobtitle").count().sort("url", ascending=False)
