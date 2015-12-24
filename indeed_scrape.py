@@ -3,6 +3,7 @@
 # Author : Daniel Cuneo
 # Creation Date : 11-05-2015
 ######################################
+from fuzzywuzzy import fuzz
 import GrammarParser
 import codecs
 import re
@@ -18,7 +19,6 @@ from nltk import stem
 from nltk import tokenize
 import re
 import os
-import pdb
 
 grammar = GrammarParser.GrammarParser()
 
@@ -121,7 +121,8 @@ class Indeed(object):
         self.channel_name = config_parser.get("channel", "channel_name")
 
     def _get_count(self):
-        self.count = self.df.dropna(subset=['summary'], how='any').drop_duplicates(subset=['summary', 'url', 'job_key']).count()['url']
+        df = self.summary_similarity(self.df)
+        self.count = df.dropna(subset=['summary'], how='any').drop_duplicates(subset=['summary', 'url', 'job_key']).count()['url']
 
     def get_data(self, ind, start):
         data, num_res, end = self.get_url(start)
@@ -296,7 +297,10 @@ class Indeed(object):
         self.add_stop_words()
         self.get_data(ind=0, start=0)
         self.df.dropna(subset=['summary', 'url'], inplace=True)
+
+        #cheap insurance
         self.df.drop_duplicates(subset=['summary', 'job_key', 'url'], inplace=True)
+        self.df = self.summary_similarity(self.df)
 
     def vectorizer(self, corpus, max_features=200, max_df=0.8, min_df=0.1, n_min=2, n_max=3):
         vectorizer = CountVectorizer(max_features=max_features,
@@ -393,6 +397,20 @@ class Indeed(object):
 
         return new
 
+    def summary_similarity(self, df):
+        dup_list = []
+
+        for i in range(df.shape[0] - 1):
+            string1 = df.loc[i, 'summary']
+
+            for j in range(i+1, df.shape[0] - 1):
+                string2 = df.loc[j+1, 'summary']
+                ratio = fuzz.ratio(string1, string2)
+
+                if ratio >= 80:
+                    dup_list.append(j)
+
+        return df.drop(df.index[dup_list])
 
 if __name__ == "__main__":
     ind = Indeed()

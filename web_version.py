@@ -613,9 +613,6 @@ def run_analysis():
 
     ind.main()
     df = ind.df
-    # cheap insurance
-    df = df.dropna(subset=['summary']).drop_duplicates('summary')
-    df = summary_similarity(df)
 
     # save df for additional analysis
     save_to_csv(df)
@@ -700,7 +697,6 @@ def grammar_parser():
 @app.route('/missing/', methods=['GET', 'POST'])
 def compute_missing_keywords():
     if request.method == "POST":
-        pdb.set_trace()
         resume_file = request.files['File']
         logging.info("resume path: %s" % resume_file.filename)
 
@@ -804,21 +800,6 @@ def _gzip(File):
     _call_shell(cmd)
 
     return File + '.gz'
-
-def summary_similarity(df):
-    dup_list = []
-
-    for i in range(df.shape[0] - 1):
-        string1 = df.loc[i, 'summary']
-
-        for j in range(i+1, df.shape[0] - 1):
-            string2 = df.loc[j+1, 'summary']
-            ratio = fuzz.ratio(string1, string2)
-
-            if ratio >= 0.70:
-                dup_list.append(j)
-
-    return df.drop(df.index[dup_list])
 
 
 if __name__ == "__main__":

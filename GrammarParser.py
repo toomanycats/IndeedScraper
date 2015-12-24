@@ -77,7 +77,7 @@ class GrammarParser(object):
         if text is None:
             return None
 
-        text = text.encode("ascii", "ignore")
+        text = text.decode("unicode_escape").encode("ascii", "ignore")
 
         chunker = nltk.RegexpParser(grammar)
 

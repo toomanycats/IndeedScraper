@@ -35,7 +35,7 @@ class MissingKeywords(object):
 
         for w in words:
             row = row % w
-            rows.append(row)
+            rows += row
 
         return rows
 
@@ -53,4 +53,4 @@ class MissingKeywords(object):
         for word in intersect:
             resume_kw.remove(word)
 
-        return make_rows(resume_kw)
+        return self.make_rows(resume_kw)
