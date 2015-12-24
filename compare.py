@@ -51,6 +51,6 @@ class MissingKeywords(object):
         intersect = np.intersect1d(resume_kw, kw)
 
         for word in intersect:
-            text.remove(word)
+            kw.remove(word)
 
-        return self.make_rows(text)
+        return self.make_rows(kw)
