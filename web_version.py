@@ -61,6 +61,8 @@ missing_template = jinja2.Template('''
 <head>
     <link rel="stylesheet" href="css/style.css">
     <title>missing keyword analysis</title>
+    <meta name="description" content="Upload your PDF resume for an analysis of
+    missing keywords compared with the nationwide job postings"</meta>
     <meta charset="UTF-8">
     <style>
         p {
@@ -90,11 +92,11 @@ missing_template = jinja2.Template('''
 </head>
 <body>
 
-<h1>Upload your resume for an analysis of missing keywords compared with the
+<h1>Upload your PDF resume for an analysis of missing keywords compared with the
 job search results.</h1>
 
 <p>This service will extract the text from your resume and compare it to the list of keywords found in the previous analysis. The output will be the keywords not included in your resume that were found in the job postings.</p>
-
+<p><b>Only PFD's are allowed</b></p>
 <form action='/missing/' method=POST enctype=multipart/form-data>
     <input type=file name=File>
     <input type=submit value=Upload>
@@ -447,9 +449,9 @@ output_template = jinja2.Template("""
 
     <h1>Frequency of Keyword Pairs</h1>
     <p><i>The graph is interactive, scroll up and down to zoom</i></p>
-    <div id="chart">Collecting data might take a minute...
     <p>This analysis uses all the text found in the bullet points. Typically,
     these are where the hard skills are listed for the applicant.</p>
+    <div id="chart">Collecting data might take a minute or longer.
     </div>
 
     <br><br>
