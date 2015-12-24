@@ -4,6 +4,10 @@ import subprocess
 import numpy as np
 import logging
 
+data_dir = os.getenv('OPENSHIFT_DATA_DIR')
+if data_dir is None:
+    data_dir = os.getenv('PWD')
+
 logging = logging.getLogger(__name__)
 grammar = GrammarParser.GrammarParser()
 ind = indeed_scrape.Indeed('kw')
@@ -13,8 +17,11 @@ class MissingKeywords(object):
         pass
 
     def pdf_to_text(self, infile):
-        cmd = "java -jar pdfbox-app-2.0.0-RC2.jar ExtractText -console %s"
-        cmd = cmd % (infile)
+        jar_file = os.path.join(data_dir, 'pdfbox-app-2.0.0-RC2.jar')
+        cmd = "java -jar %(jar)s ExtractText -console %(infile)s"
+        cmd = cmd % {'jar':jar_file,
+                     'infile':infile
+                     }
 
         process = subprocess.Popen(cmd, shell=True,
                             stdout=subprocess.PIPE,
