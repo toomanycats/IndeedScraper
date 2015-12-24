@@ -3,3 +3,5 @@
 *.tar.gz
 df_dir
 python.log
+*.pdf.gz
+*.pdf
