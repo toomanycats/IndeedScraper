@@ -30,12 +30,12 @@ class MissingKeywords(object):
         return out
 
     def make_rows(self, words):
-        row = u'<tr><td>%s</td></tr>'
-        rows = u''
+        row = '<tr><td>%s</td></tr>'
+        rows = ''
 
         for w in words:
-            row = row % w
-            rows += row
+            w = w.decode("unicode_escape").encode("ascii", "ignore")
+            rows += row % w
 
         return rows
 
@@ -48,9 +48,9 @@ class MissingKeywords(object):
         _, kw = ind.vectorizer(indeed_kws, n_min=1, n_max=1, max_features=100,
                 max_df=0.65, min_df=0.01)
 
-        intersect = np.intersect1d(kw, resume_kw)
+        intersect = np.intersect1d(resume_kw, kw)
 
         for word in intersect:
-            resume_kw.remove(word)
+            text.remove(word)
 
-        return self.make_rows(resume_kw)
+        return self.make_rows(text)
