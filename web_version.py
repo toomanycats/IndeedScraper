@@ -422,8 +422,11 @@ output_template = jinja2.Template("""
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 
     <script type="text/javascript">
+        $.ajaxSetup({
+        timeout: 1000
+        });
         $(function() {
-            $("#chart").load("/run_analysis", function() {
+            $("#chart").load("/run_analysis/", function() {
                 $("#stem").slideToggle("fast", function() {
                     $("#grammar").slideToggle("/grammar/", function() {
                         $("#cities").slideToggle("fast", function() {
