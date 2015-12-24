@@ -423,7 +423,7 @@ output_template = jinja2.Template("""
 
     <script type="text/javascript">
         $.ajaxSetup({
-        timeout: 1000
+        timeout: 800000
         });
         $(function() {
             $("#chart").load("/run_analysis/", function() {
