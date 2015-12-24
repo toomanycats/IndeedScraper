@@ -318,7 +318,7 @@ input_template = jinja2.Template('''
     <title>keyword counter optimizer</title>
     <meta charset="UTF-8">
     <meta name="description" content="Optimize Your Resume and Social Media Keywords, Provide statistics on the keywords used in job postings Group the cities they are from Report the job titles searched." />
-    <meata name="robots" content="index, follow" />
+    <meta name="robots" content="index, follow" />
     <style>
     p {
         margin: 0.5cm 0.5cm 0.2cm 6cm;
@@ -413,8 +413,8 @@ output_template = jinja2.Template("""
     <meta charset="UTF-8">
     <style>
         body {
-            background-color: #caf6f6;
             font-size: 125%;
+            background-color: #caf6f6;
             }
     </style>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
