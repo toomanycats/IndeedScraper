@@ -136,6 +136,9 @@ grammar_template = jinja2.Template('''
 double keywords was focused on skills. This treatment tries to avoid
 the bulleted skills and find meaning in the general text.</p>
 
+<br>
+<p><i>The graph is interactive, scroll up and down to zoom</i></p>
+
 {{ div }}
 {{ script }}
 
@@ -255,7 +258,7 @@ stem_template= jinja2.Template('''
 
 <body>
 <h1>Frequency of Single Keywords:Skills Focused</h1>
-<p>The graph is interactive, scroll up and down to zoom.</p>
+<p><i>The graph is interactive, scroll up and down to zoom</i></p>
 
 {{ div }}
 
@@ -443,9 +446,11 @@ output_template = jinja2.Template("""
 <body>
 
     <h1>Frequency of Keyword Pairs</h1>
+    <p><i>The graph is interactive, scroll up and down to zoom</i></p>
+    <div id="chart">Collecting data might take a minute...
     <p>This analysis uses all the text found in the bullet points. Typically,
     these are where the hard skills are listed for the applicant.</p>
-    <div id="chart">Collecting data might take a minute...</div>
+    </div>
 
     <br><br>
 
@@ -522,6 +527,7 @@ radius_template = jinja2.Template('''
 <body>
     <br><br><br>
     <h2>Words found about a 5 word radius.</h2>
+    <p><i>The graph is interactive, scroll up and down to zoom</i></p>
 
     {{ div }}
     {{ script }}
