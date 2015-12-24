@@ -225,6 +225,7 @@ class Indeed(object):
     def _get_parsed_li(self, soup):
         obj = re.compile(r'summary|description')
         result = self._get_li(soup, 'span', obj)
+
         if result:
             return result
         else:
@@ -245,7 +246,8 @@ class Indeed(object):
                 parsed = " ".join(output).replace('\n', '')
                 return parsed
             else:
-                return class_data.get_text().replace('\n', '')
+                corpus = class_data.get_text().replace('\n', '')
+                return grammar.main(corpus)
         else:
             return False
 
