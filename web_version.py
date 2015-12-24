@@ -671,7 +671,12 @@ def run_analysis():
     ind.stop_words = stop_words
     ind.num_urls = int(sess_dict['num_urls'])
 
-    ind.main()
+    try:
+        ind.main()
+    except Exception, err:
+        logging.error(err)
+        raise Exception
+
     df = ind.df
 
     # save df for additional analysis
@@ -823,6 +828,7 @@ def load_csv():
     return df
 
 def save_to_csv(df):
+    logging.info("saving df")
     sess_dict = get_sess()
     df.to_csv(sess_dict['df_file'], index=False, quoting=1, encoding='utf-8')
     df_file =  _gzip(sess_dict['df_file'])
