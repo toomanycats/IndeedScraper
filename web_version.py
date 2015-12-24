@@ -561,7 +561,10 @@ def plot_titles():
     df_file = get_sess()['df_file']
     df = load_csv()
 
-    grp = df.groupby("jobtitle").count().sort("url", ascending=False)
+    df['jobtitle'] = df['jobtitle'].apply(lambda x:x.lower())
+    title_de_duped = ind.summary_similarity(df, 'jobtitle', 80)
+
+    grp = title_de_duped.groupby("jobtitle").count().sort("url", ascending=False)
     cities = grp.index.tolist()
     counts = grp['city'] # any key will do here
 
