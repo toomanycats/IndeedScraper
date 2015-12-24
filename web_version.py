@@ -201,6 +201,7 @@ title_template = jinja2.Template('''
     <p>More unique titles is a measure of how your keywords/title search terms, track across domains.</p>
     <li> A zero count for a title, means that the job posting(s) were not analyzed
     due to formatting concerns. However, the title was found in the search.</li>
+    <li>All titles are reduced to lower case and fuzzy matched, so that very similar titles are grouped together</li>
 
     <table>
     <tr>
@@ -335,7 +336,7 @@ input_template = jinja2.Template('''
             <p>The number of job postings to examine</p>
 
             <p><select name="num">
-                <option value=10>10</option>
+                <option value=10>10 primarily for testing</option>
                 <option value=50>50</option>
                 <option value=100>100</option>
                 <option value=200>200</option>
@@ -415,27 +416,40 @@ output_template = jinja2.Template("""
 ></script>
 <body>
 
-    <h1>Frequency of Keyword Pairs: Skills Focused</h1>
+    <h1>Frequency of Keyword Pairs</h1>
+    <p>This analysis uses all the text found in the bullet points. Typically,
+    these are where the hard skills are listed for the applicant.</p>
     <div id="chart">Collecting data might take a minute...</div>
 
     <br><br>
 
+    <p>Also text from bullet points, this time single word analysis.</p>
     <div id=stem style="display: none">
     <a href="/stem/">Single Word Analysis</a>
     </div>
 
     <br>
 
+    <p>Not all interesting keywords are contained in the bullet points. This
+    treatment will search the body of the post not including bulleted lists.
+    You may find more soft skills here.</p>
+
     <div id=grammar style="display: none">
     <a href="/grammar/">Alternate Skill Analysis</a>
 
     <br><br>
 
+    <p>A count of the job postings per city.</p>
     <div id=cities style="display: none">
     <a href="/cities/"> Show Cities </a>
     </div>
 
     <br>
+
+
+    <p> A break down of the job titles returned. This is most useful when using
+    a keyword search on indeed, to make sure your keywords are matching the jobs you
+    want.</p>
 
     <div id=titles style="display: none">
     <a href="/titles/"> Show Job Titles </a>
@@ -451,6 +465,9 @@ output_template = jinja2.Template("""
     </form>
 
     <br>
+
+    <p>Upload a PDF copy of your resume, and it will be compared with the job
+    posting keyword anaysis.</p>
 
     <div id=missing style="display: none">
     <a href="/missing/"> Analyze Your Resume For Missing Keywords</a>
