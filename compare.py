@@ -34,7 +34,6 @@ class MissingKeywords(object):
         rows = ''
 
         for w in words:
-            w = w.decode("unicode_escape").encode("ascii", "ignore")
             rows += row % w
 
         return rows
@@ -45,7 +44,8 @@ class MissingKeywords(object):
         resume_kw = grammar.main(text)
         resume_kw = resume_kw.split(' ')
 
-        _, kw = ind.vectorizer(indeed_kws, n_min=1, n_max=1, max_features=100,
+        indeed_kws = ind.len_tester(indeed_kws)
+        _, kw = ind.vectorizer(indeed_kws, n_min=1, n_max=1, max_features=60,
                 max_df=0.65, min_df=0.01)
 
         intersect = np.intersect1d(resume_kw, kw)
@@ -53,4 +53,6 @@ class MissingKeywords(object):
         for word in intersect:
             kw.remove(word)
 
-        return self.make_rows(kw)
+        rows = self.make_rows(kw)
+
+        return rows

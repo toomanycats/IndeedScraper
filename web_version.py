@@ -705,6 +705,7 @@ def compute_missing_keywords():
 
         df = load_csv()
         rows = missing_keywords.main(resume_path, df['summary'])
+        pdb.set_trace()
 
         _gzip(resume_path)
 
@@ -796,7 +797,7 @@ def _ungzip(File, force=True):
     return File.replace('.gz', '')
 
 def _gzip(File):
-    cmd = 'gzip %s' %File
+    cmd = 'gzip -f %s' %File
     _call_shell(cmd)
 
     return File + '.gz'
