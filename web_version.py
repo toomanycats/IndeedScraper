@@ -51,7 +51,7 @@ if log_dir is None:
 missing_keywords = compare.MissingKeywords()
 
 logfile = os.path.join(log_dir, 'python.log')
-logging.basicConfig(filename=logfile, level=logging.DEBUG)
+logging.basicConfig(filename=logfile, level=logging.INFO)
 
 session_file = os.path.join(data_dir, 'df_dir', 'session_file.pck')
 
@@ -93,7 +93,11 @@ missing_template = jinja2.Template('''
 <h1>Upload your resume for an analysis of missing keywords compared with the
 job search results.</h1>
 
-<p>This service will extract the text from your resume and compare it to the list of keywords found in the previous analysis. The output will be the keywords not included in your resume that were found in the job postings.</p>
+<p>This service will extract the text from your resume and compare it to the
+list of keywords found in the previous analysis.</p>
+
+<p>The output will be the keywords not included in your resume that were found
+in the job postings.</p>
 
 <form action='/missing/' method=POST enctype=multipart/form-data>
     <input type=file name=File>
