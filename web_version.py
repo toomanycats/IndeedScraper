@@ -422,7 +422,7 @@ output_template = jinja2.Template("""
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 
     <script type="text/javascript">
-        setTimeout("alert('timeout');", 800000)
+        setTimeout("", 800000)
 
         $(function() {
             $("#chart").load("/run_analysis/", function() {
@@ -673,13 +673,11 @@ def run_analysis():
     ind.stop_words = stop_words
     ind.num_urls = int(sess_dict['num_urls'])
 
-    try:
-        ind.main()
-    except Exception, err:
-        logging.error(err)
-        raise Exception
-
+    ind.main()
     df = ind.df
+    if df.shape[0] == 0:
+        logging.error("df emtyp, no postings found")
+        raise Exception, "No postings found"
 
     # save df for additional analysis
     save_to_csv(df)
