@@ -422,16 +422,18 @@ output_template = jinja2.Template("""
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 
     <script type="text/javascript">
-        setTimeout("", 800000)
 
-        $(function() {
-            $("#chart").load("/run_analysis/", function() {
-                $("#stem").slideToggle("fast", function() {
-                    $("#grammar").slideToggle("/grammar/", function() {
-                        $("#cities").slideToggle("fast", function() {
-                            $("#titles").slideToggle("fast", function() {
-                                $("#radius").slideToggle("fast", function() {
-                                    $("#missing").slideToggle("fast");
+        $(function () {
+        $("#chart").load("/run_analysis/", function(response,status,xhr) {
+            if (status == 'timeout')
+                alert("timed out");
+            if (status == 'success')
+                $("#stem").slideDown("fast", function() {
+                    $("#grammar").slideDown("/grammar/", function() {
+                        $("#cities").slideDown("fast", function() {
+                            $("#titles").slideDown("fast", function() {
+                                $("#radius").slideDown("fast", function() {
+                                    $("#missing").slideDown("fast");
                                     });
                                 });
                             });
