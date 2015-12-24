@@ -29,7 +29,7 @@ repo_dir = os.getenv("OPENSHIFT_REPO_DIR")
 if repo_dir is None:
     repo_dir = os.getenv("PWD")
 
-try:
+try: # for calling these methods from CLI
     logging = logging.getLogger(__name__)
 except:
     pass
@@ -121,15 +121,13 @@ class Indeed(object):
         self.channel_name = config_parser.get("channel", "channel_name")
 
     def _get_count(self):
-        self.df= self.df.dropna(how='any').drop_duplicates(subset=['summary'])
-        self.count = self.df.count()['url']
+        self.count = self.df.dropna(subset=['summary'], how='any').drop_duplicates(subset=['summary', 'url', 'job_key']).count()['url']
 
     def get_data(self, ind, start):
         data, num_res, end = self.get_url(start)
         logging.debug("number of results:%i" % num_res)
         num_res = int(num_res)
         end = int(end)
-        self._get_count()
 
         for item in data:
             content = self.get_content(item[0])
@@ -147,10 +145,12 @@ class Indeed(object):
             ind += 1
             logging.debug("index: %i" % ind)
 
-        if end < num_res and ind < self.count:
+        self._get_count()
+        if end < num_res and self.count < self.num_urls:
             logging.debug("calling get_data(), end:%i index:%i" % (end, ind))
             self.get_data(ind, end)
         else:
+            self._get_count()
             return
 
     def get_url(self, start):
@@ -295,6 +295,8 @@ class Indeed(object):
         self.build_api_string()
         self.add_stop_words()
         self.get_data(ind=0, start=0)
+        self.df.dropna(subset=['summary', 'url'], inplace=True)
+        self.df.drop_duplicates(subset=['summary', 'job_key', 'url'], inplace=True)
 
     def vectorizer(self, corpus, max_features=200, max_df=0.8, min_df=0.1, n_min=2, n_max=3):
         vectorizer = CountVectorizer(max_features=max_features,

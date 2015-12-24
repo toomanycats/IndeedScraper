@@ -3,6 +3,7 @@
 # Author : Daniel Cuneo
 # Creation Date : 11-21-2015
 ######################################
+from fuzzywuzzy import fuzz
 import sqlalchemy
 import uuid #for random strints
 import subprocess
@@ -22,7 +23,6 @@ import json
 import pickle
 import compare
 import pdb
-
 
 sql_username = os.getenv("OPENSHIFT_MYSQL_DB_USERNAME")
 if sql_username is None:
@@ -614,7 +614,8 @@ def run_analysis():
     ind.main()
     df = ind.df
     # cheap insurance
-    df = df.dropna(subset=['summary']).drop_duplicates('job_key')
+    df = df.dropna(subset=['summary']).drop_duplicates('summary')
+    df = summary_similarity(df)
 
     # save df for additional analysis
     save_to_csv(df)
@@ -707,7 +708,7 @@ def compute_missing_keywords():
         resume_file.save(resume_path)
 
         df = load_csv()
-        rows = missing_keywords.main(df['summary'], resume_path)
+        rows = missing_keywords.main(resume_path, df['summary'])
 
         _gzip(resume_path)
 
@@ -804,8 +805,21 @@ def _gzip(File):
 
     return File + '.gz'
 
+def summary_similarity(df):
+    dup_list = []
+
+    for i in range(df.shape[0] - 1):
+        string1 = df.loc[i, 'summary']
+
+        for j in range(i+1, df.shape[0] - 1):
+            string2 = df.loc[j+1, 'summary']
+            ratio = fuzz.ratio(string1, string2)
+
+            if ratio >= 0.70:
+                dup_list.append(j)
+
+    return df.drop(df.index[dup_list])
+
+
 if __name__ == "__main__":
     app.run()
-
-
-

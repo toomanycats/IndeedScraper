@@ -4,8 +4,7 @@ import subprocess
 import numpy as np
 import logging
 
-logging.getLogger(__name__)
-
+logging = logging.getLogger(__name__)
 grammar = GrammarParser.GrammarParser()
 ind = indeed_scrape.Indeed('kw')
 

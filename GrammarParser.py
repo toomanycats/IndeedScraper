@@ -77,6 +77,8 @@ class GrammarParser(object):
         if text is None:
             return None
 
+        text = text.encode("ascii", "ignore")
+
         chunker = nltk.RegexpParser(grammar)
 
         toks = nltk.regexp_tokenize(text, sentence_re)
