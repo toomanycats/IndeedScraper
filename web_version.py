@@ -51,7 +51,7 @@ if log_dir is None:
 missing_keywords = compare.MissingKeywords()
 
 logfile = os.path.join(log_dir, 'python.log')
-logging.basicConfig(filename=logfile, level=logging.DEBUG)
+logging.basicConfig(filename=logfile, level=logging.INFO)
 
 session_file = os.path.join(data_dir, 'df_dir', 'session_file.pck')
 
