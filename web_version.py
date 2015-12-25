@@ -51,7 +51,7 @@ if log_dir is None:
 missing_keywords = compare.MissingKeywords()
 
 logfile = os.path.join(log_dir, 'python.log')
-logging.basicConfig(filename=logfile, level=logging.INFO)
+logging.basicConfig(filename=logfile, level=logging.DEBUG)
 
 session_file = os.path.join(data_dir, 'df_dir', 'session_file.pck')
 
@@ -677,7 +677,7 @@ def run_analysis():
 
     ind.main()
     df = ind.df
-    if df.shape[0] == 0:
+    if df.count()['summary'] == 0:
         logging.error("df emtyp, no postings found")
         raise Exception, "No postings found"
 
