@@ -461,7 +461,7 @@ output_template = jinja2.Template("""
     <a href="/grammar/">Soft Skill Analysis</a>
     </div>
 
-    <br><br>
+    <br>
 
     <div id=cities style="display: none">
     <p>A count of the job postings per city.</p>
@@ -712,6 +712,26 @@ def radius():
     script, div = get_plot_comp(kw, count, df, 'radius_kw')
     return radius_template.render(div=div, script=script)
 
+def get_inverse_stem(kw):
+    sess_dict = get_sess()
+    inv = sess_dict['stem_inv']
+
+    orig_keyword = []
+    temp = []
+    for key in kw: # could be bigrams or more
+        keys = key.split(" ")
+        for k in keys:
+            try: # make sure there's an output
+                temp.append(inv[k])
+            except KeyError:
+                logging.error("inverse stem lookup fail:%s" % k)
+                temp.append(k)
+        orig_keyword.append(" ".join(temp))
+        temp = []
+
+    return orig_keyword
+
+
 @app.route('/stem/')
 def stem():
     logging.info("running stem")
@@ -727,17 +747,8 @@ def stem():
     count, kw = ind.vectorizer(summary_stem, n_min=1, n_max=2, max_features=80,
             max_df=compute_max_df(sess_dict['type_'], sess_dict['num_urls']))
 
-    inv = sess_dict['stem_inv']
-    orig_keyword = []
-    temp = []
-    for key in kw:
-        keys = key.split(" ")
-        for k in keys:
-            temp.append(inv[k])
-        orig_keyword.append(" ".join(temp))
-        temp = []
-
-    script, div = get_plot_comp(orig_keyword, count, df, 'kws')
+    orig_keywords = get_inverse_stem(kw)
+    script, div = get_plot_comp(orig_keywords, count, df, 'kws')
 
     page = stem_template.render(script=script, div=div)
     return encode_utf8(page)
