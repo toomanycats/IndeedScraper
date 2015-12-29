@@ -413,24 +413,24 @@ output_template = jinja2.Template("""
 <body>
     <script type="text/javascript">
     $(function() {
-        $("#chart").load("/run_analysis/", function() {
-                $("#stem").slideDown("fast", function() {
-                    $("#grammar").slideDown("/grammar/", function() {
-                        $("#cities").slideDown("fast", function() {
-                            $("#titles").slideDown("fast", function() {
-                                $("#radius").slideDown("fast", function() {
-                                    $("#missing").slideDown("fast")
-                                    });
-                                });
-                            });
-                        });
-                    });
-                });
+        $("#chart").load("/run_analysis/");
 
         $.ajax({
             timeout: 800000,
             error: function() {alert("error")},
-            success: function() {alert("complete")},
+            success: function() {
+                    $("#stem").slideDown("fast", function() {
+                        $("#grammar").slideDown("fast", function() {
+                            $("#cities").slideDown("fast", function() {
+                                $("#titles").slideDown("fast", function() {
+                                    $("#radius").slideDown("fast", function() {
+                                        $("#missing").slideDown("fast")
+                                        });
+                                    });
+                                });
+                            });
+                        });
+                    }
             });
         });
     </script>
