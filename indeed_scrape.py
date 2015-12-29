@@ -3,6 +3,7 @@
 # Author : Daniel Cuneo
 # Creation Date : 11-05-2015
 ######################################
+import pdb
 from fuzzywuzzy import fuzz
 import GrammarParser
 import codecs
@@ -37,7 +38,6 @@ except:
 class Indeed(object):
     def __init__(self, query_type):
         self.query_type = query_type
-        self.delta_zero = 0
         self.num_urls = 10
         self.add_loc = None
         self.stop_words = None
@@ -46,6 +46,7 @@ class Indeed(object):
         self.config_path = os.path.join(repo_dir, "tokens.cfg")
         self.query = None
         self.title = None
+        self.stem_inverse = {}
         self.locations = None
 
     def _decode(self, string):
@@ -122,12 +123,13 @@ class Indeed(object):
 
     def _get_count(self):
         df = self.summary_similarity(self.df, 'summary', 80)
-        self.count = df.dropna(subset=['summary'], how='any').drop_duplicates(subset=['summary', 'url', 'job_key']).count()['url']
+        count = df.dropna(subset=['summary'], how='any').drop_duplicates(subset=['summary', 'url', 'job_key']).count()['url']
+        return count
 
     def get_data(self, ind, start):
         data, num_res, end = self.get_url(start)
         logging.debug("number of results:%i" % num_res)
-        num_res = int(num_res)
+        num_res = np.int32(num_res)
         end = int(end)
 
         for item in data:
@@ -146,13 +148,8 @@ class Indeed(object):
             ind += 1
             logging.debug("index: %i" % ind)
 
-        self._get_count()
-        if end < num_res and self.count < self.num_urls:
-            logging.debug("calling get_data(), end:%i index:%i count:%i" % (end, ind, self.count))
-            self.get_data(ind, end)
-        else:
-            self._get_count()
-            return
+        count = self._get_count()
+        return ind, end, num_res, count
 
     def get_url(self, start):
         api = self.api %{'pub_id':self.pub_id,
@@ -218,10 +215,15 @@ class Indeed(object):
 
         string = self._decode(string)
         words = toker(string)
+        words = map(lambda x:x.lower(), words)
         words = self.len_tester(words)
-        words = map(stemmer.stem, words)
+        stem_words = map(stemmer.stem, words)
 
-        return " ".join(words)
+        #master dict of stemmed words and originals
+        for s,w in zip(stem_words, words):
+            self.stem_inverse[s] = w
+
+        return " ".join(stem_words)
 
     def _get_parsed_li(self, soup):
         obj = re.compile(r'summary|description')
@@ -298,7 +300,12 @@ class Indeed(object):
         self.load_config()
         self.build_api_string()
         self.add_stop_words()
-        self.get_data(ind=0, start=0)
+
+        ind, end, num_res, count = self.get_data(ind=0, start=0)
+        while end < num_res and count < self.num_urls:
+            logging.debug("calling get_data(), end:%i index:%i count:%i" % (end, ind, count))
+            ind, end, num_res, count = self.get_data(ind, start=end)
+
         self.df.dropna(subset=['summary', 'url'], inplace=True)
 
         #cheap insurance

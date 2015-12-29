@@ -275,13 +275,9 @@ is, the suffixes have been removed,</p>
 <li>works</li>
 <li>worked</li>
 
-<p>are counted the same, as "work".
-<li>The bar graph shows only single keywords, known as Mono-grams.</li>
-<li>Many words will be reduced, 'requirements', or, 'experience' will look like:
-<p>
-    <li>requir</li>
-    <li>experi</li>
-</p>
+<p>are counted the same. The actual word shown will be the last
+word that appeared. You may see, "works" , because that was the last
+version of work, working, worked, that occurred in the analysis words.
 
 
 </body>
@@ -341,22 +337,15 @@ input_template = jinja2.Template('''
             color: #e5ffff;
          }
 
-    body {
-            background: url('static/med_dir_300.png') no-repeat fixed;
-            -webkit-background-size: contain;
-            -moz-background-size: contain;
-            -o-background-size: contain;
-            background-size: contain;
-          }
     </style>
 
 </head>
 
 <body>
-        <center><img src=static/dir_marketing.png alt="Sample Keyword Output" style="width:1200px;height:425px;"></center><br>
+        <p><left><img src=static/logo_trans.png alt="Sample Keyword Output"></left></p>
         <center><h1>Optimize Your Keywords for Resumes and LinkedIn</h1></center>
 
-        <form action="/get_data/"  method="POST">
+        <form action="/get_data/" method="POST">
 
         <p>Enter your keywords here <input type="text" name="kw" placeholder="data science" spellcheck="true"></p>
 
@@ -422,25 +411,25 @@ output_template = jinja2.Template("""
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 
     <script type="text/javascript">
+        $.ajax({
+            timeout: 800000,
+        })
 
-        $(function () {
-        $("#chart").load("/run_analysis/", function(response,status,xhr) {
-            if (status == 'timeout')
-                alert("timed out");
-            if (status == 'success')
-                $("#stem").slideDown("fast", function() {
-                    $("#grammar").slideDown("/grammar/", function() {
-                        $("#cities").slideDown("fast", function() {
-                            $("#titles").slideDown("fast", function() {
-                                $("#radius").slideDown("fast", function() {
-                                    $("#missing").slideDown("fast");
-                                    });
+        $(function (){
+        $("#chart").load("/run_analysis/", function() {
+            $("#stem").slideDown("fast", function() {
+                $("#grammar").slideDown("/grammar/", function() {
+                    $("#cities").slideDown("fast", function() {
+                        $("#titles").slideDown("fast", function() {
+                            $("#radius").slideDown("fast", function() {
+                                $("#missing").slideDown("fast");
                                 });
                             });
                         });
                     });
                 });
             });
+        });
     </script>
 </head>
 
@@ -453,7 +442,7 @@ output_template = jinja2.Template("""
 ></script>
 <body>
 
-    <h1>Frequency of Keyword Pairs</h1>
+    <h1>Frequency of Keyword Pairs: Hard Skills</h1>
     <p><i>The graph is interactive, scroll up and down to zoom</i></p>
     <p>This analysis uses all the text found in the bullet points. Typically,
     these are where the hard skills are listed for the applicant.</p>
@@ -464,7 +453,7 @@ output_template = jinja2.Template("""
 
     <div id=stem style="display: none">
     <p>Also text from bullet points, the analysis below produces single words.</p>
-    <a href="/stem/">Single Word Analysis</a>
+    <a href="/stem/">Single Word Hard Skill Analysis</a>
     </div>
 
     <br>
@@ -474,7 +463,7 @@ output_template = jinja2.Template("""
     <p>Not all interesting keywords are contained in the bullet points. This
     treatment will search the body of the post not including bulleted lists.
     You may find more soft skills here.</p>
-    <a href="/grammar/">Alternate Skill Analysis</a>
+    <a href="/grammar/">Soft Skill Analysis</a>
     </div>
 
     <br><br>
@@ -676,12 +665,18 @@ def run_analysis():
     ind.num_urls = int(sess_dict['num_urls'])
 
     ind.main()
+
     df = ind.df
+
     if df.count()['summary'] == 0:
         logging.error("df emtyp, no postings found")
         raise Exception, "No postings found"
 
     # save df for additional analysis
+    sess_dict = get_sess()
+    sess_dict['stem_inv'] = ind.stem_inverse
+    put_to_sess(sess_dict)
+
     save_to_csv(df)
     to_sql()
 
@@ -737,7 +732,18 @@ def stem():
 
     count, kw = ind.vectorizer(summary_stem, n_min=1, n_max=2, max_features=80,
             max_df=compute_max_df(sess_dict['type_'], sess_dict['num_urls']))
-    script, div = get_plot_comp(kw, count, df, 'kws')
+
+    inv = sess_dict['stem_inv']
+    orig_keyword = []
+    temp = []
+    for key in kw:
+        keys = key.split(" ")
+        for k in keys:
+            temp.append(inv[k])
+        orig_keyword.append(" ".join(temp))
+        temp = []
+
+    script, div = get_plot_comp(orig_keyword, count, df, 'kws')
 
     page = stem_template.render(script=script, div=div)
     return encode_utf8(page)
@@ -772,8 +778,6 @@ def compute_missing_keywords():
 
         df = load_csv()
         rows = missing_keywords.main(resume_path, df['summary'])
-
-        _gzip(resume_path)
 
         return missing_template.render(rows=rows)
 
@@ -822,10 +826,7 @@ def to_sql():
 
 def load_csv():
     sess_dict = get_sess()
-    df_file = _ungzip(sess_dict['df_file'])
-    df = pd.read_csv(df_file)
-
-    _gzip(sess_dict['df_file'])
+    df = pd.read_csv(sess_dict['df_file'])
 
     return df
 
@@ -833,42 +834,6 @@ def save_to_csv(df):
     logging.info("saving df")
     sess_dict = get_sess()
     df.to_csv(sess_dict['df_file'], index=False, quoting=1, encoding='utf-8')
-    df_file =  _gzip(sess_dict['df_file'])
-
-    #re write the pickle file with gz ext for df_file
-    sess_dict['df_file'] = df_file
-    put_to_sess(sess_dict)
-
-def _call_shell(cmd):
-    logging.debug('command line used: %s' %cmd)
-
-    process = subprocess.Popen(cmd, shell=True,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE)
-
-    out, err = process.communicate()
-    errcode = process.returncode
-
-    logging.debug('Shell call output: %s' %out)
-
-    return out
-
-def _ungzip(File, force=True):
-    if force is True:
-        cmd = 'gunzip -f %s' %File
-    else:
-        cmd = 'gunzip %s' %File
-
-    _call_shell(cmd)
-
-    return File.replace('.gz', '')
-
-def _gzip(File):
-    cmd = 'gzip -f %s' %File
-    _call_shell(cmd)
-
-    return File + '.gz'
-
 
 if __name__ == "__main__":
     app.run()
