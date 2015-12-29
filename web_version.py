@@ -414,7 +414,8 @@ output_template = jinja2.Template("""
     <script type="text/javascript">
         $.ajax({
             timeout: 800000,
-            error: function() {alert("prog running long time")}
+            error: function() {alert("prog running long time")},
+            success: function() {alert("complete")}
         });
 
         $(function() {
