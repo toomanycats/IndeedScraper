@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>keyword counter optimizer</title>
+    <meta charset="UTF-8">
+    <meta name="description" content="Optimize Your Resume and Social Media Keywords, Provide statistics on the keywords used in job postings Group the cities they are from Report the job titles searched." />
+    <meta name="robots" content="index, follow" />
+    <style>
+    p {
+        margin: 0.5cm 0.5cm 0.2cm 6cm;
+        font-family:"Verdana";
+        font-size:150%
+      }
+    li {
+        padding-left: 8cm;
+        font-size:150%
+       }
+
+    html {
+            background: url(static/background.jpg) no-repeat center center fixed;
+            -webkit-background-size: cover;
+            -moz-background-size: cover;
+            -o-background-size: cover;
+            background-size: cover;
+            color: #e5ffff;
+         }
+
+    </style>
+
+</head>
+
+<body>
+        <p><left><img src=static/logo_trans.png alt="Sample Keyword Output"></left></p>
+        <center><h1>Optimize Your Keywords for Resumes and LinkedIn</h1></center>
+
+        <form action="/get_data/" method="POST">
+
+        <p>Enter your keywords here <input type="text" name="kw" placeholder="data science" spellcheck="true"></p>
+
+            <p>The number of job postings to examine</p>
+
+            <p><select name="num">
+                <option value=10>10 primarily for testing</option>
+                <option value=50>50 about a minute wait</option>
+                <option value=100>100 could take 10 min. </option>
+                <option value=200>200 will take 10 min. plus</option>
+                </select>
+            </p>
+
+            <p>Select whether you want to use the keyword or title mode. I suggest
+            trying out both. The uniqued list of job titles will be
+            displayed with the results so that you can determine if the
+            keywords were appropriate or not. You also learn something about
+            the fields  which use the skills you are providing as search
+            terms.</p>
+
+            <p><select name="type_">
+                <option value='title'>title</option>
+                <option value='keywords'>keywords</option>
+                </select>
+            </p>
+
+            <p><input type="submit" value="Submit" name="submit"></p>
+        </form>
+
+<!-- Start of StatCounter Code for Default Guide -->
+<script type="text/javascript">
+var sc_project=10739395;
+var sc_invisible=1;
+var sc_security="0d075499";
+var scJsHost = (("https:" == document.location.protocol) ?
+"https://secure." : "http://www.");
+document.write("<sc"+"ript type='text/javascript' src='" +
+scJsHost+
+"statcounter.com/counter/counter.js'></"+"script>");
+</script>
+<noscript><div class="statcounter"><a title="free web stats"
+href="http://statcounter.com/" target="_blank"><img
+class="statcounter"
+src="http://c.statcounter.com/10739395/0/0d075499/1/"
+alt="free web stats"></a></div></noscript>
+<!-- End of StatCounter Code for Default Guide -->
+
+</body>
+</html>
