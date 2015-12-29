@@ -412,7 +412,6 @@ output_template = jinja2.Template("""
 
     <script type="text/javascript">
         $.ajax({
-            url: '/run_analysis/',
             timeout: 800000
         });
 
@@ -656,45 +655,43 @@ def plot_cities():
     page = cities_template.render(div=div, script=script)
 
     return encode_utf8(page)
-@app.route('/run_analysis/', methods=['POST', 'GET'])
+
+@app.route('/run_analysis/')
 def run_analysis():
-    if request.method == 'POST':
-        return ""
-    if request.method == "GET":
-        sess_dict = get_sess()
-        logging.info("starting run_analysis %s" % time.strftime("%H:%M:%S"))
-        ind = indeed_scrape.Indeed(query_type=sess_dict['type_'])
-        ind.query = sess_dict['kws']
-        ind.stop_words = stop_words
-        ind.num_urls = int(sess_dict['num_urls'])
+    sess_dict = get_sess()
+    logging.info("starting run_analysis %s" % time.strftime("%H:%M:%S"))
+    ind = indeed_scrape.Indeed(query_type=sess_dict['type_'])
+    ind.query = sess_dict['kws']
+    ind.stop_words = stop_words
+    ind.num_urls = int(sess_dict['num_urls'])
 
-        ind.main()
-        df = ind.df
+    ind.main()
+    df = ind.df
 
-        if df.count()['summary'] == 0:
-            logging.error("df emtyp, no postings found")
-            raise Exception, "No postings found"
+    if df.count()['summary'] == 0:
+        logging.error("df emtyp, no postings found")
+        raise Exception, "No postings found"
 
-        # save df for additional analysis
-        sess_dict = get_sess()
-        sess_dict['stem_inv'] = ind.stem_inverse
-        put_to_sess(sess_dict)
+    # save df for additional analysis
+    sess_dict = get_sess()
+    sess_dict['stem_inv'] = ind.stem_inverse
+    put_to_sess(sess_dict)
 
-        save_to_csv(df)
-        to_sql()
+    save_to_csv(df)
+    to_sql()
 
-        count, kw = ind.vectorizer(df['summary'], n_min=2, n_max=2, max_features=60,
-                max_df=compute_max_df(sess_dict['type_'], sess_dict['num_urls']))
+    count, kw = ind.vectorizer(df['summary'], n_min=2, n_max=2, max_features=60,
+            max_df=compute_max_df(sess_dict['type_'], sess_dict['num_urls']))
 
-        script, div = get_plot_comp(kw, count, df, 'kws')
+    script, div = get_plot_comp(kw, count, df, 'kws')
 
 
-        output = """
+    output = """
 %(kw_div)s
 %(kw_script)s
-    """
-        return output %{'kw_script':script,
-                        'kw_div':div }
+"""
+    return output %{'kw_script':script,
+                    'kw_div':div }
 
 @app.route('/radius/', methods=['post'])
 def radius():
