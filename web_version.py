@@ -412,6 +412,11 @@ output_template = jinja2.Template("""
 </head>
 <body>
     <script type="text/javascript">
+        $.ajax({
+            timeout: 800000,
+            error: function() {alert("prog running long time")}
+        });
+
         $(function() {
         $("#chart").load("/run_analysis/", function() {
                 $("#stem").slideDown("fast", function() {
@@ -677,6 +682,7 @@ def run_analysis():
 %(kw_script)s
 """
     logging.debug("run_analysis returning components")
+    logging.debug("bokeh div:%s" % div)
     return output %{'kw_script':script,
                     'kw_div':div }
 
