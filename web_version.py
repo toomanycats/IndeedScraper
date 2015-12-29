@@ -59,10 +59,9 @@ missing_template = jinja2.Template('''
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="stylesheet" href="css/style.css">
     <title>missing keyword analysis</title>
     <meta name="description" content="Upload your PDF resume for an analysis of
-    missing keywords compared with the nationwide job postings"</meta>
+        missing keywords compared with the nationwide job postings"</meta>
     <meta charset="UTF-8">
     <style>
         p {
@@ -179,7 +178,6 @@ title_template = jinja2.Template('''
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="stylesheet" href="css/style.css">
     <style>
         p {
             margin: 0.2cm 0.5cm 0.1cm 1cm;
@@ -235,7 +233,6 @@ stem_template= jinja2.Template('''
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="stylesheet" href="css/style.css">
     <style>
         p {
             margin: 0.5cm 0.5cm 0.2cm 6cm;
@@ -402,26 +399,21 @@ output_template = jinja2.Template("""
 <head>
     <title>keyword counter results</title>
     <meta charset="UTF-8">
+    <link href="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.css" rel="stylesheet" type="text/css">
+    <script src="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
     <style>
         body {
             font-size: 125%;
             background-color: #caf6f6;
             }
     </style>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 
-<link
-    href="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.css"
-    rel="stylesheet" type="text/css">
-
-<script
-    src="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.js"
-></script>
 </head>
 <body>
     <script type="text/javascript">
-        $(document).ready(function() {
-            $("#chart").load("/run_analysis/", function() {
+        $(function() {
+        $("#chart").load("/run_analysis/", function() {
                 $("#stem").slideDown("fast", function() {
                     $("#grammar").slideDown("/grammar/", function() {
                         $("#cities").slideDown("fast", function() {
@@ -447,12 +439,11 @@ output_template = jinja2.Template("""
     <br><br>
 
     <div id=stem style="display: none">
-    <p>Also text from bullet points, the analysis below produces single words.</p>
-    <a href="/stem/">Single Word Hard Skill Analysis</a>
+        <p>Also text from bullet points, the analysis below produces single words.</p>
+        <a href="/stem/">Single Word Hard Skill Analysis</a>
     </div>
 
     <br>
-
 
     <div id=grammar style="display: none">
     <p>Not all interesting keywords are contained in the bullet points. This
@@ -664,7 +655,7 @@ def run_analysis():
     df = ind.df
 
     if df.count()['summary'] == 0:
-        logging.error("df emtyp, no postings found")
+        logging.error("df empty, no postings found")
         raise Exception, "No postings found"
 
     # save df for additional analysis
@@ -685,6 +676,7 @@ def run_analysis():
 %(kw_div)s
 %(kw_script)s
 """
+    logging.debug("run_analysis returning components")
     return output %{'kw_script':script,
                     'kw_div':div }
 
