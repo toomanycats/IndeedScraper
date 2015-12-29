@@ -410,29 +410,6 @@ output_template = jinja2.Template("""
     </style>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 
-    <script type="text/javascript">
-        $.ajax({
-            timeout: 800000
-        });
-
-        $(function (){
-        $("#chart").load("/run_analysis/", function() {
-            $("#stem").slideDown("fast", function() {
-                $("#grammar").slideDown("/grammar/", function() {
-                    $("#cities").slideDown("fast", function() {
-                        $("#titles").slideDown("fast", function() {
-                            $("#radius").slideDown("fast", function() {
-                                $("#missing").slideDown("fast");
-                                });
-                            });
-                        });
-                    });
-                });
-            });
-        });
-    </script>
-</head>
-
 <link
     href="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.css"
     rel="stylesheet" type="text/css">
@@ -440,14 +417,32 @@ output_template = jinja2.Template("""
 <script
     src="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.js"
 ></script>
+</head>
 <body>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            $("#chart").load("/run_analysis/", function() {
+                $("#stem").slideDown("fast", function() {
+                    $("#grammar").slideDown("/grammar/", function() {
+                        $("#cities").slideDown("fast", function() {
+                            $("#titles").slideDown("fast", function() {
+                                $("#radius").slideDown("fast", function() {
+                                    $("#missing").slideDown("fast");
+                                    });
+                                });
+                            });
+                        });
+                    });
+                });
+            });
+    </script>
+
 
     <h1>Frequency of Keyword Pairs: Hard Skills</h1>
     <p><i>The graph is interactive, scroll up and down to zoom</i></p>
     <p>This analysis uses all the text found in the bullet points. Typically,
     these are where the hard skills are listed for the applicant.</p>
-    <div id="chart">Collecting data might take a minute or longer.
-    </div>
+    <div id="chart">Collecting data...</div>
 
     <br><br>
 
@@ -562,7 +557,7 @@ def get_keywords():
     logging.info("running app:%s" % time.strftime("%d-%m-%Y:%H:%M:%S"))
     return input_template.render()
 
-@app.route('/get_data/', methods=['post', 'get'])
+@app.route('/get_data/', methods=['post'])
 def get_data():
     logging.info("starting get_data: %s" % time.strftime("%H:%M:%S"))
 
