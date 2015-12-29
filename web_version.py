@@ -679,7 +679,7 @@ def run_analysis():
     put_to_sess(sess_dict)
 
     save_to_csv(df)
-    #to_sql()
+    to_sql()
 
     count, kw = ind.vectorizer(df['summary'], n_min=2, n_max=2, max_features=60,
             max_df=compute_max_df(sess_dict['type_'], sess_dict['num_urls']))
