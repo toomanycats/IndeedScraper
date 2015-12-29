@@ -563,7 +563,7 @@ def get_keywords():
     logging.info("running app:%s" % time.strftime("%d-%m-%Y:%H:%M:%S"))
     return input_template.render()
 
-@app.route('/get_data/', methods=['post'])
+@app.route('/get_data/', methods=['post', 'get'])
 def get_data():
     logging.info("starting get_data: %s" % time.strftime("%H:%M:%S"))
 
@@ -656,7 +656,7 @@ def plot_cities():
     page = cities_template.render(div=div, script=script)
 
     return encode_utf8(page)
-@app.route('/run_analysis/')
+@app.route('/run_analysis/', methods=['post', 'get'])
 def run_analysis():
     sess_dict = get_sess()
     logging.info("starting run_analysis %s" % time.strftime("%H:%M:%S") )
@@ -679,7 +679,7 @@ def run_analysis():
     put_to_sess(sess_dict)
 
     save_to_csv(df)
-    to_sql()
+    #to_sql()
 
     count, kw = ind.vectorizer(df['summary'], n_min=2, n_max=2, max_features=60,
             max_df=compute_max_df(sess_dict['type_'], sess_dict['num_urls']))
