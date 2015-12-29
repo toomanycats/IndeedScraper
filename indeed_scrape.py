@@ -80,7 +80,7 @@ class Indeed(object):
         query = self.format_query()
         start = '&start=%(start)s'
         frm = '&fromage=360'
-        limit = '&limit=200'
+        limit = '&limit=25'
         site = '&st=jobsite'
         format = '&format=json'
         filter = '&filter=1'
