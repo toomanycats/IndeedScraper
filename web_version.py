@@ -412,27 +412,21 @@ output_template = jinja2.Template("""
 </head>
 <body>
     <script type="text/javascript">
-        $.ajax({
-            timeout: 800000,
-            error: function() {alert("prog running long time")},
-            success: function() {alert("complete")}
-        });
-
         $(function() {
-        $("#chart").load("/run_analysis/", function() {
-                $("#stem").slideDown("fast", function() {
-                    $("#grammar").slideDown("/grammar/", function() {
-                        $("#cities").slideDown("fast", function() {
-                            $("#titles").slideDown("fast", function() {
-                                $("#radius").slideDown("fast", function() {
-                                    $("#missing").slideDown("fast");
+            $("#chart").load("/run_analysis/", function() {
+                    $("#stem").slideDown("fast", function() {
+                        $("#grammar").slideDown("/grammar/", function() {
+                            $("#cities").slideDown("fast", function() {
+                                $("#titles").slideDown("fast", function() {
+                                    $("#radius").slideDown("fast", function() {
+                                        $("#missing").slideDown("fast");
+                                        });
                                     });
                                 });
                             });
                         });
                     });
                 });
-            });
     </script>
 
 
@@ -554,32 +548,36 @@ def get_keywords():
     logging.info("running app:%s" % time.strftime("%d-%m-%Y:%H:%M:%S"))
     return input_template.render()
 
-@app.route('/get_data/', methods=['post'])
+@app.route('/get_data/', methods=['GET', 'POST'])
 def get_data():
     logging.info("starting get_data: %s" % time.strftime("%H:%M:%S"))
 
-    type_ = request.form['type_']
-    kws = request.form['kw'].lower()
-    num_urls = int(request.form['num'])
+    if request.method == "POST":
+        type_ = request.form['type_']
+        kws = request.form['kw'].lower()
+        num_urls = int(request.form['num'])
 
-    df_file = os.path.join(data_dir,  'df_dir', mk_random_string())
-    logging.info("session file path: %s" % df_file)
+        df_file = os.path.join(data_dir,  'df_dir', mk_random_string())
+        logging.info("session file path: %s" % df_file)
 
-    put_to_sess({'type_':type_,
-                 'kws':kws,
-                 'num_urls':num_urls,
-                 'df_file':df_file,
-                 })
+        put_to_sess({'type_':type_,
+                    'kws':kws,
+                    'num_urls':num_urls,
+                    'df_file':df_file,
+                    })
 
-    logging.info("running get_data:%s" % time.strftime("%d-%m-%Y:%H:%M:%S"))
-    logging.info("df file path: %s :%s" % (df_file, time.strftime("%d-%m-%Y:%H:%M:%S")))
-    logging.info("type:%s" %  type_)
-    logging.info("key words:%s" % kws)
-    logging.info("number urls:%s" % num_urls)
+        logging.info("running get_data:%s" % time.strftime("%d-%m-%Y:%H:%M:%S"))
+        logging.info("df file path: %s :%s" % (df_file, time.strftime("%d-%m-%Y:%H:%M:%S")))
+        logging.info("type:%s" %  type_)
+        logging.info("key words:%s" % kws)
+        logging.info("number urls:%s" % num_urls)
 
-    html = output_template.render()
+        html = output_template.render()
+        return encode_utf8(html)
 
-    return encode_utf8(html)
+    if request.method == "GET":
+        html = output_template.render()
+        return encode_utf8(html)
 
 def get_plot_comp(kw, count, df, title_key):
         count = count.toarray().sum(axis=0)
