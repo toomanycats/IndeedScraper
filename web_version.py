@@ -417,16 +417,16 @@ output_template = jinja2.Template("""
 </head>
 <body>
     <script type="text/javascript">
-    $(function() {
-        $("#chart").load("/run_analysis/");
 
         $.ajax({
             statusCode: {
                 502: function(){alert('502');}
                 },
+            timeout:800000,
             type: "GET",
-            url: '/get_data#chart',
+            url: '/run_analysis/',
             success: function() {
+                $("#chart").load("/run_analysis/", function() {
                     $("#stem").slideDown("fast", function() {
                         $("#grammar").slideDown("fast", function() {
                             $("#cities").slideDown("fast", function() {
@@ -438,9 +438,9 @@ output_template = jinja2.Template("""
                                 });
                             });
                         });
-                    }
+                    });
+                }
             });
-        });
     </script>
 
 
