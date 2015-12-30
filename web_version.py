@@ -51,7 +51,7 @@ if log_dir is None:
 missing_keywords = compare.MissingKeywords()
 
 logfile = os.path.join(log_dir, 'python.log')
-logging.basicConfig(filename=logfile, level=logging.DEBUG)
+logging.basicConfig(filename=logfile, level=logging.INFO)
 
 session_file = os.path.join(data_dir, 'df_dir', 'session_file.pck')
 
@@ -416,11 +416,12 @@ output_template = jinja2.Template("""
         $("#chart").load("/run_analysis/");
 
         $.ajax({
-            async: false,
+            statusCode: {
+                502: function(){alert('still working');
+                }
+            },
             type: "GET",
             url: '/get_data#chart',
-            timeout: 600000,
-            error: function() {alert("error")},
             success: function() {
                     $("#stem").slideDown("fast", function() {
                         $("#grammar").slideDown("fast", function() {
