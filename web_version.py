@@ -417,9 +417,9 @@ output_template = jinja2.Template("""
 
         $.ajax({
             async: false,
-            type: "POST",
-            url: '/run_analysis/',
-            timeout: 500000,
+            type: "GET",
+            url: '/get_data#chart',
+            timeout: 600000,
             error: function() {alert("error")},
             success: function() {
                     $("#stem").slideDown("fast", function() {
