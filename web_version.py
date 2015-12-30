@@ -417,7 +417,7 @@ output_template = jinja2.Template("""
 
         $.ajax({
             async: false,
-            type: "GET",
+            type: "POST",
             url: '/run_analysis/',
             timeout: 500000,
             error: function() {alert("error")},
