@@ -408,6 +408,11 @@ output_template = jinja2.Template("""
             background-color: #caf6f6;
             }
     </style>
+    <script>
+        setInterval(function() {
+            $( ".blink" ).fadeToggle();
+            }, 500);
+    </script>
 
 </head>
 <body>
@@ -417,9 +422,8 @@ output_template = jinja2.Template("""
 
         $.ajax({
             statusCode: {
-                502: function(){alert('still working');
-                }
-            },
+                502: function(){alert('502');}
+                },
             type: "GET",
             url: '/get_data#chart',
             success: function() {
@@ -444,7 +448,7 @@ output_template = jinja2.Template("""
     <p><i>The graph is interactive, scroll up and down to zoom</i></p>
     <p>This analysis uses all the text found in the bullet points. Typically,
     these are where the hard skills are listed for the applicant.</p>
-    <div id="chart">Collecting data...</div>
+    <div id="chart">Collecting Data...</div>
 
     <br><br>
 
