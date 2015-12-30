@@ -416,7 +416,7 @@ output_template = jinja2.Template("""
         $("#chart").load("/run_analysis/");
 
         $.ajax({
-            async: false,
+            url: '/run_analysis/',
             timeout: 800000,
             error: function() {alert("error")},
             success: function() {
