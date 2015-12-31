@@ -399,17 +399,23 @@ class Indeed(object):
 
         return new
 
-    @classmethod
     def summary_similarity(self, df, column, ratio_thres):
         dup_list = []
 
         for i in range(df.shape[0] - 1):
-            string1 = df.loc[i, column]
-            string1 = self._decode(string1)
+            try:
+                string1 = df.loc[i, column]
+                string1 = self._decode(string1)
+            except UnicodeDecodeError:
+                continue
 
             for j in range(i+1, df.shape[0] - 1):
-                string2 = df.loc[j+1, column]
-                string2 = self.decode(string2)
+                try:
+                    string2 = df.loc[j+1, column]
+                    string2 = self._decode(string2)
+                except UnicodeDecodeError:
+                    continue
+
                 ratio = fuzz.ratio(string1, string2)
 
                 if ratio >= ratio_thres:

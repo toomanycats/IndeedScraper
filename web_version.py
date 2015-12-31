@@ -51,7 +51,7 @@ if log_dir is None:
 missing_keywords = compare.MissingKeywords()
 
 logfile = os.path.join(log_dir, 'python.log')
-logging.basicConfig(filename=logfile, level=logging.INFO)
+logging.basicConfig(filename=logfile, level=logging.DEBUG)
 
 session_file = os.path.join(data_dir, 'df_dir', 'session_file.pck')
 
@@ -420,9 +420,8 @@ output_template = jinja2.Template("""
         });
     </script>
 
-    <form action='/run_analysis/' method='get'>
-    <input type='submit' value='get more samples'>
-    </form>
+    <button type='button' onclick='$("#chart").load("/run_analysis/")'>
+    More Resulsts</button>
 
     <h1>Frequency of Keyword Pairs: Hard Skills</h1>
     <p><i>The graph is interactive, scroll up and down to zoom</i></p>
@@ -597,7 +596,7 @@ def plot_titles():
     df = load_csv()
 
     df['jobtitle'] = df['jobtitle'].apply(lambda x:x.lower())
-    ind = indeed_scrape.Indeed
+    ind = indeed_scrape.Indeed("kw")
     title_de_duped = ind.summary_similarity(df, 'jobtitle', 80)
 
     grp = title_de_duped.groupby("jobtitle").count().sort("url", ascending=False)
@@ -653,18 +652,24 @@ def run_analysis():
 
     index = sess_dict['index']
     end = sess_dict['end']
-    index, end, num_res, count = ind.get_data(ind=index, start=end)
 
+    try:
+        index, end, num_res, count = ind.get_data(ind=index, start=end)
+    # random fail: hack fix
+    except NoneTypeError:
+        index, end, num_res, count = ind.get_data(ind=index, start=end)
+    except Exception, err:
+        logging.error(err)
+        raise Exception
 
     while count < sess_dict['count_thres']:
         index, end, num_res, count = ind.get_data(ind=index, start=end)
 
     sess_dict['end'] = end
-    sess_dict['count_thres'] = 20
+    sess_dict['count_thres'] = 25
 
     # append existing df if second or more time here
     if os.path.exists(sess_dict['df_file']):
-        pdb.set_trace()
         df = load_csv()
         df = df.append(ind.df, ignore_index=True)
         df = ind.summary_similarity(df, 'summary', 80)
@@ -682,10 +687,14 @@ def run_analysis():
     save_to_csv(df)
 
     max_df = compute_max_df(sess_dict['type_'], df.shape[0], n_min=2)
-    count_array, kw = ind.vectorizer(df['summary'], n_min=2, n_max=2, max_features=60, max_df=max_df, min_df=5)
+    count_array, kw = ind.vectorizer(df['summary'],
+                                     n_min=2,
+                                     n_max=3,
+                                     max_features=30,
+                                     max_df=max_df,
+                                     min_df=3)
 
     script, div = get_plot_comp(kw, count_array, df, 'kws')
-
 
     output = """
 %(kw_div)s
@@ -738,7 +747,6 @@ def get_inverse_stem(kw):
         temp = []
 
     return orig_keyword
-
 
 @app.route('/stem/')
 def stem():
@@ -818,11 +826,14 @@ def compute_max_df(type_, num_samp, n_min=1):
     else:
         raise ValueError, "type not understood"
 
-    if num_samp < 50:
-        base += 0.10
-
-    if n_min > 1:
+    if num_samp > 95:
         base -= 0.10
+
+    elif n_min > 1:
+        base -= 0.05
+
+    else:
+        pass
 
     return base
 
