@@ -401,12 +401,19 @@ output_template = jinja2.Template("""
             }
     </style>
 
+    <script>
+        var blink = setInterval(function() {
+        $('#blink').fadeToggle();
+        }, 500);
+    </script>
+
 </head>
 <body>
     <script type="text/javascript">
     $(function() {
         $("#chart").load("/run_analysis/", function() {
-            $("#flashing").hide('fast', function() {
+            clearInterval(blink);
+            $("#blink").hide('fast', function() {
                 $("#stem").slideDown("fast", function() {
                     $("#grammar").slideDown("fast", function() {
                         $("#cities").slideDown("fast", function() {
@@ -430,7 +437,7 @@ output_template = jinja2.Template("""
     <p><i>The graph is interactive, scroll up and down to zoom</i></p>
     <p>This analysis uses all the text found in the bullet points. Typically,
     these are where the hard skills are listed for the applicant.</p>
-    <p id="flashing">Collecting Data</p>
+    <p id="blink">Collecting Data</p>
     <div id="chart"></div>
 
     <br><br>
