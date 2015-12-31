@@ -346,16 +346,6 @@ input_template = jinja2.Template('''
 
         <p>Enter your keywords here <input type="text" name="kw" placeholder="data science" spellcheck="true"></p>
 
-            <p>The number of job postings to examine</p>
-
-            <p><select name="num">
-                <option value=10>10 primarily for testing</option>
-                <option value=50>50 about a minute wait</option>
-                <option value=100>100 could take 10 min. </option>
-                <option value=200>200 will take 10 min. plus</option>
-                </select>
-            </p>
-
             <p>Select whether you want to use the keyword or title mode. I suggest
             trying out both. The uniqued list of job titles will be
             displayed with the results so that you can determine if the
@@ -402,47 +392,37 @@ output_template = jinja2.Template("""
     <link href="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.css" rel="stylesheet" type="text/css">
     <script src="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
     <style>
         body {
             font-size: 125%;
             background-color: #caf6f6;
             }
     </style>
-    <script>
-        setInterval(function() {
-            $( ".blink" ).fadeToggle();
-            }, 500);
-    </script>
 
 </head>
 <body>
     <script type="text/javascript">
-
-        $.ajax({
-            statusCode: {
-                502: function(){alert('502');}
-                },
-            timeout:800000,
-            type: "GET",
-            url: '/run_analysis/',
-            success: function() {
-                $("#chart").load("/run_analysis/", function() {
-                    $("#stem").slideDown("fast", function() {
-                        $("#grammar").slideDown("fast", function() {
-                            $("#cities").slideDown("fast", function() {
-                                $("#titles").slideDown("fast", function() {
-                                    $("#radius").slideDown("fast", function() {
-                                        $("#missing").slideDown("fast")
-                                        });
-                                    });
+    $(function() {
+        $("#chart").load("/run_analysis/", function() {
+            $("#stem").slideDown("fast", function() {
+                $("#grammar").slideDown("fast", function() {
+                    $("#cities").slideDown("fast", function() {
+                        $("#titles").slideDown("fast", function() {
+                            $("#radius").slideDown("fast", function() {
+                                $("#missing").slideDown("fast")
                                 });
                             });
                         });
                     });
-                }
+                });
             });
+        });
     </script>
 
+    <form action='/run_analysis/' method='get'>
+    <input type='submit' value='get more samples'>
+    </form>
 
     <h1>Frequency of Keyword Pairs: Hard Skills</h1>
     <p><i>The graph is interactive, scroll up and down to zoom</i></p>
@@ -569,22 +549,24 @@ def get_data():
     if request.method == "POST":
         type_ = request.form['type_']
         kws = request.form['kw'].lower()
-        num_urls = int(request.form['num'])
 
         df_file = os.path.join(data_dir,  'df_dir', mk_random_string())
         logging.info("session file path: %s" % df_file)
 
         put_to_sess({'type_':type_,
                     'kws':kws,
-                    'num_urls':num_urls,
                     'df_file':df_file,
+                    'index':0,
+                    'end':0,
+                    'count_thres':50
                     })
 
         logging.info("running get_data:%s" % time.strftime("%d-%m-%Y:%H:%M:%S"))
         logging.info("df file path: %s :%s" % (df_file, time.strftime("%d-%m-%Y:%H:%M:%S")))
         logging.info("type:%s" %  type_)
         logging.info("key words:%s" % kws)
-        logging.info("number urls:%s" % num_urls)
+
+        to_sql()
 
         html = output_template.render()
         return encode_utf8(html)
@@ -667,27 +649,42 @@ def run_analysis():
     ind = indeed_scrape.Indeed(query_type=sess_dict['type_'])
     ind.query = sess_dict['kws']
     ind.stop_words = stop_words
-    ind.num_urls = int(sess_dict['num_urls'])
-
     ind.main()
-    df = ind.df
 
-    if df.count()['summary'] == 0:
-        logging.error("df empty, no postings found")
-        raise Exception, "No postings found"
+    index = sess_dict['index']
+    end = sess_dict['end']
+    index, end, num_res, count = ind.get_data(ind=index, start=end)
+
+
+    while count < sess_dict['count_thres']:
+        index, end, num_res, count = ind.get_data(ind=index, start=end)
+
+    sess_dict['end'] = end
+    sess_dict['count_thres'] = 20
+
+    # append existing df if second or more time here
+    if os.path.exists(sess_dict['df_file']):
+        pdb.set_trace()
+        df = load_csv()
+        df = df.append(ind.df, ignore_index=True)
+        df = ind.summary_similarity(df, 'summary', 80)
+    else:
+        df = ind.df
+
+    df.dropna(subset=['summary', 'url'], inplace=True)
+    df.reset_index(inplace=True, drop=True)
+    sess_dict['index'] = df.shape[0]
 
     # save df for additional analysis
-    sess_dict = get_sess()
     sess_dict['stem_inv'] = ind.stem_inverse
     put_to_sess(sess_dict)
 
     save_to_csv(df)
-    to_sql()
 
-    count, kw = ind.vectorizer(df['summary'], n_min=2, n_max=2, max_features=60,
-            max_df=compute_max_df(sess_dict['type_'], sess_dict['num_urls']))
+    max_df = compute_max_df(sess_dict['type_'], df.shape[0], n_min=2)
+    count_array, kw = ind.vectorizer(df['summary'], n_min=2, n_max=2, max_features=60, max_df=max_df, min_df=5)
 
-    script, div = get_plot_comp(kw, count, df, 'kws')
+    script, div = get_plot_comp(kw, count_array, df, 'kws')
 
 
     output = """
@@ -716,7 +713,7 @@ def radius():
 
     try:
         count, kw = ind.vectorizer(words, max_features=50, n_min=1, n_max=2,
-               max_df=compute_max_df(sess_dict['type_'], sess_dict['num_urls']))
+               max_df=compute_max_df(sess_dict['type_'], df.shape[0]))
     except ValueError:
         return "The body of words compiled did not contain substantially repeated terms."
 
@@ -756,7 +753,7 @@ def stem():
     ind.add_stop_words()
 
     count, kw = ind.vectorizer(summary_stem, n_min=1, n_max=2, max_features=80,
-            max_df=compute_max_df(sess_dict['type_'], sess_dict['num_urls']))
+            max_df=compute_max_df(sess_dict['type_'], df.shape[0]))
 
     orig_keywords = get_inverse_stem(kw)
     script, div = get_plot_comp(orig_keywords, count, df, 'kws')
@@ -811,7 +808,7 @@ def put_to_sess(values):
 def get_sess():
     return pickle.load(open(session_file, 'rb'))
 
-def compute_max_df(type_, num_samp):
+def compute_max_df(type_, num_samp, n_min=1):
     if type_ == 'keywords':
         base = 0.80
 
@@ -822,10 +819,12 @@ def compute_max_df(type_, num_samp):
         raise ValueError, "type not understood"
 
     if num_samp < 50:
-        return base + 0.10
+        base += 0.10
 
-    else:
-        return base
+    if n_min > 1:
+        base -= 0.10
+
+    return base
 
 def to_sql():
     sess_dict = get_sess()

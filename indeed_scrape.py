@@ -38,7 +38,6 @@ except:
 class Indeed(object):
     def __init__(self, query_type):
         self.query_type = query_type
-        self.num_urls = 10
         self.add_loc = None
         self.stop_words = None
         self.num_samp = 1000
@@ -122,7 +121,8 @@ class Indeed(object):
         self.channel_name = config_parser.get("channel", "channel_name")
 
     def _get_count(self):
-        df = self.summary_similarity(self.df, 'summary', 80)
+        df = self.df.reset_index()
+        df = self.summary_similarity(df, 'summary', 80)
         count = df.dropna(subset=['summary'], how='any').drop_duplicates(subset=['summary', 'url', 'job_key']).count()['url']
         return count
 
@@ -149,6 +149,8 @@ class Indeed(object):
             logging.debug("index: %i" % ind)
 
         count = self._get_count()
+        logging.debug("count: %i" % count)
+
         return ind, end, num_res, count
 
     def get_url(self, start):
@@ -301,18 +303,8 @@ class Indeed(object):
         self.build_api_string()
         self.add_stop_words()
 
-        ind, end, num_res, count = self.get_data(ind=0, start=0)
-        while end < num_res and count < self.num_urls:
-            logging.debug("calling get_data(), end:%i index:%i count:%i" % (end, ind, count))
-            ind, end, num_res, count = self.get_data(ind, start=end)
 
-        self.df.dropna(subset=['summary', 'url'], inplace=True)
-
-        #cheap insurance
-        self.df.drop_duplicates(subset=['summary', 'job_key', 'url'], inplace=True)
-        self.df = self.summary_similarity(self.df, 'summary', 80)
-
-    def vectorizer(self, corpus, max_features=200, max_df=0.8, min_df=0.1, n_min=2, n_max=3):
+    def vectorizer(self, corpus, max_features=200, max_df=0.8, min_df=5, n_min=2, n_max=3):
         vectorizer = CountVectorizer(max_features=max_features,
                                     max_df=max_df,
                                     min_df=min_df,
@@ -413,9 +405,11 @@ class Indeed(object):
 
         for i in range(df.shape[0] - 1):
             string1 = df.loc[i, column]
+            string1 = self._decode(string1)
 
             for j in range(i+1, df.shape[0] - 1):
                 string2 = df.loc[j+1, column]
+                string2 = self.decode(string2)
                 ratio = fuzz.ratio(string1, string2)
 
                 if ratio >= ratio_thres:
