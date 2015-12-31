@@ -23,6 +23,7 @@ import json
 import pickle
 import compare
 import pdb
+import time
 
 sql_username = os.getenv("OPENSHIFT_MYSQL_DB_USERNAME")
 if sql_username is None:
@@ -405,12 +406,13 @@ output_template = jinja2.Template("""
     <script type="text/javascript">
     $(function() {
         $("#chart").load("/run_analysis/", function() {
-            $("#stem").slideDown("fast", function() {
-                $("#grammar").slideDown("fast", function() {
-                    $("#cities").slideDown("fast", function() {
-                        $("#titles").slideDown("fast", function() {
-                            $("#radius").slideDown("fast", function() {
-                                $("#missing").slideDown("fast")
+            $("#flashing").hide('fast', function() {
+                $("#stem").slideDown("fast", function() {
+                    $("#grammar").slideDown("fast", function() {
+                        $("#cities").slideDown("fast", function() {
+                            $("#titles").slideDown("fast", function() {
+                                $("#radius").slideDown("fast", function() {
+                                    $("#missing").slideDown("fast")
                                 });
                             });
                         });
@@ -418,16 +420,18 @@ output_template = jinja2.Template("""
                 });
             });
         });
+    });
     </script>
 
     <button type='button' onclick='$("#chart").load("/run_analysis/")'>
-    More Resulsts</button>
+    More Results</button>
 
     <h1>Frequency of Keyword Pairs: Hard Skills</h1>
     <p><i>The graph is interactive, scroll up and down to zoom</i></p>
     <p>This analysis uses all the text found in the bullet points. Typically,
     these are where the hard skills are listed for the applicant.</p>
-    <div id="chart">Collecting Data...</div>
+    <p id="flashing">Collecting Data</p>
+    <div id="chart"></div>
 
     <br><br>
 
@@ -653,17 +657,15 @@ def run_analysis():
     index = sess_dict['index']
     end = sess_dict['end']
 
-    try:
-        index, end, num_res, count = ind.get_data(ind=index, start=end)
-    # random fail: hack fix
-    except NoneTypeError:
-        index, end, num_res, count = ind.get_data(ind=index, start=end)
-    except Exception, err:
-        logging.error(err)
-        raise Exception
+    start_time = time.time()
+    index, end, num_res, count = ind.get_data(ind=index, start=end)
+    logging.debug("end:%i" % end)
 
-    while count < sess_dict['count_thres']:
+    while count < sess_dict['count_thres'] and end < num_res:
         index, end, num_res, count = ind.get_data(ind=index, start=end)
+        end_time = time.time()
+        if (end_time - start_time) / 60.0 > 3.0: # avoid 502
+            break
 
     sess_dict['end'] = end
     sess_dict['count_thres'] = 25

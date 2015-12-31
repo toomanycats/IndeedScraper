@@ -123,7 +123,7 @@ class Indeed(object):
     def _get_count(self):
         df = self.df.reset_index()
         df = self.summary_similarity(df, 'summary', 80)
-        count = df.dropna(subset=['summary'], how='any').drop_duplicates(subset=['summary', 'url', 'job_key']).count()['url']
+        count = df.count()['url']
         return count
 
     def get_data(self, ind, start):
