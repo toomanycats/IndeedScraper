@@ -430,7 +430,9 @@ output_template = jinja2.Template("""
     });
     </script>
 
-    <button type='button' onclick='$("#chart").load("/run_analysis/")'>
+    <button type='button' onclick='$("#blink").show(function() {
+        $("#chart").load("/run_analysis/");
+    });'>
     More Results</button>
 
     <h1>Frequency of Keyword Pairs: Hard Skills</h1>
