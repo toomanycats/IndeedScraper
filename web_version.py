@@ -688,6 +688,9 @@ def run_analysis():
     sess_dict['end'] = end
     sess_dict['count_thres'] = 25
 
+    #scrub repeated words
+    ind.clean_dup_words()
+
     # append existing df if second or more time here
     if os.path.exists(sess_dict['df_file']):
         df = load_csv()
