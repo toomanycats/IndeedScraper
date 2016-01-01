@@ -426,8 +426,8 @@ class Indeed(object):
     def clean_dup_words(self):
         self.obj = re.compile('(\b.+\b) \1\b')
         self.df['summary'] = self.df['summary'].apply(lambda x: self._clean_helper(x) if self.obj.search(x) else x)
-        self.df['stem_summary'] = self.df['summary'].apply(lambda x: self._clean_helper(x) if self.obj.search(x) else x)
-        self.df['grammar' ] = self.df['summary'].apply(lambda x: self._clean_helper(x) if self.obj.search(x) else x)
+        self.df['stem_summary'] = self.df['summary_stem'].apply(lambda x: self._clean_helper(x) if self.obj.search(x) else x)
+        self.df['grammar' ] = self.df['grammar'].apply(lambda x: self._clean_helper(x) if self.obj.search(x) else x)
 
     def _clean_helper(self, x):
         reg = self.obj.search(x)
