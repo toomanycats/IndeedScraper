@@ -536,7 +536,7 @@ radius_template = jinja2.Template('''
 
 app = Flask(__name__)
 
-stop_words = 'religion sex disibility veteran status sexual orientation and work ability http https www gender'
+stop_words = 'resume affirmative cover letter equal religion sex disibility veteran status sexual orientation and work ability http https www gender'
 
 def plot_fig(df, num, kws):
 
