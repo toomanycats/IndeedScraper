@@ -114,6 +114,24 @@ keywords not included in your resume that were found in the job postings.</p>
         {{ rows }}
     </table>
 
+<!-- Start of StatCounter Code for Default Guide -->
+<script type="text/javascript">
+var sc_project=10739395;
+var sc_invisible=1;
+var sc_security="0d075499";
+var scJsHost = (("https:" == document.location.protocol) ?
+"https://secure." : "http://www.");
+document.write("<sc"+"ript type='text/javascript' src='" +
+scJsHost+
+"statcounter.com/counter/counter.js'></"+"script>");
+</script>
+<noscript><div class="statcounter"><a title="free web stats"
+href="http://statcounter.com/" target="_blank"><img
+class="statcounter"
+src="http://c.statcounter.com/10739395/0/0d075499/1/"
+alt="free web stats"></a></div></noscript>
+<!-- End of StatCounter Code for Default Guide -->
+
 </body>
 </html>
 ''')
@@ -146,6 +164,24 @@ the bulleted skills and find meaning in the general text.</p>
 {{ div }}
 {{ script }}
 
+<!-- Start of StatCounter Code for Default Guide -->
+<script type="text/javascript">
+var sc_project=10739395;
+var sc_invisible=1;
+var sc_security="0d075499";
+var scJsHost = (("https:" == document.location.protocol) ?
+"https://secure." : "http://www.");
+document.write("<sc"+"ript type='text/javascript' src='" +
+scJsHost+
+"statcounter.com/counter/counter.js'></"+"script>");
+</script>
+<noscript><div class="statcounter"><a title="free web stats"
+href="http://statcounter.com/" target="_blank"><img
+class="statcounter"
+src="http://c.statcounter.com/10739395/0/0d075499/1/"
+alt="free web stats"></a></div></noscript>
+<!-- End of StatCounter Code for Default Guide -->
+
 </body>
 </html>
 ''')
@@ -171,6 +207,25 @@ cities_template = jinja2.Template('''
 <h1>Count of job Postings per City: Showing Top 20 Citites</h1>
 {{ div }}
 {{ script }}
+
+<!-- Start of StatCounter Code for Default Guide -->
+<script type="text/javascript">
+var sc_project=10739395;
+var sc_invisible=1;
+var sc_security="0d075499";
+var scJsHost = (("https:" == document.location.protocol) ?
+"https://secure." : "http://www.");
+document.write("<sc"+"ript type='text/javascript' src='" +
+scJsHost+
+"statcounter.com/counter/counter.js'></"+"script>");
+</script>
+<noscript><div class="statcounter"><a title="free web stats"
+href="http://statcounter.com/" target="_blank"><img
+class="statcounter"
+src="http://c.statcounter.com/10739395/0/0d075499/1/"
+alt="free web stats"></a></div></noscript>
+<!-- End of StatCounter Code for Default Guide -->
+
 </body>
 </html>
 ''')
@@ -226,6 +281,24 @@ title_template = jinja2.Template('''
         {{ rows }}
     </table>
 
+<!-- Start of StatCounter Code for Default Guide -->
+<script type="text/javascript">
+var sc_project=10739395;
+var sc_invisible=1;
+var sc_security="0d075499";
+var scJsHost = (("https:" == document.location.protocol) ?
+"https://secure." : "http://www.");
+document.write("<sc"+"ript type='text/javascript' src='" +
+scJsHost+
+"statcounter.com/counter/counter.js'></"+"script>");
+</script>
+<noscript><div class="statcounter"><a title="free web stats"
+href="http://statcounter.com/" target="_blank"><img
+class="statcounter"
+src="http://c.statcounter.com/10739395/0/0d075499/1/"
+alt="free web stats"></a></div></noscript>
+<!-- End of StatCounter Code for Default Guide -->
+
 </body>
 </html>
 ''')
@@ -278,6 +351,24 @@ word that appeared. You may see, "works" , because that was the last
 version of work, working, worked, that occurred in the analysis words.
 
 
+<!-- Start of StatCounter Code for Default Guide -->
+<script type="text/javascript">
+var sc_project=10739395;
+var sc_invisible=1;
+var sc_security="0d075499";
+var scJsHost = (("https:" == document.location.protocol) ?
+"https://secure." : "http://www.");
+document.write("<sc"+"ript type='text/javascript' src='" +
+scJsHost+
+"statcounter.com/counter/counter.js'></"+"script>");
+</script>
+<noscript><div class="statcounter"><a title="free web stats"
+href="http://statcounter.com/" target="_blank"><img
+class="statcounter"
+src="http://c.statcounter.com/10739395/0/0d075499/1/"
+alt="free web stats"></a></div></noscript>
+<!-- End of StatCounter Code for Default Guide -->
+
 </body>
 </html>
 ''')
@@ -302,6 +393,24 @@ This app is still a work in progress. <br><br>
 <br><br>
 {{ error }}
 <br><br>
+
+<!-- Start of StatCounter Code for Default Guide -->
+<script type="text/javascript">
+var sc_project=10739395;
+var sc_invisible=1;
+var sc_security="0d075499";
+var scJsHost = (("https:" == document.location.protocol) ?
+"https://secure." : "http://www.");
+document.write("<sc"+"ript type='text/javascript' src='" +
+scJsHost+
+"statcounter.com/counter/counter.js'></"+"script>");
+</script>
+<noscript><div class="statcounter"><a title="free web stats"
+href="http://statcounter.com/" target="_blank"><img
+class="statcounter"
+src="http://c.statcounter.com/10739395/0/0d075499/1/"
+alt="free web stats"></a></div></noscript>
+<!-- End of StatCounter Code for Default Guide -->
 
 </body>
 </html>
@@ -503,6 +612,25 @@ output_template = jinja2.Template("""
     <a href="/missing/"> Analyze Your Resume For Missing Keywords</a>
     </div>
 
+
+<!-- Start of StatCounter Code for Default Guide -->
+<script type="text/javascript">
+var sc_project=10739395;
+var sc_invisible=1;
+var sc_security="0d075499";
+var scJsHost = (("https:" == document.location.protocol) ?
+"https://secure." : "http://www.");
+document.write("<sc"+"ript type='text/javascript' src='" +
+scJsHost+
+"statcounter.com/counter/counter.js'></"+"script>");
+</script>
+<noscript><div class="statcounter"><a title="free web stats"
+href="http://statcounter.com/" target="_blank"><img
+class="statcounter"
+src="http://c.statcounter.com/10739395/0/0d075499/1/"
+alt="free web stats"></a></div></noscript>
+<!-- End of StatCounter Code for Default Guide -->
+
 </body>
 </html>
 """)
@@ -532,6 +660,24 @@ radius_template = jinja2.Template('''
 
     {{ div }}
     {{ script }}
+
+<!-- Start of StatCounter Code for Default Guide -->
+<script type="text/javascript">
+var sc_project=10739395;
+var sc_invisible=1;
+var sc_security="0d075499";
+var scJsHost = (("https:" == document.location.protocol) ?
+"https://secure." : "http://www.");
+document.write("<sc"+"ript type='text/javascript' src='" +
+scJsHost+
+"statcounter.com/counter/counter.js'></"+"script>");
+</script>
+<noscript><div class="statcounter"><a title="free web stats"
+href="http://statcounter.com/" target="_blank"><img
+class="statcounter"
+src="http://c.statcounter.com/10739395/0/0d075499/1/"
+alt="free web stats"></a></div></noscript>
+<!-- End of StatCounter Code for Default Guide -->
 
 </body>
 </html>
