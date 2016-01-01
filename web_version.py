@@ -419,7 +419,7 @@ output_template = jinja2.Template("""
                         $("#cities").slideDown("fast", function() {
                             $("#titles").slideDown("fast", function() {
                                 $("#radius").slideDown("fast", function() {
-                                    $("#missing").slideDown("fast")
+                                    $("#missing").slideDown("fast");
                                 });
                             });
                         });
@@ -430,10 +430,19 @@ output_template = jinja2.Template("""
     });
     </script>
 
-    <button type='button' onclick='$("#blink").show(function() {
-        $("#chart").load("/run_analysis/");
-    });'>
-    More Results</button>
+     <button id='more' type='button'>More Results</button>
+
+    <script type="text/javascript">
+     $(function() {
+        $("#more").click(function() {
+            $('#blink').show('fast', function() {
+                $('#chart').load('/run_analysis/', function() {
+                    $("#blink").hide('fast');
+                    });
+                });
+            });
+        });
+        </script>
 
     <h1>Frequency of Keyword Pairs: Hard Skills</h1>
     <p><i>The graph is interactive, scroll up and down to zoom</i></p>
