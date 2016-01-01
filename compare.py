@@ -18,6 +18,7 @@ class MissingKeywords(object):
         pass
 
     def pdf_to_text(self, infile):
+        logging.debug("pdf_to_text, infile:%s" % infile)
         jar_file = os.path.join(data_dir, 'pdfbox-app-2.0.0-RC2.jar')
         cmd = "java -jar %(jar)s ExtractText -console %(infile)s"
         cmd = cmd % {'jar':jar_file,
