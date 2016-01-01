@@ -430,7 +430,14 @@ output_template = jinja2.Template("""
     });
     </script>
 
-     <button id='more' type='button'>More Results</button>
+
+    <h1>Frequency of Keyword Pairs: Hard Skills</h1>
+    <p><i>The graph is interactive, scroll up and down to zoom</i></p>
+    <p>This analysis uses all the text found in the bullet points. Typically,
+    these are where the hard skills are listed for the applicant.</p>
+
+     <button id='more' style="background-color:red" type='button'>
+     More Results</button>
 
     <script type="text/javascript">
      $(function() {
@@ -442,12 +449,8 @@ output_template = jinja2.Template("""
                 });
             });
         });
-        </script>
+     </script>
 
-    <h1>Frequency of Keyword Pairs: Hard Skills</h1>
-    <p><i>The graph is interactive, scroll up and down to zoom</i></p>
-    <p>This analysis uses all the text found in the bullet points. Typically,
-    these are where the hard skills are listed for the applicant.</p>
     <p id="blink">Collecting Data</p>
     <div id="chart"></div>
 
