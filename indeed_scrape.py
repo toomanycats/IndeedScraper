@@ -1,4 +1,4 @@
-######################################
+#####################################
 # File Name : indeed_scrape.py
 # Author : Daniel Cuneo
 # Creation Date : 11-05-2015
@@ -424,7 +424,7 @@ class Indeed(object):
         return df.drop(df.index[dup_list])
 
     def clean_dup_words(self):
-        self.obj = re.compile('(\b.+\b) \1\b')
+        self.obj = re.compile(r'(\b.+\b) \1\b')
         self.df['summary'] = self.df['summary'].apply(lambda x: self._clean_helper(x) if self.obj.search(x) else x)
         self.df['stem_summary'] = self.df['summary_stem'].apply(lambda x: self._clean_helper(x) if self.obj.search(x) else x)
         self.df['grammar' ] = self.df['grammar'].apply(lambda x: self._clean_helper(x) if self.obj.search(x) else x)
