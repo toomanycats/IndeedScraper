@@ -707,12 +707,20 @@ def run_analysis():
     save_to_csv(df)
 
     max_df = compute_max_df(sess_dict['type_'], df.shape[0], n_min=2)
-    count_array, kw = ind.vectorizer(df['summary'],
-                                     n_min=2,
-                                     n_max=3,
-                                     max_features=30,
-                                     max_df=max_df,
-                                     min_df=3)
+    try:
+        count_array, kw = ind.vectorizer(df['summary'],
+                                        n_min=2,
+                                        n_max=3,
+                                        max_features=30,
+                                        max_df=max_df,
+                                        min_df=3)
+    except ValueError:
+        count_array, kw = ind.vectorizer(df['summary'],
+                                        n_min=2,
+                                        n_max=3,
+                                        max_features=30,
+                                        max_df=1.0,
+                                        min_df=1)
 
     script, div = get_plot_comp(kw, count_array, df, 'kws')
 
