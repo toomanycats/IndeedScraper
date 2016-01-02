@@ -10,7 +10,7 @@ import subprocess
 import time
 import logging
 import pandas as pd
-from flask import Flask, request, redirect, url_for, jsonify
+from flask import Flask, request, redirect, url_for, jsonify, render_template
 import indeed_scrape
 import jinja2
 from bokeh.embed import components
@@ -416,225 +416,6 @@ alt="free web stats"></a></div></noscript>
 </html>
 ''')
 
-input_template = jinja2.Template('''
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>keyword counter optimizer</title>
-    <meta charset="UTF-8">
-    <meta name="description" content="Optimize Your Resume and Social Media Keywords, Provide statistics on the keywords used in job postings Group the cities they are from Report the job titles searched." />
-    <meta name="robots" content="index, follow" />
-    <style>
-    p {
-        margin: 0.5cm 0.5cm 0.2cm 6cm;
-        font-family:"Verdana";
-        font-size:150%
-      }
-    li {
-        padding-left: 8cm;
-        font-size:150%
-       }
-
-    html {
-            background: url(static/background.jpg) no-repeat center center fixed;
-            -webkit-background-size: cover;
-            -moz-background-size: cover;
-            -o-background-size: cover;
-            background-size: cover;
-            color: #e5ffff;
-         }
-
-    </style>
-
-</head>
-
-<body>
-        <p><left><img src=static/logo_trans.png alt="Sample Keyword Output"></left></p>
-        <center><h1>Optimize Your Keywords for Resumes and LinkedIn</h1></center>
-
-        <form action="/get_data/" method="POST">
-
-        <p>Enter your keywords here <input type="text" name="kw" placeholder="data science" spellcheck="true"></p>
-
-            <p>Select whether you want to use the keyword or title mode. I suggest
-            trying out both. The uniqued list of job titles will be
-            displayed with the results so that you can determine if the
-            keywords were appropriate or not. You also learn something about
-            the fields  which use the skills you are providing as search
-            terms.</p>
-
-            <p><select name="type_">
-                <option value='title'>title</option>
-                <option value='keywords'>keywords</option>
-                </select>
-            </p>
-
-            <p><input type="submit" value="Submit" name="submit"></p>
-        </form>
-
-<!-- Start of StatCounter Code for Default Guide -->
-<script type="text/javascript">
-var sc_project=10739395;
-var sc_invisible=1;
-var sc_security="0d075499";
-var scJsHost = (("https:" == document.location.protocol) ?
-"https://secure." : "http://www.");
-document.write("<sc"+"ript type='text/javascript' src='" +
-scJsHost+
-"statcounter.com/counter/counter.js'></"+"script>");
-</script>
-<noscript><div class="statcounter"><a title="free web stats"
-href="http://statcounter.com/" target="_blank"><img
-class="statcounter"
-src="http://c.statcounter.com/10739395/0/0d075499/1/"
-alt="free web stats"></a></div></noscript>
-<!-- End of StatCounter Code for Default Guide -->
-
-</body>
-</html>''')
-
-output_template = jinja2.Template("""
-<!DOCTYPE html>
-<html lang="en-US">
-<head>
-    <title>keyword counter results</title>
-    <meta charset="UTF-8">
-    <link href="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.css" rel="stylesheet" type="text/css">
-    <script src="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-
-    <style>
-        body {
-            font-size: 125%;
-            background-color: #caf6f6;
-            }
-    </style>
-
-    <script>
-        var blink = setInterval(function() {
-        $('#blink').fadeToggle();
-        }, 500);
-    </script>
-
-</head>
-<body>
-    <script type="text/javascript">
-    $(function() {
-        $("#chart").load("/run_analysis/", function() {
-            clearInterval(blink);
-            $("#blink").hide('fast', function() {
-                $("#stem").slideDown("fast", function() {
-                    $("#grammar").slideDown("fast", function() {
-                        $("#cities").slideDown("fast", function() {
-                            $("#titles").slideDown("fast", function() {
-                                $("#radius").slideDown("fast", function() {
-                                    $("#missing").slideDown("fast");
-                                });
-                            });
-                        });
-                    });
-                });
-            });
-        });
-    });
-    </script>
-
-
-    <h1>Frequency of Keyword Pairs: Hard Skills</h1>
-    <p><i>The graph is interactive, scroll up and down to zoom</i></p>
-    <p>This analysis uses all the text found in the bullet points. Typically,
-    these are where the hard skills are listed for the applicant.</p>
-
-     <button id='more' style="background-color:red" type='button'>
-     More Results</button>
-
-    <script type="text/javascript">
-     $(function() {
-        $("#more").click(function() {
-            $('#blink').show('fast', function() {
-                $('#chart').load('/run_analysis/', function() {
-                    $("#blink").hide('fast');
-                    });
-                });
-            });
-        });
-     </script>
-
-    <p id="blink">Collecting Data</p>
-    <div id="chart"></div>
-
-    <br><br>
-
-    <div id=stem style="display: none">
-        <p>Also text from bullet points, the analysis below produces single words.</p>
-        <a href="/stem/">Single Word Hard Skill Analysis</a>
-    </div>
-
-    <br>
-
-    <div id=grammar style="display: none">
-    <p>Not all interesting keywords are contained in the bullet points. This
-    treatment will search the body of the post not including bulleted lists.
-    You may find more soft skills here.</p>
-    <a href="/grammar/">Soft Skill Analysis</a>
-    </div>
-
-    <br>
-
-    <div id=cities style="display: none">
-    <p>A count of the job postings per city.</p>
-    <a href="/cities/"> Show Cities </a>
-    </div>
-
-    <br>
-
-    <div id=titles style="display: none">
-    <p> A break down of the job titles returned. This is most useful when using
-    a keyword search on indeed, to make sure your keywords are matching the jobs you
-    want.</p>
-    <a href="/titles/"> Show Job Titles </a>
-    </div>
-
-    <br>
-
-    <form  id=radius action="/radius/"  method="post" style="display: none">
-        Explore around the radius of a word across all posts.<br>
-        The default is five words in front and in back. <br>
-        <input type="text" name="word" placeholder="experience"><br>
-        <input type="submit" value="Submit" name="submit">
-    </form>
-
-    <br>
-
-    <div id=missing style="display: none">
-    <p>Upload a PDF copy of your resume, and it will be compared with the job
-    posting keyword anaysis.</p>
-    <a href="/missing/"> Analyze Your Resume For Missing Keywords</a>
-    </div>
-
-
-<!-- Start of StatCounter Code for Default Guide -->
-<script type="text/javascript">
-var sc_project=10739395;
-var sc_invisible=1;
-var sc_security="0d075499";
-var scJsHost = (("https:" == document.location.protocol) ?
-"https://secure." : "http://www.");
-document.write("<sc"+"ript type='text/javascript' src='" +
-scJsHost+
-"statcounter.com/counter/counter.js'></"+"script>");
-</script>
-<noscript><div class="statcounter"><a title="free web stats"
-href="http://statcounter.com/" target="_blank"><img
-class="statcounter"
-src="http://c.statcounter.com/10739395/0/0d075499/1/"
-alt="free web stats"></a></div></noscript>
-<!-- End of StatCounter Code for Default Guide -->
-
-</body>
-</html>
-""")
-
 radius_template = jinja2.Template('''
 <!DOCTYPE html>
 <html lang="en-US">
@@ -710,7 +491,7 @@ def internal_error(error):
 @app.route('/')
 def get_keywords():
     logging.info("running app:%s" % time.strftime("%d-%m-%Y:%H:%M:%S"))
-    return input_template.render()
+    return render_template('input.html')
 
 @app.route('/get_data/', methods=['GET', 'POST'])
 def get_data():
@@ -738,7 +519,7 @@ def get_data():
 
         to_sql()
 
-        html = output_template.render()
+        html = render_template('output.html')
         return encode_utf8(html)
 
     if request.method == "GET":
