@@ -136,6 +136,53 @@ alt="free web stats"></a></div></noscript>
 </html>
 ''')
 
+cities_template = jinja2.Template('''
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Count of job Postings per City: Showing Top 20 Citites</title>
+    <meta name="description" content="analysis of job postings per city"/>
+    <style>
+        body {
+            background-color: #caf6f6;
+            }
+    </style>
+    <meta charset="UTF-8">
+    <link href="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.css"
+          rel="stylesheet" type="text/css">
+
+    <script src="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.js"></script>
+</head>
+
+<body>
+<h1>Count of job Postings per City: Showing Top 20 Citites</h1>
+
+{{ div }}
+
+{{ script }}
+
+<!-- Start of StatCounter Code for Default Guide -->
+<script type="text/javascript">
+var sc_project=10739395;
+var sc_invisible=1;
+var sc_security="0d075499";
+var scJsHost = (("https:" == document.location.protocol) ?
+"https://secure." : "http://www.");
+document.write("<sc"+"ript type='text/javascript' src='" +
+scJsHost+
+"statcounter.com/counter/counter.js'></"+"script>");
+</script>
+<noscript><div class="statcounter"><a title="free web stats"
+href="http://statcounter.com/" target="_blank"><img
+class="statcounter"
+src="http://c.statcounter.com/10739395/0/0d075499/1/"
+alt="free web stats"></a></div></noscript>
+<!-- End of StatCounter Code for Default Guide -->
+
+</body>
+</html>
+''')
+
 grammar_template = jinja2.Template('''
 <!DOCTYPE html>
 <html lang="en">
@@ -161,50 +208,6 @@ the bulleted skills and find meaning in the general text.</p>
 <br>
 <p><i>The graph is interactive, scroll up and down to zoom</i></p>
 
-{{ div }}
-{{ script }}
-
-<!-- Start of StatCounter Code for Default Guide -->
-<script type="text/javascript">
-var sc_project=10739395;
-var sc_invisible=1;
-var sc_security="0d075499";
-var scJsHost = (("https:" == document.location.protocol) ?
-"https://secure." : "http://www.");
-document.write("<sc"+"ript type='text/javascript' src='" +
-scJsHost+
-"statcounter.com/counter/counter.js'></"+"script>");
-</script>
-<noscript><div class="statcounter"><a title="free web stats"
-href="http://statcounter.com/" target="_blank"><img
-class="statcounter"
-src="http://c.statcounter.com/10739395/0/0d075499/1/"
-alt="free web stats"></a></div></noscript>
-<!-- End of StatCounter Code for Default Guide -->
-
-</body>
-</html>
-''')
-
-cities_template = jinja2.Template('''
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>Count of job Postings per City: Showing Top 20 Citites</title>
-    <style>
-        body {
-            background-color: #caf6f6;
-            }
-    </style>
-    <meta charset="UTF-8">
-    <link href="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.css"
-          rel="stylesheet" type="text/css">
-
-    <script src="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.js"></script>
-</head>
-
-<body>
-<h1>Count of job Postings per City: Showing Top 20 Citites</h1>
 {{ div }}
 {{ script }}
 
