@@ -487,6 +487,10 @@ def plot_fig(df, num, kws):
 
     return p
 
+@app.route('/gallery/')
+def gallery():
+    return render_template('gallery.html')
+
 @app.errorhandler(500)
 def internal_error(error):
     return error_template.render(error=error)
