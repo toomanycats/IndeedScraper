@@ -547,7 +547,7 @@ def get_data():
         html = output_template.render()
         return encode_utf8(html)
 
-def get_plot_comp(kw, count, df, title_key):
+def get_plot_comp(kw, count, df):
         count = count.toarray().sum(axis=0)
 
         num = df['url'].count()
@@ -660,23 +660,28 @@ def run_analysis():
 
     save_to_csv(df)
 
-    max_df = compute_max_df(sess_dict['type_'], df.shape[0], n_min=2)
+    return bigram(df, sess_dict['type_'], ind)
+
+def bigram(df, type_, ind):
+    max_df = compute_max_df(type_, df.shape[0], n_min=2)
+
     try:
-        count_array, kw = ind.vectorizer(df['summary'],
+        count_array, kw = ind.vectorizer(df['summary_stem'],
                                         n_min=2,
                                         n_max=3,
                                         max_features=30,
                                         max_df=max_df,
                                         min_df=3)
     except ValueError:
-        count_array, kw = ind.vectorizer(df['summary'],
+        count_array, kw = ind.vectorizer(df['summary_stem'],
                                         n_min=2,
                                         n_max=3,
                                         max_features=30,
                                         max_df=1.0,
                                         min_df=1)
 
-    script, div = get_plot_comp(kw, count_array, df, 'kws')
+    kw = get_inverse_stem(kw)
+    script, div = get_plot_comp(kw, count_array, df)
 
     output = """
 %(kw_div)s
@@ -711,7 +716,7 @@ def radius():
     except ValueError:
         return "The body of words compiled did not contain substantially repeated terms."
 
-    script, div = get_plot_comp(kw, count, df, 'radius_kw')
+    script, div = get_plot_comp(kw, count, df)
     return radius_template.render(div=div, script=script)
 
 def get_inverse_stem(kw):
@@ -749,7 +754,7 @@ def stem():
             max_df=compute_max_df(sess_dict['type_'], df.shape[0]))
 
     orig_keywords = get_inverse_stem(kw)
-    script, div = get_plot_comp(orig_keywords, count, df, 'kws')
+    script, div = get_plot_comp(orig_keywords, count, df)
 
     page = stem_template.render(script=script, div=div)
     return encode_utf8(page)
@@ -768,7 +773,7 @@ def grammar_parser():
     count, kw = ind.tfidf_vectorizer(df['grammar'], n_min=2, n_max=3, max_features=30,
             max_df=0.75, min_df=0.01)
 
-    script, div = get_plot_comp(kw, count, df, 'kws')
+    script, div = get_plot_comp(kw, count, df)
 
     page = grammar_template.render(script=script, div=div)
     return encode_utf8(page)
