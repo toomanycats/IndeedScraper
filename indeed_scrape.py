@@ -303,7 +303,6 @@ class Indeed(object):
         self.build_api_string()
         self.add_stop_words()
 
-
     def vectorizer(self, corpus, max_features=200, max_df=0.8, min_df=5, n_min=2, n_max=3):
         vectorizer = CountVectorizer(max_features=max_features,
                                     max_df=max_df,
@@ -384,8 +383,10 @@ class Indeed(object):
 
             return np.unique(src_range_tot)
 
-    def build_corpus_from_sent(self, keyword):
-        documents = self.df['summary'].apply(lambda x: x.decode("utf-8", "ignore"))
+    def build_corpus_from_sent(self, keyword, column):
+        keyword = stemmer.stem(keyword)
+
+        documents = self.df[column].apply(lambda x: x.decode("utf-8", "ignore"))
         corpus = []
         for doc in documents:
             corpus.extend(tokenize.sent_tokenize(doc))
