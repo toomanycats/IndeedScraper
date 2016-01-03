@@ -7,8 +7,14 @@
     <link href="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.css" rel="stylesheet" type="text/css">
     <script src="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="{{ url_for('static', filename='script.js') }} "></script>
 
     <style>
+        h1 {
+            margin: 0.5cm 0.5cm 0.2cm 6cm;
+        }
+
         body {
             font-size: 125%;
             background-color: #caf6f6;
@@ -28,23 +34,24 @@
         $("#chart").load("/run_analysis/", function() {
             clearInterval(blink);
             $("#blink").hide('fast', function() {
-                $("#stem").slideDown("fast", function() {
-                    $("#grammar").slideDown("fast", function() {
-                        $("#cities").slideDown("fast", function() {
-                            $("#titles").slideDown("fast", function() {
-                                $("#radius").slideDown("fast", function() {
-                                    $("#missing").slideDown("fast");
-                                });
-                            });
-                        });
-                    });
-                });
+                $("#radius").slideDown('fast');
             });
         });
     });
     </script>
 
-    <h1>Frequency of Keyword Pairs: Hard Skills</h1>
+    <div id='cssmenu'>
+    <ul>
+        <li><a href='/stem/'><span>Single Word</span></a></li>
+        <li><a href='/grammar/'><span>Soft Skills</span></a></li>
+        <li><a href='/cities/'><span>Cities</span></a></li>
+        <li><a href='/titles/'><span>Titles</span></a></li>
+        <li><a href='/missing/'><span>Analyze Your Resume</span></a></li>
+        <li class='last'><a  href='/radius/'><span>Search Around a Particular Word</span></a></li>
+    </ul>
+    </div>
+
+    <h1>Hard Skills: Frequency of Keyword Pairs</h1>
     <p><i>The graph is interactive, scroll up and down to zoom</i></p>
     <p>This analysis uses all the text found in the bullet points. Typically,
     these are where the hard skills are listed for the applicant.</p>
@@ -57,11 +64,12 @@
         $("#more").click(function() {
             $('#blink').show('fast', function() {
                 $('#chart').load('/run_analysis/', function() {
-                    $("#blink").hide('fast');
+                    $("#blink").hide('fast', function() {
                     });
                 });
             });
         });
+    });
      </script>
 
     <p id="blink">Collecting Data</p>
@@ -69,53 +77,12 @@
 
     <br><br>
 
-    <div id=stem style="display: none">
-        <p>Also text from bullet points, the analysis below produces single words.</p>
-        <a href="/stem/">Single Word Hard Skill Analysis</a>
-    </div>
-
-    <br>
-
-    <div id=grammar style="display: none">
-    <p>Not all interesting keywords are contained in the bullet points. This
-    treatment will search the body of the post not including bulleted lists.
-    You may find more soft skills here.</p>
-    <a href="/grammar/">Soft Skill Analysis</a>
-    </div>
-
-    <br>
-
-    <div id=cities style="display: none">
-    <p>A count of the job postings per city.</p>
-    <a href="/cities/"> Show Cities </a>
-    </div>
-
-    <br>
-
-    <div id=titles style="display: none">
-    <p> A break down of the job titles returned. This is most useful when using
-    a keyword search on indeed, to make sure your keywords are matching the jobs you
-    want.</p>
-    <a href="/titles/"> Show Job Titles </a>
-    </div>
-
-    <br>
-
     <form  id=radius action="/radius/"  method="post" style="display: none">
         Explore around the radius of a word across all posts.<br>
         The default is five words in front and in back. <br>
         <input type="text" name="word" placeholder="experience"><br>
         <input type="submit" value="Submit" name="submit">
     </form>
-
-    <br>
-
-    <div id=missing style="display: none">
-    <p>Upload a PDF copy of your resume, and it will be compared with the job
-    posting keyword anaysis.</p>
-    <a href="/missing/"> Analyze Your Resume For Missing Keywords</a>
-    </div>
-
 
 <!-- Start of StatCounter Code for Default Guide -->
 <script type="text/javascript">

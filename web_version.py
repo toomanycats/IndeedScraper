@@ -211,6 +211,13 @@ the bulleted skills and find meaning in the general text.</p>
 {{ div }}
 {{ script }}
 
+<form  id=radius action="/radius/"  method="post" style="display: none">
+    Explore around the radius of a word across all posts.<br>
+    The default is five words in front and in back. <br>
+    <input type="text" name="word" placeholder="experience"><br>
+    <input type="submit" value="Submit" name="submit">
+</form>
+
 <!-- Start of StatCounter Code for Default Guide -->
 <script type="text/javascript">
 var sc_project=10739395;
@@ -341,6 +348,13 @@ stem_template= jinja2.Template('''
 {{ div }}
 
 {{ script }}
+
+<form  id=radius action="/radius/"  method="post" style="display: none">
+    Explore around the radius of a word across all posts.<br>
+    The default is five words in front and in back. <br>
+    <input type="text" name="word" placeholder="experience"><br>
+    <input type="submit" value="Submit" name="submit">
+</form>
 
 <p>All the words in the sample have been reduced to their "stems". <br> That
 is, the suffixes have been removed,</p>
