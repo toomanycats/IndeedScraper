@@ -211,7 +211,7 @@ the bulleted skills and find meaning in the general text.</p>
 {{ div }}
 {{ script }}
 
-<form  id=radius action="/radius/"  method="post" style="display: none">
+<form  id=radius action="/radius/"  method="post">
     Explore around the radius of a word across all posts.<br>
     The default is five words in front and in back. <br>
     <input type="text" name="word" placeholder="experience"><br>
@@ -349,7 +349,7 @@ stem_template= jinja2.Template('''
 
 {{ script }}
 
-<form  id=radius action="/radius/"  method="post" style="display: none">
+<form  id=radius action="/radius/"  method="post">
     Explore around the radius of a word across all posts.<br>
     The default is five words in front and in back. <br>
     <input type="text" name="word" placeholder="experience"><br>
