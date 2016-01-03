@@ -685,10 +685,11 @@ def radius():
     ind.add_stop_words()
     ind.df = df
 
+    kw = ind.stemmer_(kw)
     words = ind.build_corpus_from_sent(kw, 'summary_stem')
     words = ind.find_words_in_radius(words, kw, 5)
 
-    words = self.get_inverse_stem(words)
+    words = get_inverse_stem(words)
 
     try:
         count, kw = ind.vectorizer(words, max_features=50, n_min=1, n_max=2,
