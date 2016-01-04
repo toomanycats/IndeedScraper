@@ -68,7 +68,7 @@ missing_template = jinja2.Template('''
         p {
             margin: 0.2cm 0.5cm 0.1cm 1cm;
             font-family:"Verdana";
-            font-size:110%
+            font-size:100%
         }
 
         table {
@@ -248,7 +248,7 @@ title_template = jinja2.Template('''
         p {
             margin: 0.2cm 0.5cm 0.1cm 1cm;
             font-family:"Verdana";
-            font-size:110%
+            font-size:100%
         }
 
         li {
@@ -321,12 +321,12 @@ stem_template= jinja2.Template('''
         p {
             margin: 0.5cm 0.5cm 0.2cm 6cm;
             font-family:"Verdana";
-            font-size:150%
+            font-size:100%
         }
 
         li {
         padding-left: 8cm;
-        font-size:150%
+        font-size:110%
         }
 
         body {
