@@ -512,7 +512,7 @@ def internal_error(error):
 @app.route('/')
 def get_keywords():
     logging.info("running app:%s" % time.strftime("%d-%m-%Y:%H:%M:%S"))
-    return render_template('input.html')
+    return render_template('keywordcounter.html')
 
 @app.route('/get_data/', methods=['GET', 'POST'])
 def get_data():
