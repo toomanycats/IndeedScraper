@@ -10,6 +10,33 @@
     <meta name="robots" content="index, follow" />
     <script src="http://code.jquery.com/jquery-latest.min.js" type="text/javascript"></script>
     <style>
+    #header {
+        font: Verdana;
+        font-size: 300%;
+        color:white;
+        text-align:center;
+        padding:5px;
+    }
+    #nav {
+        line-height:30px;
+        height:400px;
+        width:500px;
+        padding:5px;
+        float:left;
+    }
+    #section {
+        width:1000px;
+        float:left;
+        padding:10px;
+    }
+    #footer {
+        color:white;
+        clear:both;
+        text-align:center;
+        padding:0px;
+        font-size: 200%;
+    }
+
     a {
         color: #ffe5ff
       }
@@ -39,11 +66,25 @@
 </head>
 
 <body>
-        <p><left><img src=static/logo_trans.png alt="Sample Keyword Output"></left></p>
-        <center><h1>Enter a position title and optimize your keywords for resumes and LinkedIn.</h1></center>
-        <center><h1>Find out which skills are in demand across fields searching by keyword.</h1></center>
-        <center><p><a href='/gallery/'>Gallery of Outputs</a></p></center>
+        <div id='header'>Keyword Counter</div>
+        <div id='nav'><img src=static/logo_trans.png alt="Sample Keyword Output"></div>
+        <div id='section'><h1>Enter a position title and optimize your keywords for resumes and LinkedIn.
+        <br><br>Find out which skills are in demand across fields searching by keyword.</h1></div>
+        <div id='section'><font color='#ffffb3'><h1>Enter the job title or
+        keywords you use on job boards when looking for
+        openings.</h1></font></div>
+        <div id='section'><form action="/get_data/" method="POST">
+            <input type="text" name="kw" placeholder="data science" spellcheck="true">
 
+            <select name="type_">
+                <option value='title'>title</option>
+                <option value='keywords'>keywords</option>
+            </select>
+
+            <input type="submit" value="Submit" name="submit">
+            </form>
+        </div>
+        <div id='footer'>Finding Keywords That Optimize Your Resume Or Social Media Content</div>
 
         <p>Many advice articles agree that you should optimize your resume and
         other social media with branding keywords. How does one go about
@@ -61,17 +102,8 @@
         about, such as, "director of marketing", use "director marketing" and a
         title search.</p>
 
-        <center><form action="/get_data/" method="POST">
-        <p><font color='#ffffb3'>Enter the job title or keywords you use on job boards when looking for openings.</font></p>
-        <p><input type="text" name="kw" placeholder="data science" spellcheck="true">
+        <center><p><a href='/gallery/'>Gallery of Outputs</a></p></center>
 
-        <select name="type_">
-            <option value='title'>title</option>
-            <option value='keywords'>keywords</option>
-        </select>
-
-        <input type="submit" value="Submit" name="submit"></p>
-        </form></center>
 
 <!-- Start of StatCounter Code for Default Guide -->
 <script type="text/javascript">
