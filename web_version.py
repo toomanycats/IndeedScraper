@@ -14,7 +14,6 @@ from flask import Flask, request, redirect, url_for, jsonify, render_template
 import indeed_scrape
 import jinja2
 from bokeh.embed import components
-from bokeh.plotting import figure
 from bokeh.util.string import encode_utf8
 from bokeh.charts import Bar
 import os
@@ -186,7 +185,6 @@ def plot_cities():
     script, div = components(p)
 
     page = render_template('cities.html', div=div, script=script)
-
     return encode_utf8(page)
 
 @app.route('/run_analysis/')
@@ -350,7 +348,7 @@ def grammar_parser():
 
     script, div = get_plot_comp(kw, count, df)
 
-    page = render_template('grammar', script=script, div=div)
+    page = render_template('grammar.html', script=script, div=div)
     return encode_utf8(page)
 
 @app.route('/missing/', methods=['GET', 'POST'])
