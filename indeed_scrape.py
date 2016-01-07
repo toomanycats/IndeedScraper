@@ -24,6 +24,7 @@ import os
 grammar = GrammarParser.GrammarParser()
 
 toker = tokenize.word_tokenize
+sent_toker = tokenize.sent_tokenize
 stemmer = stem.SnowballStemmer('english')
 
 repo_dir = os.getenv("OPENSHIFT_REPO_DIR")
@@ -50,7 +51,7 @@ class Indeed(object):
 
     def _decode(self, string):
         try:
-            string = string.encode('ascii', 'ignore').encode("ascii", "ignore")
+            string = string.decode('ascii', 'ignore').encode("ascii", "ignore")
             return string
 
         except Exception:
@@ -199,6 +200,16 @@ class Indeed(object):
             logging.error("get content:%s" % err)
             return None
 
+    def case_norm(self, doc):
+        out = []
+        sentences = sent_toker(doc)
+        for sent in sentences:
+            words = toker(sent)
+            words[0] = words[0].lower()
+            out.extend(words)
+
+        return out
+
     @classmethod
     def len_tester(self, word_list, thres=3):
         new_list = []
@@ -210,14 +221,13 @@ class Indeed(object):
 
         return new_list
 
-    def stemmer_(self, string):
+    def stemmer_(self, document):
 
-        if string is None:
+        if document is None:
             return None
 
-        string = self._decode(string)
-        words = toker(string)
-        words = map(lambda x:x.lower(), words)
+        document = self._decode(document)
+        words = self.case_norm(document)
         words = self.len_tester(words)
         stem_words = map(stemmer.stem, words)
 
@@ -307,7 +317,7 @@ class Indeed(object):
         vectorizer = CountVectorizer(max_features=max_features,
                                     max_df=max_df,
                                     min_df=min_df,
-                                    lowercase=True,
+                                    lowercase=False,
                                     stop_words=self.stop_words,
                                     ngram_range=(n_min, n_max),
                                     analyzer='word',
