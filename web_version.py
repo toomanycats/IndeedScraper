@@ -56,431 +56,6 @@ logging.basicConfig(filename=logfile, level=logging.DEBUG)
 
 session_file = os.path.join(data_dir, 'df_dir', 'session_file.pck')
 
-missing_template = jinja2.Template('''
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>missing keyword analysis</title>
-    <meta name="description" content="Upload your PDF resume for an analysis of
-        missing keywords compared with the nationwide job postings"</meta>
-    <meta charset="UTF-8">
-    <style>
-        p {
-            margin: 0.2cm 0.5cm 0.1cm 1cm;
-            font-family:"Verdana";
-            font-size:100%
-        }
-
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
-
-        th, td {
-            text-align: left;
-            padding: 8px;
-        }
-
-        tr:nth-child(even){background-color: #f2f2f2}
-
-        th {
-            background-color: #4CAF50;
-            color: white;
-        }
-    </style>
-
-</head>
-<body>
-
-<h1>Upload your PDF resume for an analysis of missing keywords compared with the
-job search results.</h1>
-
-<p>This function will extract the text from your resume and compare it to the
-list of keywords found in the previous analysis. The output will be the
-keywords not included in your resume that were found in the job postings.</p>
-
-<form action='/missing/' method=POST enctype=multipart/form-data>
-    <input type=file name=File>
-    <input type=submit value=Upload>
-</form>
-
-<br><br>
-
-<h2>Comparison of your resume with the single keyword analysis</h2>
-    <table>
-    <tr>
-        <th>Missing Keywords in Your Resume</th>
-    </tr>
-        {{ rows }}
-    </table>
-
-<!-- Start of StatCounter Code for Default Guide -->
-<script type="text/javascript">
-var sc_project=10739395;
-var sc_invisible=1;
-var sc_security="0d075499";
-var scJsHost = (("https:" == document.location.protocol) ?
-"https://secure." : "http://www.");
-document.write("<sc"+"ript type='text/javascript' src='" +
-scJsHost+
-"statcounter.com/counter/counter.js'></"+"script>");
-</script>
-<noscript><div class="statcounter"><a title="free web stats"
-href="http://statcounter.com/" target="_blank"><img
-class="statcounter"
-src="http://c.statcounter.com/10739395/0/0d075499/1/"
-alt="free web stats"></a></div></noscript>
-<!-- End of StatCounter Code for Default Guide -->
-
-</body>
-</html>
-''')
-
-cities_template = jinja2.Template('''
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>Count of job Postings per City: Showing Top 20 Citites</title>
-    <meta name="description" content="analysis of job postings per city"/>
-    <style>
-        body {
-            background-color: #caf6f6;
-            }
-    </style>
-    <meta charset="UTF-8">
-    <link href="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.css"
-          rel="stylesheet" type="text/css">
-
-    <script src="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.js"></script>
-</head>
-
-<body>
-<h1>Count of job Postings per City: Showing Top 20 Citites</h1>
-
-{{ div }}
-
-{{ script }}
-
-<!-- Start of StatCounter Code for Default Guide -->
-<script type="text/javascript">
-var sc_project=10739395;
-var sc_invisible=1;
-var sc_security="0d075499";
-var scJsHost = (("https:" == document.location.protocol) ?
-"https://secure." : "http://www.");
-document.write("<sc"+"ript type='text/javascript' src='" +
-scJsHost+
-"statcounter.com/counter/counter.js'></"+"script>");
-</script>
-<noscript><div class="statcounter"><a title="free web stats"
-href="http://statcounter.com/" target="_blank"><img
-class="statcounter"
-src="http://c.statcounter.com/10739395/0/0d075499/1/"
-alt="free web stats"></a></div></noscript>
-<!-- End of StatCounter Code for Default Guide -->
-
-</body>
-</html>
-''')
-
-grammar_template = jinja2.Template('''
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>analysis of full job posting text</title>
-    <meta charset="UTF-8">
-    <style>
-        body {
-            background-color: #caf6f6;
-            }
-    </style>
-    <link href="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.css"
-          rel="stylesheet" type="text/css">
-
-    <script src="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.js"></script>
-</head>
-
-<body>
-<h1>General Language Analysis</h1> <p>The previous analysis of single and
-double keywords was focused on skills. This treatment tries to avoid
-the bulleted skills and find meaning in the general text.</p>
-
-<br>
-<p><i>The graph is interactive, scroll up and down to zoom</i></p>
-
-{{ div }}
-{{ script }}
-
-<form  id=radius action="/radius/"  method="post">
-    Explore around the radius of a word across all posts.<br>
-    The default is five words in front and in back. <br>
-    <input type="text" name="word" placeholder="experience"><br>
-    <input type="submit" value="Submit" name="submit">
-</form>
-
-<!-- Start of StatCounter Code for Default Guide -->
-<script type="text/javascript">
-var sc_project=10739395;
-var sc_invisible=1;
-var sc_security="0d075499";
-var scJsHost = (("https:" == document.location.protocol) ?
-"https://secure." : "http://www.");
-document.write("<sc"+"ript type='text/javascript' src='" +
-scJsHost+
-"statcounter.com/counter/counter.js'></"+"script>");
-</script>
-<noscript><div class="statcounter"><a title="free web stats"
-href="http://statcounter.com/" target="_blank"><img
-class="statcounter"
-src="http://c.statcounter.com/10739395/0/0d075499/1/"
-alt="free web stats"></a></div></noscript>
-<!-- End of StatCounter Code for Default Guide -->
-
-</body>
-</html>
-''')
-
-title_template = jinja2.Template('''
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <style>
-        p {
-            margin: 0.2cm 0.5cm 0.1cm 1cm;
-            font-family:"Verdana";
-            font-size:100%
-        }
-
-        li {
-        padding-left: 2cm;
-        font-size:110%
-        }
-
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
-
-        th, td {
-            text-align: left;
-            padding: 8px;
-        }
-
-        tr:nth-child(even){background-color: #f2f2f2}
-
-        th {
-            background-color: #4CAF50;
-            color: white;
-        }
-    </style>
-</head>
-
-<body>
-    <p>The table below is a list of the job titles that formed the search
-    results. This table can provide some insights:</p>
-
-    <p>More unique titles is a measure of how your keywords/title search terms, track across domains.</p>
-    <li> A zero count for a title, means that the job posting(s) were not analyzed
-    due to formatting concerns. However, the title was found in the search.</li>
-    <li>All titles are reduced to lower case and fuzzy matched, so that very similar titles are grouped together</li>
-
-    <table>
-    <tr>
-        <th>Job Title From Posting</th><th>Count</th>
-    </tr>
-        {{ rows }}
-    </table>
-
-<!-- Start of StatCounter Code for Default Guide -->
-<script type="text/javascript">
-var sc_project=10739395;
-var sc_invisible=1;
-var sc_security="0d075499";
-var scJsHost = (("https:" == document.location.protocol) ?
-"https://secure." : "http://www.");
-document.write("<sc"+"ript type='text/javascript' src='" +
-scJsHost+
-"statcounter.com/counter/counter.js'></"+"script>");
-</script>
-<noscript><div class="statcounter"><a title="free web stats"
-href="http://statcounter.com/" target="_blank"><img
-class="statcounter"
-src="http://c.statcounter.com/10739395/0/0d075499/1/"
-alt="free web stats"></a></div></noscript>
-<!-- End of StatCounter Code for Default Guide -->
-
-</body>
-</html>
-''')
-
-stem_template= jinja2.Template('''
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <style>
-        p {
-            margin: 0.5cm 0.5cm 0.2cm 6cm;
-            font-family:"Verdana";
-            font-size:100%
-        }
-
-        li {
-        padding-left: 8cm;
-        font-size:110%
-        }
-
-        body {
-            background-color: #caf6f6;
-        }
-    </style>
-    <title>stemmed results</title>
-    <meta charset="UTF-8">
-    <link href="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.css"
-          rel="stylesheet" type="text/css">
-
-    <script src="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.js"></script>
-</head>
-
-<body>
-<h1>Frequency of Single Keywords:Skills Focused</h1>
-<p><i>The graph is interactive, scroll up and down to zoom</i></p>
-
-{{ div }}
-
-{{ script }}
-
-<form  id=radius action="/radius/"  method="post">
-    Explore around the radius of a word across all posts.<br>
-    The default is five words in front and in back. <br>
-    <input type="text" name="word" placeholder="experience"><br>
-    <input type="submit" value="Submit" name="submit">
-</form>
-
-<p>All the words in the sample have been reduced to their "stems". <br> That
-is, the suffixes have been removed,</p>
-
-<li>working</li>
-<li>works</li>
-<li>worked</li>
-
-<p>are counted the same. The actual word shown will be the last
-word that appeared. You may see, "works" , because that was the last
-version of work, working, worked, that occurred in the analysis words.
-
-
-<!-- Start of StatCounter Code for Default Guide -->
-<script type="text/javascript">
-var sc_project=10739395;
-var sc_invisible=1;
-var sc_security="0d075499";
-var scJsHost = (("https:" == document.location.protocol) ?
-"https://secure." : "http://www.");
-document.write("<sc"+"ript type='text/javascript' src='" +
-scJsHost+
-"statcounter.com/counter/counter.js'></"+"script>");
-</script>
-<noscript><div class="statcounter"><a title="free web stats"
-href="http://statcounter.com/" target="_blank"><img
-class="statcounter"
-src="http://c.statcounter.com/10739395/0/0d075499/1/"
-alt="free web stats"></a></div></noscript>
-<!-- End of StatCounter Code for Default Guide -->
-
-</body>
-</html>
-''')
-
-error_template = jinja2.Template('''
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>error page</title>
-    <meta charset="UTF-8">
-</head>
-
-<body>
-<strong>
-Sorry, but an error occured in the program. <br>
-This app is still a work in progress. <br><br>
-
-<li> Please check that your inputs are reasonable. </li>
-<li> Sometimes job titles are not found or keywords are not common enough.</li>
-</strong>
-
-<br><br>
-{{ error }}
-<br><br>
-
-<!-- Start of StatCounter Code for Default Guide -->
-<script type="text/javascript">
-var sc_project=10739395;
-var sc_invisible=1;
-var sc_security="0d075499";
-var scJsHost = (("https:" == document.location.protocol) ?
-"https://secure." : "http://www.");
-document.write("<sc"+"ript type='text/javascript' src='" +
-scJsHost+
-"statcounter.com/counter/counter.js'></"+"script>");
-</script>
-<noscript><div class="statcounter"><a title="free web stats"
-href="http://statcounter.com/" target="_blank"><img
-class="statcounter"
-src="http://c.statcounter.com/10739395/0/0d075499/1/"
-alt="free web stats"></a></div></noscript>
-<!-- End of StatCounter Code for Default Guide -->
-
-</body>
-</html>
-''')
-
-radius_template = jinja2.Template('''
-<!DOCTYPE html>
-<html lang="en-US">
-<head>
-    <style>
-        body {
-            background-color: #caf6f6;
-            }
-    </style>
-    <title>radius</title>
-    <meta charset="UTF-8">
-    <link href="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.css"
-          rel="stylesheet" type="text/css">
-
-    <script src="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.js"></script>
-</head>
-
-<html>
-<body>
-    <br><br><br>
-    <h2>Words found about a 5 word radius.</h2>
-    <p><i>The graph is interactive, scroll up and down to zoom</i></p>
-
-    {{ div }}
-    {{ script }}
-
-<!-- Start of StatCounter Code for Default Guide -->
-<script type="text/javascript">
-var sc_project=10739395;
-var sc_invisible=1;
-var sc_security="0d075499";
-var scJsHost = (("https:" == document.location.protocol) ?
-"https://secure." : "http://www.");
-document.write("<sc"+"ript type='text/javascript' src='" +
-scJsHost+
-"statcounter.com/counter/counter.js'></"+"script>");
-</script>
-<noscript><div class="statcounter"><a title="free web stats"
-href="http://statcounter.com/" target="_blank"><img
-class="statcounter"
-src="http://c.statcounter.com/10739395/0/0d075499/1/"
-alt="free web stats"></a></div></noscript>
-<!-- End of StatCounter Code for Default Guide -->
-
-</body>
-</html>
-''')
-
 app = Flask(__name__)
 
 stop_words = 'resume affirmative cover letter equal religion sex disibility veteran status sexual orientation and work ability http https www gender'
@@ -507,7 +82,7 @@ def gallery():
 
 @app.errorhandler(500)
 def internal_error(error):
-    return error_template.render(error=error)
+    return render_template('error.html',error=error)
 
 @app.route('/')
 def get_keywords():
@@ -586,7 +161,7 @@ def plot_titles():
         except:
            continue
 
-    page = title_template.render(rows=rows)
+    page = render_template('titles.html', rows=rows)
     return encode_utf8(page)
 
 @app.route('/cities/')
@@ -610,7 +185,7 @@ def plot_cities():
     p = plot_fig(df_city.loc[0:end,:], num_posts, 'Posts Per City in the Analysis:Top 20')
     script, div = components(p)
 
-    page = cities_template.render(div=div, script=script)
+    page = render_template('cities.html', div=div, script=script)
 
     return encode_utf8(page)
 
@@ -717,7 +292,7 @@ def radius():
         return "The body of words compiled did not contain substantially repeated terms."
 
     script, div = get_plot_comp(kw, count, df)
-    return radius_template.render(div=div, script=script)
+    return render_template('radius.html', div=div, script=script)
 
 def get_inverse_stem(kw):
     sess_dict = get_sess()
@@ -756,7 +331,7 @@ def stem():
     orig_keywords = get_inverse_stem(kw)
     script, div = get_plot_comp(orig_keywords, count, df)
 
-    page = stem_template.render(script=script, div=div)
+    page = render_template('stem.html', script=script, div=div)
     return encode_utf8(page)
 
 @app.route('/grammar/')
@@ -775,7 +350,7 @@ def grammar_parser():
 
     script, div = get_plot_comp(kw, count, df)
 
-    page = grammar_template.render(script=script, div=div)
+    page = render_template('grammar', script=script, div=div)
     return encode_utf8(page)
 
 @app.route('/missing/', methods=['GET', 'POST'])
@@ -790,10 +365,10 @@ def compute_missing_keywords():
         df = load_csv()
         rows = missing_keywords.main(resume_path, df['summary'])
 
-        return missing_template.render(rows=rows)
+        return render_template('missing.html', rows=rows)
 
     else:
-        return missing_template.render()
+        return render_template('missing.html')
 
 def mk_random_string():
     random_string = str(uuid.uuid4()) + ".csv"
