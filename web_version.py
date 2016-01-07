@@ -57,7 +57,7 @@ session_file = os.path.join(data_dir, 'df_dir', 'session_file.pck')
 
 app = Flask(__name__)
 
-stop_words = 'resume affirmative cover letter equal religion sex disibility veteran status sexual orientation and work ability http https www gender'
+stop_words = 'resume affirmative cover letter equal religion sex disibility veteran status sexual orientation and work ability http https www gender com org'
 
 def plot_fig(df, num, kws):
 
