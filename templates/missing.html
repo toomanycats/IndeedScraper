@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>missing keyword analysis</title>
+    <meta name="description" content="Upload your PDF resume for an analysis of
+        missing keywords compared with the nationwide job postings"</meta>
+    <meta charset="UTF-8">
+    <style>
+        p {
+            margin: 0.2cm 0.5cm 0.1cm 1cm;
+            font-family:"Verdana";
+            font-size:100%
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 8px;
+        }
+
+        tr:nth-child(even){background-color: #f2f2f2}
+
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+    </style>
+
+</head>
+<body>
+
+<h1>Upload your PDF resume for an analysis of missing keywords compared with the
+job search results.</h1>
+
+<p>This function will extract the text from your resume and compare it to the
+list of keywords found in the previous analysis. The output will be the
+keywords not included in your resume that were found in the job postings.</p>
+
+<form action='/missing/' method=POST enctype=multipart/form-data>
+    <input type=file name=File>
+    <input type=submit value=Upload>
+</form>
+
+<br><br>
+
+<h2>Comparison of your resume with the single keyword analysis</h2>
+    <table>
+    <tr>
+        <th>Missing Keywords in Your Resume</th>
+    </tr>
+        {{ rows }}
+    </table>
+
+<!-- Start of StatCounter Code for Default Guide -->
+<script type="text/javascript">
+var sc_project=10739395;
+var sc_invisible=1;
+var sc_security="0d075499";
+var scJsHost = (("https:" == document.location.protocol) ?
+"https://secure." : "http://www.");
+document.write("<sc"+"ript type='text/javascript' src='" +
+scJsHost+
+"statcounter.com/counter/counter.js'></"+"script>");
+</script>
+<noscript><div class="statcounter"><a title="free web stats"
+href="http://statcounter.com/" target="_blank"><img
+class="statcounter"
+src="http://c.statcounter.com/10739395/0/0d075499/1/"
+alt="free web stats"></a></div></noscript>
+<!-- End of StatCounter Code for Default Guide -->
+
+</body>
+</html>

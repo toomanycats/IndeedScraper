@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>analysis of job posting text for soft skills</title>
+    <meta name="description analysis of job postings for soft skills" content=""/>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            background-color: #caf6f6;
+            }
+    </style>
+    <link href="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.css"
+          rel="stylesheet" type="text/css">
+
+    <script src="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.js"></script>
+</head>
+
+<body>
+<h1>General Language Analysis</h1> <p>The previous analysis of single and
+double keywords was focused on skills. This treatment tries to avoid
+the bulleted skills and find meaning in the general text.</p>
+
+<br>
+<p><i>The graph is interactive, scroll up and down to zoom</i></p>
+
+{{ div }}
+{{ script }}
+
+<form  id=radius action="/radius/"  method="post">
+    Explore around the radius of a word across all posts.<br>
+    The default is five words in front and in back. <br>
+    <input type="text" name="word" placeholder="experience"><br>
+    <input type="submit" value="Submit" name="submit">
+</form>
+
+<!-- Start of StatCounter Code for Default Guide -->
+<script type="text/javascript">
+var sc_project=10739395;
+var sc_invisible=1;
+var sc_security="0d075499";
+var scJsHost = (("https:" == document.location.protocol) ?
+"https://secure." : "http://www.");
+document.write("<sc"+"ript type='text/javascript' src='" +
+scJsHost+
+"statcounter.com/counter/counter.js'></"+"script>");
+</script>
+<noscript><div class="statcounter"><a title="free web stats"
+href="http://statcounter.com/" target="_blank"><img
+class="statcounter"
+src="http://c.statcounter.com/10739395/0/0d075499/1/"
+alt="free web stats"></a></div></noscript>
+<!-- End of StatCounter Code for Default Guide -->
+
+</body>
+</html>
