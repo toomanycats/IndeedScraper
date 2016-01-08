@@ -85,10 +85,11 @@ class Indeed(object):
         format = '&format=json'
         filter = '&filter=1'
         country = '&co=us'
+        highlight = '&highlight=0'
         suffix = '&userip=1.2.3.4&useragent=Mozilla/%%2F4.0%%28Firefox%%29&v=2'
 
         self.api = prefix + pub + chan + loc + query + start + frm + limit + \
-                   site + format + country + filter + suffix
+                   site + format + country + filter + highlight + suffix
 
         logging.debug("api string: %s" % self.api)
 
@@ -123,7 +124,7 @@ class Indeed(object):
 
     def _get_count(self):
         df = self.df.reset_index()
-        df = self.summary_similarity(df, 'summary', 80)
+        df = self.summary_similarity(df, 'snippet', 80)
         count = df.count()['url']
         return count
 
@@ -144,6 +145,7 @@ class Indeed(object):
             self.df.loc[ind, 'jobtitle'] = item[2]
             self.df.loc[ind, 'job_key'] = item[3]
             self.df.loc[ind, 'summary'] = parsed_content
+            self.df.loc[ind, 'snippet'] = item[4]
             self.df.loc[ind, 'summary_stem'] = self.stemmer_(parsed_content)
             self.df.loc[ind, 'grammar'] = self.get_grammar_content(content, soup)
             ind += 1
@@ -169,7 +171,7 @@ class Indeed(object):
             data = json.loads(response.read())
             response.close()
 
-            results = [(item['url'], item['city'], item['jobtitle'], item['jobkey'])  for item in data['results']]
+            results = [(item['url'], item['city'], item['jobtitle'], item['jobkey'], item['snippet'])  for item in data['results']]
 
         except urllib2.HTTPError, err:
             logging.debug("get url: %s" % err)
@@ -257,7 +259,7 @@ class Indeed(object):
             output = [item.get_text() for item in skills]
             output = self.len_tester(output)
 
-            if len(output) > 0:
+            if len(output) > 5:
                 parsed = " ".join(output).replace('\n', '')
                 return parsed
             else:
