@@ -219,11 +219,11 @@ def run_analysis():
     if os.path.exists(sess_dict['df_file']):
         df = load_csv()
         df = df.append(ind.df, ignore_index=True)
-        df = ind.summary_similarity(df, 'summary', 80)
     else:
         df = ind.df
 
-    df.dropna(subset=['summary', 'url'], inplace=True)
+    df = ind.summary_similarity(df, 'summary', 80)
+    df.dropna(subset=['summary', 'url', 'summary_stem'], how='any', inplace=True)
     df.reset_index(inplace=True, drop=True)
     sess_dict['index'] = df.shape[0]
 
