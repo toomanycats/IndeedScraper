@@ -1,6 +1,6 @@
-http://www.keywordcounter.com/cities.html
+http://www.keywordcounter.com/canonical/cities.html
+http://www.keywordcounter.com/canonical/grammar.html
+http://www.keywordcounter.com/canonical/titles.html
+http://www.keywordcounter.com/canonical/output.html
+http://www.keywordcounter.com/canonical/stem.html
 http://www.keywordcounter.com/gallery.html
-http://www.keywordcounter.com/grammar.html
-http://www.keywordcounter.com/missing.html
-http://www.keywordcounter.com/radius.html
-http://www.keywordcounter.com/titles.html
