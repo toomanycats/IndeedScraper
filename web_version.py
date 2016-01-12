@@ -187,6 +187,14 @@ def plot_cities():
     page = render_template('cities.html', div=div, script=script)
     return encode_utf8(page)
 
+@app.route('/bigram/')
+def get_bigram_again():
+    sess_dict = get_sess()
+    df = load_csv()
+    html = bigram(df, sess_dict['type_'], ind)
+
+    return render_template('bigram.html', html=html)
+
 @app.route('/run_analysis/')
 def run_analysis():
     sess_dict = get_sess()
