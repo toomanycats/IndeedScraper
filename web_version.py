@@ -51,7 +51,7 @@ if log_dir is None:
 missing_keywords = compare.MissingKeywords()
 
 logfile = os.path.join(log_dir, 'python.log')
-logging.basicConfig(filename=logfile, level=logging.DEBUG)
+logging.basicConfig(filename=logfile, level=logging.INFO)
 
 session_file = os.path.join(data_dir, 'df_dir', 'session_file.pck')
 
@@ -190,7 +190,7 @@ def plot_cities():
 @app.route('/bigram/')
 def get_bigram_again():
     sess_dict = get_sess()
-    return render_template('bigram.html', html=sess_dict['bigram'])
+    return render_template("bigram.html", html=sess_dict['bigram'])
 
 @app.route('/run_analysis/')
 def run_analysis():

@@ -4,6 +4,7 @@
     <link rel='icon' href="static/favicon.ico" type="image/x-icon">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.js"></script>
     <script src="{{ url_for('static', filename='script.js') }} "></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
@@ -15,16 +16,16 @@
             margin: 0.5cm 0.5cm 0.2cm 6cm;
             font-family:"Verdana";
             font-size:100%
-        }
+            }
 
         li {
-        padding-left: 8cm;
-        font-size:110%
-        }
+            padding-left: 8cm;
+            font-size:110%
+            }
 
         body {
             background-color: #caf6f6;
-        }
+            }
     </style>
     <title>keyword pairs for job postings</title>
     <meta charset="UTF-8">
@@ -33,6 +34,7 @@
           rel="stylesheet" type="text/css">
 
     <script src="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.js"></script>
+
 </head>
 
 <body>
@@ -46,12 +48,36 @@
     <li class='last'><a href='/missing/'><span>Analyze Your Resume</span></a></li>
 </ul>
 </div>
-<h1>Hard Skills: Keyword Pairs</h1>
+
+<script type="text/javascript">
+    $(function() {
+    $("#more").click(function() {
+        $('#load_mess').show('fast', function() {
+            $('#chart').load('/run_analysis/', function() {
+                $("#load_mess").hide('fast', function() {
+                    $("#orig_chart").hide('fast', function () {
+                    });
+                });
+            });
+        });
+    });
+});
+</script>
+
+<h1>Hard Skills: Frequency of Keyword Pairs</h1>
 <p><i>The graph is interactive, scroll up and down to zoom</i></p>
+<p>This analysis uses all the text found in the bullet points. Typically,
+these are where the hard skills are listed for the applicant.</p>
 
-{{ html | safe }}
+    <button id='more' style="background-color:red" type='button'>
+    More Results</button>
+    <p id="load_mess" style="display: none; color:red">Collecting More Data</p>
+    <div id='orig_chart'>{{ html | safe }}</div>
+    <div id="chart"></div>
 
-<form  id=radius action="/radius/"  method="post">
+<br><br>
+
+<form  id=radius action="/radius/"  method="post" style="display: none">
     Explore around the radius of a word across all posts.<br>
     The default is five words in front and in back. <br>
     <input type="text" name="word" placeholder="experience"><br>
@@ -84,4 +110,3 @@ alt="free web stats"></a></div></noscript>
 <!-- End of StatCounter Code for Default Guide -->
 </body>
 </html>
-
