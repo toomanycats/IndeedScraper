@@ -190,10 +190,7 @@ def plot_cities():
 @app.route('/bigram/')
 def get_bigram_again():
     sess_dict = get_sess()
-    df = load_csv()
-    html = bigram(df, sess_dict['type_'], ind)
-
-    return render_template('bigram.html', html=html)
+    return render_template('bigram.html', html=sess_dict['bigram'])
 
 @app.route('/run_analysis/')
 def run_analysis():
@@ -237,11 +234,16 @@ def run_analysis():
 
     # save df for additional analysis
     sess_dict['stem_inv'] = ind.stem_inverse
-    put_to_sess(sess_dict)
 
     save_to_csv(df)
+    put_to_sess(sess_dict)
 
-    return bigram(df, sess_dict['type_'], ind)
+    html = bigram(df, sess_dict['type_'], ind)
+
+    sess_dict['bigram'] = html
+    put_to_sess(sess_dict)
+
+    return html
 
 def bigram(df, type_, ind):
     max_df = compute_max_df(type_, df.shape[0], n_min=2)
