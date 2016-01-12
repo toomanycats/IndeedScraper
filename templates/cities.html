@@ -10,13 +10,27 @@
             }
     </style>
     <meta charset="UTF-8">
-    <link href="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.css"
-          rel="stylesheet" type="text/css">
-
+    <link href="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.css" rel="stylesheet" type="text/css">
+    <link rel='icon' href="static/favicon.ico" type="image/x-icon">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="{{ url_for('static', filename='script.js') }} "></script>
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
     <script src="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.js"></script>
 </head>
 
 <body>
+<div id='cssmenu'>
+<ul>
+    <li><a href='/stem/'><span>Single Word</span></a></li>
+    <li><a href='/grammar/'><span>Soft Skills</span></a></li>
+    <li><a href='/cities/'><span>Cities</span></a></li>
+    <li><a href='/titles/'><span>Titles</span></a></li>
+    <li class='last'><a href='/missing/'><span>Analyze Your Resume</span></a></li>
+</ul>
+</div>
 <h1>Count of job Postings per City: Showing Top 20 Citites</h1>
 
 {{ div | safe }}

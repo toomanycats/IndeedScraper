@@ -1,6 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel='icon' href="static/favicon.ico" type="image/x-icon">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="{{ url_for('static', filename='script.js') }} "></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <style>
         p {
             margin: 0.5cm 0.5cm 0.2cm 6cm;
@@ -26,6 +32,15 @@
 </head>
 
 <body>
+<div id='cssmenu'>
+<ul>
+    <li><a href='/stem/'><span>Single Word</span></a></li>
+    <li><a href='/grammar/'><span>Soft Skills</span></a></li>
+    <li><a href='/cities/'><span>Cities</span></a></li>
+    <li><a href='/titles/'><span>Titles</span></a></li>
+    <li class='last'><a href='/missing/'><span>Analyze Your Resume</span></a></li>
+</ul>
+</div>
 <h1>Frequency of Single Keywords:Skills Focused</h1>
 <p><i>The graph is interactive, scroll up and down to zoom</i></p>
 
