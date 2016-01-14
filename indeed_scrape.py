@@ -229,7 +229,9 @@ class Indeed(object):
             return None
 
         document = self._decode(document)
-        words = self.case_norm(document)
+        words = toker(document)
+        words =  map(lambda x: x.lower(), words)
+        #words = self.case_norm(document)
         words = self.len_tester(words)
         stem_words = map(stemmer.stem, words)
 
