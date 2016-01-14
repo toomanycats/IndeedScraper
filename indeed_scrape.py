@@ -443,10 +443,15 @@ class Indeed(object):
         self.df['grammar' ] = self.df['grammar'].apply(lambda x: self._clean_helper(x) if self.obj.search(x) else x)
 
     def _clean_helper(self, x):
-        reg = self.obj.search(x)
-        words = reg.groups()
-        for word in words:
-            x = re.sub(word, '', x)
+        try:
+            reg = self.obj.search(x)
+            words = reg.groups()
+            for word in words:
+                x = re.sub(word, '', x)
+
+        except Exception, err:
+            logging.error("dup clean helper fail with word:%s" % word)
+            logging.error(err)
 
         return x
 
