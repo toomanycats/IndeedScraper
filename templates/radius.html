@@ -2,6 +2,15 @@
 <html lang="en-US">
 <head>
     <title>search job postings around a word keywordcounter.com</title>
+    <link rel='icon' href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="{{ url_for('static', filename='script.js') }} "></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script type="text/javascript">var switchTo5x=true;</script>
+    <script type="text/javascript" src="http://w.sharethis.com/button/buttons.js"></script>
+    <script type="text/javascript" src="http://s.sharethis.com/loader.js"></script>
     <meta charset="UTF-8">
     <meta name="description" content="search job posting skill results" />
     <style>
@@ -19,12 +28,32 @@
 
 <html>
 <body>
+    <div id='cssmenu'>
+    <ul>
+        <li><a href='/'><span>New Search</span></a></li>
+        <li><a href='/stem/'><span>Single Word</span></a></li>
+        <li><a href='/bigram/'><span>Keyword Pairs</span></a></li>
+        <li><a href='/grammar/'><span>Soft Skills</span></a></li>
+        <li><a href='/cities/'><span>Cities</span></a></li>
+        <li><a href='/titles/'><span>Titles</span></a></li>
+        <li class='last'><a href='/missing/'><span>Analyze Your Resume</span></a></li>
+    </ul>
+    </div>
+
     <br><br><br>
+
     <h2>Words found about a 5 word radius.</h2>
     <p><i>The graph is interactive, scroll up and down to zoom</i></p>
 
     {{ div | safe }}
     {{ script | safe }}
+
+<!-- Social button bar -->
+<script type="text/javascript">stLight.options({publisher: "e8fcd386-83a6-40ab-80bb-7649867c948b", doNotHash: false, doNotCopy: false, hashAddressBar: false});</script>
+<script>
+var options={ "publisher": "e8fcd386-83a6-40ab-80bb-7649867c948b", "ad": { "visible": false, "openDelay": "5", "closeDelay": "0"}, "livestream": { "domain": "", "type": "sharethis", "customColors": { "widgetBackgroundColor": "#FFFFFF", "articleLinkColor": "#006fbb"}}, "ticker": { "visible": false, "domain": "", "title": "", "type": "sharethis", "customColors": { "widgetBackgroundColor": "#1d4161", "articleLinkColor": "#FFFFFF"}}, "facebook": { "visible": false, "profile": "sharethis"}, "fblike": { "visible": false, "url": ""}, "twitter": { "visible": false, "user": "sharethis"}, "twfollow": { "visible": false}, "custom": [{ "visible": false, "title": "Custom 1", "url": "", "img": "", "popup": false, "popupCustom": { "width": 300, "height": 250}}, { "visible": false, "title": "Custom 2", "url": "", "img": "", "popup": false, "popupCustom": { "width": 300, "height": 250}}, { "visible": false, "title": "Custom 3", "url": "", "img": "", "popup": false, "popupCustom": { "width": 300, "height": 250}}], "chicklets": { "items": ["linkedin", "facebook", "twitter", "email"]}, "background": "#558aca", "color": "#2150a5", "arrowStyle": "light"};
+var st_bar_widget = new sharethis.widgets.sharebar(options);
+</script>
 
 <!-- Start of StatCounter Code for Default Guide -->
 <script type="text/javascript">
