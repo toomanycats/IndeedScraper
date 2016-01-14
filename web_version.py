@@ -220,6 +220,7 @@ def process_data_in_db(df_file):
 
     html = bigram(df, sess_dict['type_'], ind)
     sess_dict['bigram'] = html
+    sess_dict['count_thres'] = 20
     put_to_sess(sess_dict)
 
     return html
@@ -231,7 +232,7 @@ def check_db():
     sess_dict = get_sess()
     kws = sess_dict['kws']
     type_ = sess_dict['type_']
-    df_file  = look_up_in_db(kws, type_)
+    df_file = look_up_in_db(kws, type_)
 
     if df_file is not None:
         logging.info("df file found in DB")
@@ -242,6 +243,7 @@ def check_db():
         logging.info("no df file found in DB, run_analysis")
         return run_analysis()
 
+@app.route("/run_analysis/")
 def run_analysis():
     logging.info("starting run_analysis %s" % time.strftime("%H:%M:%S"))
     sess_dict = get_sess()
@@ -262,6 +264,7 @@ def run_analysis():
         index, end, num_res, count = ind.get_data(ind=index, start=end)
         end_time = time.time()
         if (end_time - start_time) / 60.0 > 3.0: # avoid 502
+            logging.info("avoiding 502, break")
             break
 
     sess_dict['end'] = end
