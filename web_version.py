@@ -116,8 +116,6 @@ def get_data():
         logging.info("type:%s" %  type_)
         logging.info("key words:%s" % kws)
 
-        to_sql()
-
         html = render_template('output.html')
         return encode_utf8(html)
 
@@ -196,9 +194,9 @@ def get_bigram_again():
     sess_dict = get_sess()
     return render_template("bigram.html", html=sess_dict['bigram'])
 
-def look_up_in_db(kw_string):
-    sql = "SELECT df_file FROM data WHERE keyword = %s"
-    sql = sql % kw_string
+def look_up_in_db(kw_string, type_):
+    sql = "SELECT df_file FROM data WHERE keyword = '%s' and type_ = '%s';"
+    sql = sql %(kw_string, type_)
 
     sql_engine = sqlalchemy.create_engine(conn_string)
     df = pd.read_sql(sql=sql, con=sql_engine)
@@ -215,13 +213,13 @@ def process_data_in_db(df_file):
     sess_dict['df_file'] = df_file
     df = pd.read_csv(df_file)
 
+    # discard output
+    map(ind.stemmer_, df['summary'])
+    sess_dict['stem_inv'] = ind.stem_inverse
+    put_to_sess(sess_dict)
+
     html = bigram(df, sess_dict['type_'], ind)
     sess_dict['bigram'] = html
-
-    # discard output, use to set attrib
-    map(ind.stemmer_, df['summary'])
-
-    sess_dict['stem_inv'] = ind.stem_inverse
     put_to_sess(sess_dict)
 
     return html
@@ -232,14 +230,17 @@ def check_db():
 
     sess_dict = get_sess()
     kws = sess_dict['kws']
-    df_file  = look_up_in_db(kws)
+    type_ = sess_dict['type_']
+    df_file  = look_up_in_db(kws, type_)
 
     if df_file is not None:
+        logging.info("df file found in DB")
         html = process_data_in_db(df_file)
         return html
 
     else:
-        run_analysis()
+        logging.info("no df file found in DB, run_analysis")
+        return run_analysis()
 
 def run_analysis():
     logging.info("starting run_analysis %s" % time.strftime("%H:%M:%S"))
@@ -286,6 +287,7 @@ def run_analysis():
 
     save_to_csv(df)
     put_to_sess(sess_dict)
+    to_sql()
 
     html = bigram(df, sess_dict['type_'], ind)
 
@@ -465,7 +467,8 @@ def to_sql():
     norm_keywords = indeed_scrape.Indeed._split_on_spaces(sess_dict['kws'])
     norm_keywords = " ".join(norm_keywords)
     reference = pd.DataFrame({'keyword':norm_keywords,
-                              'df_file':sess_dict['df_file']
+                              'df_file':sess_dict['df_file'],
+                              'type_': sess_dict['type_']
                              }, index=[0])
 
     sql_engine = sqlalchemy.create_engine(conn_string)
