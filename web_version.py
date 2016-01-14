@@ -5,7 +5,7 @@
 ######################################
 from fuzzywuzzy import fuzz
 import sqlalchemy
-import uuid #for random strints
+import uuid
 import subprocess
 import time
 import logging
@@ -55,6 +55,8 @@ logging.basicConfig(filename=logfile, level=logging.INFO)
 
 session_file = os.path.join(data_dir, 'df_dir', 'session_file.pck')
 
+conn_string = "mysql://%s:%s@%s/indeed" %(sql_username, sql_password, mysql_ip)
+
 app = Flask(__name__)
 
 stop_words = 'resume affirmative cover letter equal religion sex disibility veteran status sexual orientation and work ability http https www gender com org'
@@ -95,6 +97,8 @@ def get_data():
     if request.method == "POST":
         type_ = request.form['type_']
         kws = request.form['kw'].lower()
+        kws = indeed_scrape.Indeed._split_on_spaces(kws)
+        kws = " ".join(kws) #enter into DB normalized
 
         df_file = os.path.join(data_dir,  'df_dir', mk_random_string())
         logging.info("session file path: %s" % df_file)
@@ -192,10 +196,55 @@ def get_bigram_again():
     sess_dict = get_sess()
     return render_template("bigram.html", html=sess_dict['bigram'])
 
-@app.route('/run_analysis/')
-def run_analysis():
+def look_up_in_db(kw_string):
+    sql = "SELECT df_file FROM data WHERE keyword = %s"
+    sql = sql % kw_string
+
+    sql_engine = sqlalchemy.create_engine(conn_string)
+    df = pd.read_sql(sql=sql, con=sql_engine)
+
+    if df.shape[0] == 0:
+        return None
+    else:
+        return df['df_file'][0] # just in case there's more than one
+
+def process_data_in_db(df_file):
+    ind = indeed_scrape.Indeed("kw")
     sess_dict = get_sess()
+
+    sess_dict['df_file'] = df_file
+    df = pd.read_csv(df_file)
+
+    html = bigram(df, sess_dict['type_'], ind)
+    sess_dict['bigram'] = html
+
+    # discard output, use to set attrib
+    map(ind.stemmer_, df['summary'])
+
+    sess_dict['stem_inv'] = ind.stem_inverse
+    put_to_sess(sess_dict)
+
+    return html
+
+@app.route('/check_db/')
+def check_db():
+    logging.info("checking DB")
+
+    sess_dict = get_sess()
+    kws = sess_dict['kws']
+    df_file  = look_up_in_db(kws)
+
+    if df_file is not None:
+        html = process_data_in_db(df_file)
+        return html
+
+    else:
+        run_analysis()
+
+def run_analysis():
     logging.info("starting run_analysis %s" % time.strftime("%H:%M:%S"))
+    sess_dict = get_sess()
+
     ind = indeed_scrape.Indeed(query_type=sess_dict['type_'])
     ind.query = sess_dict['kws']
     ind.stop_words = stop_words
@@ -419,7 +468,6 @@ def to_sql():
                               'df_file':sess_dict['df_file']
                              }, index=[0])
 
-    conn_string = "mysql://%s:%s@%s/indeed" %(sql_username, sql_password, mysql_ip)
     sql_engine = sqlalchemy.create_engine(conn_string)
     reference.to_sql(name='data', con=sql_engine, if_exists='append', index=False)
 
