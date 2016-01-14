@@ -220,7 +220,7 @@ def process_data_in_db(df_file):
 
     html = bigram(df, sess_dict['type_'], ind)
     sess_dict['bigram'] = html
-    sess_dict['count_thres'] = 20
+    sess_dict['count_thres'] = df.shape[0] + 20
     put_to_sess(sess_dict)
 
     return html
