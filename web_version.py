@@ -489,5 +489,5 @@ def save_to_csv(df):
     df.to_csv(sess_dict['df_file'], index=False, quoting=1, encoding='utf-8')
 
 if __name__ == "__main__":
-    app.run()
+    app.run(threaded=True)
 
