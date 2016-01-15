@@ -47,9 +47,11 @@
     <script type="text/javascript">
     $(function() {
         $("#chart").load("/check_db/", function() {
-            clearInterval(blink);
-            $("#blink").hide('fast', function() {
-                $("#radius").slideDown('fast');
+            $('#check_count').load('/check_count/', function() {
+                clearInterval(blink);
+                $("#blink").hide('fast', function() {
+                    $("#radius").slideDown('fast');
+                });
             });
         });
     });
@@ -79,14 +81,14 @@
         $("#more").click(function() {
             $('#blink').show('fast', function() {
                 $('#chart').load('/run_analysis/', function() {
-                    $("#blink").hide('fast', function() {
-                    });
+                    $("#blink").hide('fast');
                 });
             });
         });
     });
      </script>
 
+    <div id='check_count'></div>
     <p id="blink" style="color:red">Collecting Data</p>
     <div id="chart"></div>
 

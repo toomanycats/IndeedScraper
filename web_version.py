@@ -415,6 +415,20 @@ def grammar_parser():
     page = render_template('grammar.html', script=script, div=div)
     return encode_utf8(page)
 
+@app.route("/check_count/")
+def check_for_low_count_using_title():
+    sess_dict = get_sess()
+    df = load_csv()
+    logging.info("title count:%i" % df.shape[0])
+
+    string = "<br><p><i>Your search by job title returned a small number of job \
+    postings. Click 'NEW SEARCH' and use the 'keyword' search.</i></p><br>"
+
+    if df.shape[0] < 25:
+        return encode_utf8(string)
+    else:
+        return ""
+
 @app.route('/missing/', methods=['GET', 'POST'])
 def compute_missing_keywords():
     if request.method == "POST":
