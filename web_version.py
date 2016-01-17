@@ -10,7 +10,7 @@ import subprocess
 import time
 import logging
 import pandas as pd
-from flask import Flask, request, redirect, url_for, jsonify, render_template
+from flask import Flask, request, redirect, url_for, jsonify, render_template, session
 import indeed_scrape
 import jinja2
 from bokeh.embed import components
@@ -23,6 +23,11 @@ import pickle
 import compare
 import pdb
 import time
+
+def mk_random_string():
+    random_string = str(uuid.uuid4()) + ".csv"
+
+    return random_string
 
 sql_username = os.getenv("OPENSHIFT_MYSQL_DB_USERNAME")
 if sql_username is None:
@@ -58,6 +63,7 @@ session_file = os.path.join(data_dir, 'df_dir', 'session_file.pck')
 conn_string = "mysql://%s:%s@%s/indeed" %(sql_username, sql_password, mysql_ip)
 
 app = Flask(__name__)
+app.secret_key = mk_random_string()
 
 stop_words = 'resume affirmative cover letter equal religion sex disibility veteran status sexual orientation and work ability http https www gender com org'
 
@@ -100,16 +106,24 @@ def get_data():
         kws = indeed_scrape.Indeed._split_on_spaces(kws)
         kws = " ".join(kws) #enter into DB normalized
 
+        session_id = mk_random_string()
         df_file = os.path.join(data_dir,  'df_dir', mk_random_string())
-        logging.info("session file path: %s" % df_file)
+        logging.info("session id: %s" % session_id)
 
-        put_to_sess({'type_':type_,
-                    'kws':kws,
-                    'df_file':df_file,
-                    'index':0,
-                    'end':0,
-                    'count_thres':50
-                    })
+        # key used for sql to recover other info
+        session['session_id'] = session_id
+
+        norm_keywords = indeed_scrape.Indeed._split_on_spaces(sess_dict['kws'])
+        norm_keywords = " ".join(norm_keywords)
+
+        to_sql({'session_id':session_id,
+                'type_':type_,
+                'kws':norm_keywords,
+                'df_file':df_file,
+                'index':0,
+                'end':0,
+                'count_thres':50
+                })
 
         logging.info("running get_data:%s" % time.strftime("%d-%m-%Y:%H:%M:%S"))
         logging.info("df file path: %s :%s" % (df_file, time.strftime("%d-%m-%Y:%H:%M:%S")))
@@ -210,18 +224,15 @@ def process_data_in_db(df_file):
     ind = indeed_scrape.Indeed("kw")
     sess_dict = get_sess()
 
-    sess_dict['df_file'] = df_file
     df = pd.read_csv(df_file)
 
     # discard output
     map(ind.stemmer_, df['summary'])
-    sess_dict['stem_inv'] = ind.stem_inverse
-    put_to_sess(sess_dict)
+    update_sql('stem_inv', ind.stem_inverse)
 
     html = bigram(df, sess_dict['type_'], ind)
-    sess_dict['bigram'] = html
-    sess_dict['count_thres'] = df.shape[0] + 20
-    put_to_sess(sess_dict)
+    update_sql('bigram', html)
+    update_sql('count_thres', df.shape[0] + 20)
 
     return html
 
@@ -236,6 +247,7 @@ def check_db():
 
     if df_file is not None:
         logging.info("df file found in DB")
+        update_sql('df_file', df_file)
         html = process_data_in_db(df_file)
         return html
 
@@ -267,8 +279,8 @@ def run_analysis():
             logging.info("avoiding 502, break")
             break
 
-    sess_dict['end'] = end
-    sess_dict['count_thres'] = 25
+    update_sql('end', end)
+    update_sql('count_thres', 25)
 
     #scrub repeated words
     ind.clean_dup_words()
@@ -283,19 +295,16 @@ def run_analysis():
     df = ind.summary_similarity(df, 'summary', 80)
     df.dropna(subset=['summary', 'url', 'summary_stem'], how='any', inplace=True)
     df.reset_index(inplace=True, drop=True)
-    sess_dict['index'] = df.shape[0]
+    update_sql('index', df.shape[0])
 
     # save df for additional analysis
-    sess_dict['stem_inv'] = ind.stem_inverse
+    update_sql('stem_inv', ind.stem_inverse)
 
     save_to_csv(df)
-    put_to_sess(sess_dict)
-    to_sql()
 
     html = bigram(df, sess_dict['type_'], ind)
 
-    sess_dict['bigram'] = html
-    put_to_sess(sess_dict)
+    update_sql('bigram', html)
 
     return html
 
@@ -446,17 +455,6 @@ def compute_missing_keywords():
     else:
         return render_template('missing.html')
 
-def mk_random_string():
-    random_string = str(uuid.uuid4()) + ".csv"
-
-    return random_string
-
-def put_to_sess(values):
-    pickle.dump(values, open(session_file, 'wb'))
-
-def get_sess():
-    return pickle.load(open(session_file, 'rb'))
-
 def compute_max_df(type_, num_samp, n_min=1):
     if type_ == 'keywords':
         base = 0.80
@@ -478,15 +476,24 @@ def compute_max_df(type_, num_samp, n_min=1):
 
     return base
 
-def to_sql():
-    sess_dict = get_sess()
+def get_sess():
+    sql = "SELECT * FROM data WHERE session_id = '%s';"
+    sql = sql % session['session_id']
+    sql_engine = sqlalchemy.create_engine(conn_string)
 
-    norm_keywords = indeed_scrape.Indeed._split_on_spaces(sess_dict['kws'])
-    norm_keywords = " ".join(norm_keywords)
-    reference = pd.DataFrame({'keyword':norm_keywords,
-                              'df_file':sess_dict['df_file'],
-                              'type_': sess_dict['type_']
-                             }, index=[0])
+    return pd.read_sql(sql=sql, con=sql_engine)
+
+def update_sql(field, value):
+    sql_engine = sqlalchemy.create_engine(conn_string)
+    sql = "UPDATE data SET '%(field)s' = '%(value)s' WHERE session_id = '%(id)s';"
+    sql = sql % {'field':field,
+                 'value':value,
+                 'id':session['session_id']
+                 }
+    sqlalchemy.db.execute(sql)
+
+def to_sql(sess_dict):
+    reference = pd.DataFrame(sess_dict, index=[0])
 
     sql_engine = sqlalchemy.create_engine(conn_string)
     reference.to_sql(name='data', con=sql_engine, if_exists='append', index=False)
