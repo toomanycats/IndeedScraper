@@ -3,6 +3,7 @@
 # Author : Daniel Cuneo
 # Creation Date : 11-21-2015
 ######################################
+from MySQLdb import escape_string
 from fuzzywuzzy import fuzz
 import sqlalchemy
 import uuid
@@ -201,7 +202,8 @@ def plot_cities():
 @app.route('/bigram/')
 def get_bigram_again():
     sess_dict = get_sess()
-    return render_template("bigram.html", html=sess_dict['bigram'][0])
+    html = sess_dict['bigram'][0]
+    return render_template("bigram.html", html=html)
 
 def look_up_in_db(kw_string, type_):
     sql = "SELECT df_file FROM data WHERE keyword = '%s' and type_ = '%s';"
@@ -390,7 +392,7 @@ def stem():
     sess_dict = get_sess()
     df_file = sess_dict['df_file'][0]
     df = load_csv()
-    summary_stem = df['summary_stem'][0]
+    summary_stem = df['summary_stem']
 
     ind = indeed_scrape.Indeed("kw")
     ind.stop_words = stop_words
@@ -483,10 +485,18 @@ def get_sess():
 
 def update_sql(field, value, data_type):
     sql_engine = sqlalchemy.create_engine(conn_string)
+
+    if field == 'bigram':
+        value = escape_string(value)
+
     if data_type == 'string':
-        sql = "UPDATE data SET %(field)s = QUOTE('%(value)s') WHERE session_id = '%(id)s';"
+        sql = "UPDATE data SET `%(field)s` = '%(value)s' WHERE `session_id` = '%(id)s';"
+
     elif data_type == 'int':
-        sql = "UPDATE data SET %(field)s = %(value)i WHERE session_id = '%(id)s';"
+        sql = "UPDATE data SET `%(field)s` = %(value)i WHERE `session_id` = '%(id)s';"
+
+    else:
+        raise Exception, "update type not understood"
 
     sql = sql % {'field':field,
                  'value':value,
@@ -513,6 +523,10 @@ def save_to_csv(df):
     logging.info("saving df")
     sess_dict = get_sess()
     df.to_csv(sess_dict['df_file'][0], index=False, quoting=1, encoding='utf-8')
+
+def _escape_html(html):
+    return html.replace("%", "\%").replace("_", "\_").replace("'", "\'").replace('"', '\"')
+
 
 if __name__ == "__main__":
     app.run(threaded=True)
