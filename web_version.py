@@ -101,6 +101,7 @@ def get_keywords():
 @app.route('/get_data/', methods=['GET', 'POST'])
 def get_data():
     logging.info("starting get_data: %s" % time.strftime("%H:%M:%S"))
+    session_id = mk_random_string()
 
     if request.method == "POST":
         type_ = request.form['type_']
@@ -108,7 +109,6 @@ def get_data():
         kws = indeed_scrape.Indeed._split_on_spaces(kws)
         kws = " ".join(kws) #enter into DB normalized
 
-        session_id = mk_random_string()
         logging.info("session id: %s" % session_id)
 
         # key used for sql to recover other info
