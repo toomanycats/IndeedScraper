@@ -61,8 +61,6 @@ missing_keywords = compare.MissingKeywords()
 logfile = os.path.join(log_dir, 'python.log')
 logging.basicConfig(filename=logfile, level=logging.INFO)
 
-session_file = os.path.join(data_dir, 'df_dir', 'session_file.pck')
-
 conn_string = "mysql://%s:%s@%s/indeed" %(sql_username, sql_password, mysql_ip)
 
 app = Flask(__name__)
@@ -102,7 +100,12 @@ def get_keywords():
 @app.route('/get_data/', methods=['GET', 'POST'])
 def get_data():
     logging.info("starting get_data: %s" % time.strftime("%H:%M:%S"))
+
     session_id = mk_random_string()
+    session['session_id'] = session_id
+    session.modified = True
+    session.permanent = True
+    logging.info("session id: %s" % session_id)
 
     if request.method == "POST":
         type_ = request.form['type_']
@@ -110,12 +113,9 @@ def get_data():
         kws = indeed_scrape.Indeed._split_on_spaces(kws)
         kws = " ".join(kws) #enter into DB normalized
 
-        logging.info("session id: %s" % session_id)
-
         # key used for sql to recover other info
-        session['session_id'] = session_id
 
-        to_sql({'session_id':session_id,
+        to_sql({'session_id':session['session_id'],
                 'type_':type_,
                 'keyword':kws,
                 'ind':0,
