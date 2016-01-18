@@ -486,10 +486,8 @@ def get_sess():
 def update_sql(field, value, data_type):
     sql_engine = sqlalchemy.create_engine(conn_string)
 
-    if field == 'bigram':
-        value = escape_string(value)
-
     if data_type == 'string':
+        value = escape_string(value)
         sql = "UPDATE data SET `%(field)s` = '%(value)s' WHERE `session_id` = '%(id)s';"
 
     elif data_type == 'int':
