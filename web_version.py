@@ -12,7 +12,7 @@ import subprocess
 import time
 import logging
 import pandas as pd
-from flask import Flask, request, redirect, url_for, jsonify, render_template, session
+from flask import Flask, request, redirect, url_for, jsonify, render_template, session, g
 import indeed_scrape
 import jinja2
 from bokeh.embed import components
@@ -101,13 +101,11 @@ def get_keywords():
 def get_data():
     logging.info("starting get_data: %s" % time.strftime("%H:%M:%S"))
 
-    session_id = mk_random_string()
-    session['session_id'] = session_id
-    session.modified = True
-    session.permanent = True
-    logging.info("session id: %s" % session_id)
-
     if request.method == "POST":
+        session_id = mk_random_string()
+        session['session_id'] = session_id
+        logging.info("session id: %s" % session_id)
+
         type_ = request.form['type_']
         kws = request.form['kw'].lower()
         kws = indeed_scrape.Indeed._split_on_spaces(kws)
@@ -115,7 +113,7 @@ def get_data():
 
         # key used for sql to recover other info
 
-        to_sql({'session_id':session['session_id'],
+        to_sql({'session_id':session_id,
                 'type_':type_,
                 'keyword':kws,
                 'ind':0,
