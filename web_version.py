@@ -23,9 +23,10 @@ import pickle
 import compare
 import pdb
 import time
+import json
 
 def mk_random_string():
-    random_string = str(uuid.uuid4()) + ".csv"
+    random_string = str(uuid.uuid4())
 
     return random_string
 
@@ -107,26 +108,20 @@ def get_data():
         kws = " ".join(kws) #enter into DB normalized
 
         session_id = mk_random_string()
-        df_file = os.path.join(data_dir,  'df_dir', mk_random_string())
         logging.info("session id: %s" % session_id)
 
         # key used for sql to recover other info
         session['session_id'] = session_id
 
-        norm_keywords = indeed_scrape.Indeed._split_on_spaces(sess_dict['kws'])
-        norm_keywords = " ".join(norm_keywords)
-
         to_sql({'session_id':session_id,
                 'type_':type_,
-                'kws':norm_keywords,
-                'df_file':df_file,
-                'index':0,
+                'keyword':kws,
+                'ind':0,
                 'end':0,
                 'count_thres':50
                 })
 
         logging.info("running get_data:%s" % time.strftime("%d-%m-%Y:%H:%M:%S"))
-        logging.info("df file path: %s :%s" % (df_file, time.strftime("%d-%m-%Y:%H:%M:%S")))
         logging.info("type:%s" %  type_)
         logging.info("key words:%s" % kws)
 
@@ -146,7 +141,7 @@ def get_plot_comp(kw, count, df):
         dff['kw'] = kw
         dff['count'] = count
 
-        kws = get_sess()['kws']
+        kws = get_sess()['keyword'][0]
 
         p = plot_fig(dff, num, kws)
         script, div = components(p)
@@ -206,7 +201,7 @@ def plot_cities():
 @app.route('/bigram/')
 def get_bigram_again():
     sess_dict = get_sess()
-    return render_template("bigram.html", html=sess_dict['bigram'])
+    return render_template("bigram.html", html=sess_dict['bigram'][0])
 
 def look_up_in_db(kw_string, type_):
     sql = "SELECT df_file FROM data WHERE keyword = '%s' and type_ = '%s';"
@@ -228,11 +223,12 @@ def process_data_in_db(df_file):
 
     # discard output
     map(ind.stemmer_, df['summary'])
-    update_sql('stem_inv', ind.stem_inverse)
+    inv = json.dumps(ind.stem_inverse)
+    update_sql('stem_inv', inv, 'string')
 
-    html = bigram(df, sess_dict['type_'], ind)
-    update_sql('bigram', html)
-    update_sql('count_thres', df.shape[0] + 20)
+    html = bigram(df, sess_dict['type_'][0], ind)
+    update_sql('bigram', html, 'string')
+    update_sql('count_thres', df.shape[0] + 20, 'int')
 
     return html
 
@@ -241,17 +237,20 @@ def check_db():
     logging.info("checking DB")
 
     sess_dict = get_sess()
-    kws = sess_dict['kws']
-    type_ = sess_dict['type_']
+    kws = sess_dict['keyword'][0]
+    type_ = sess_dict['type_'][0]
     df_file = look_up_in_db(kws, type_)
 
-    if df_file is not None:
+    if df_file is not None and os.path.exists(df_file):
         logging.info("df file found in DB")
-        update_sql('df_file', df_file)
+        update_sql('df_file', df_file, 'string')
         html = process_data_in_db(df_file)
         return html
 
     else:
+        df_file = os.path.join(data_dir, 'df_dir', mk_random_string() + '.csv')
+        logging.info("df file path: %s" % df_file)
+        update_sql('df_file', df_file, 'string')
         logging.info("no df file found in DB, run_analysis")
         return run_analysis()
 
@@ -260,33 +259,33 @@ def run_analysis():
     logging.info("starting run_analysis %s" % time.strftime("%H:%M:%S"))
     sess_dict = get_sess()
 
-    ind = indeed_scrape.Indeed(query_type=sess_dict['type_'])
-    ind.query = sess_dict['kws']
+    ind = indeed_scrape.Indeed(query_type=sess_dict['type_'][0])
+    ind.query = sess_dict['keyword'][0]
     ind.stop_words = stop_words
     ind.main()
 
-    index = sess_dict['index']
-    end = sess_dict['end']
+    index = sess_dict['ind'][0]
+    end = sess_dict['end'][0]
 
     start_time = time.time()
     index, end, num_res, count = ind.get_data(ind=index, start=end)
     logging.debug("end:%i" % end)
 
-    while count < sess_dict['count_thres'] and end < num_res:
+    while count < sess_dict['count_thres'][0] and end < num_res:
         index, end, num_res, count = ind.get_data(ind=index, start=end)
         end_time = time.time()
         if (end_time - start_time) / 60.0 > 3.0: # avoid 502
             logging.info("avoiding 502, break")
             break
 
-    update_sql('end', end)
-    update_sql('count_thres', 25)
+    update_sql('end', end, 'int')
+    update_sql('count_thres', 25, 'int')
 
     #scrub repeated words
     ind.clean_dup_words()
 
     # append existing df if second or more time here
-    if os.path.exists(sess_dict['df_file']):
+    if os.path.exists(sess_dict['df_file'][0]):
         df = load_csv()
         df = df.append(ind.df, ignore_index=True)
     else:
@@ -295,16 +294,17 @@ def run_analysis():
     df = ind.summary_similarity(df, 'summary', 80)
     df.dropna(subset=['summary', 'url', 'summary_stem'], how='any', inplace=True)
     df.reset_index(inplace=True, drop=True)
-    update_sql('index', df.shape[0])
+    update_sql('ind', df.shape[0], 'int')
 
     # save df for additional analysis
-    update_sql('stem_inv', ind.stem_inverse)
+    inv = json.dumps(ind.stem_inverse)
+    update_sql('stem_inv', inv, 'string')
 
     save_to_csv(df)
 
-    html = bigram(df, sess_dict['type_'], ind)
+    html = bigram(df, sess_dict['type_'][0], ind)
 
-    update_sql('bigram', html)
+    update_sql('bigram', html, 'string')
 
     return html
 
@@ -367,7 +367,7 @@ def radius():
 
 def get_inverse_stem(kw):
     sess_dict = get_sess()
-    inv = sess_dict['stem_inv']
+    inv = json.loads(sess_dict['stem_inv'][0])
 
     orig_keyword = []
     temp = []
@@ -388,16 +388,16 @@ def get_inverse_stem(kw):
 def stem():
     logging.info("running stem")
     sess_dict = get_sess()
-    df_file = sess_dict['df_file']
+    df_file = sess_dict['df_file'][0]
     df = load_csv()
-    summary_stem = df['summary_stem']
+    summary_stem = df['summary_stem'][0]
 
     ind = indeed_scrape.Indeed("kw")
     ind.stop_words = stop_words
     ind.add_stop_words()
 
     count, kw = ind.vectorizer(summary_stem, n_min=1, n_max=2, max_features=80,
-            max_df=compute_max_df(sess_dict['type_'], df.shape[0]))
+            max_df=compute_max_df(sess_dict['type_'][0], df.shape[0]))
 
     orig_keywords = get_inverse_stem(kw)
     script, div = get_plot_comp(orig_keywords, count, df)
@@ -408,7 +408,6 @@ def stem():
 @app.route('/grammar/')
 def grammar_parser():
     logging.info("running grammar parser")
-    sess_dict = get_sess()
     df = load_csv()
     df.dropna(subset=['grammar'], inplace=True)
 
@@ -426,7 +425,6 @@ def grammar_parser():
 
 @app.route("/check_count/")
 def check_for_low_count_using_title():
-    sess_dict = get_sess()
     df = load_csv()
     logging.info("title count:%i" % df.shape[0])
 
@@ -483,14 +481,21 @@ def get_sess():
 
     return pd.read_sql(sql=sql, con=sql_engine)
 
-def update_sql(field, value):
+def update_sql(field, value, data_type):
     sql_engine = sqlalchemy.create_engine(conn_string)
-    sql = "UPDATE data SET '%(field)s' = '%(value)s' WHERE session_id = '%(id)s';"
+    if data_type == 'string':
+        sql = "UPDATE data SET %(field)s = QUOTE('%(value)s') WHERE session_id = '%(id)s';"
+    elif data_type == 'int':
+        sql = "UPDATE data SET %(field)s = %(value)i WHERE session_id = '%(id)s';"
+
     sql = sql % {'field':field,
                  'value':value,
                  'id':session['session_id']
                  }
-    sqlalchemy.db.execute(sql)
+
+    conn = sql_engine.connect()
+    conn.execute(sql)
+    conn.close()
 
 def to_sql(sess_dict):
     reference = pd.DataFrame(sess_dict, index=[0])
@@ -500,14 +505,14 @@ def to_sql(sess_dict):
 
 def load_csv():
     sess_dict = get_sess()
-    df = pd.read_csv(sess_dict['df_file'])
+    df = pd.read_csv(sess_dict['df_file'][0])
 
     return df
 
 def save_to_csv(df):
     logging.info("saving df")
     sess_dict = get_sess()
-    df.to_csv(sess_dict['df_file'], index=False, quoting=1, encoding='utf-8')
+    df.to_csv(sess_dict['df_file'][0], index=False, quoting=1, encoding='utf-8')
 
 if __name__ == "__main__":
     app.run(threaded=True)
