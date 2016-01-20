@@ -98,8 +98,9 @@ def get_keywords():
 
 @app.route('/get_data/', methods=['GET', 'POST'])
 def get_data():
+    session_id = mk_random_string()
+
     if request.method == "POST":
-        session_id = mk_random_string()
         session['session_id'] = session_id
         logging.info("session id:%s" % session_id)
 
@@ -109,7 +110,6 @@ def get_data():
         kws = " ".join(kws) #enter into DB normalized
 
         # key used for sql to recover other info
-
         to_sql({'session_id':session_id,
                 'type_':type_,
                 'keyword':kws,
@@ -234,7 +234,7 @@ def check_db():
     logging.info("checking DB")
 
     session_id = session.get("session_id")
-    logging.info("session id:%s" % session_id)
+    logging.info("check_db: session id:%s" % session_id)
 
     sess_dict = get_sess(session_id)
     kws = sess_dict['keyword'][0]
