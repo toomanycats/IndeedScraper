@@ -98,17 +98,9 @@ def get_keywords():
 
 @app.route('/get_data/', methods=['GET', 'POST'])
 def get_data():
-    if request.method == "GET":
-        logging.info("starting get_data: %s" % time.strftime("%H:%M:%S"))
+    if request.method == "POST":
         session_id = mk_random_string()
         session['session_id'] = session_id
-        logging.info("session id: %s" % session_id)
-
-        html = output_template.render()
-        return encode_utf8(html)
-
-    if request.method == "POST":
-        session_id = request.cookies.get('session_id')
         logging.info("session id:%s" % session_id)
 
         type_ = request.form['type_']
@@ -241,7 +233,9 @@ def process_data_in_db(df_file, session_id):
 def check_db():
     logging.info("checking DB")
 
-    session_id = request.cookies.get('session_id')
+    session_id = session.get("session_id")
+    logging.info("session id:%s" % session_id)
+
     sess_dict = get_sess(session_id)
     kws = sess_dict['keyword'][0]
     type_ = sess_dict['type_'][0]
@@ -263,6 +257,7 @@ def check_db():
 @app.route("/run_analysis/")
 def run_analysis():
     session_id = session.get('session_id')
+    logging.info("session id:%s" % session_id)
     logging.info("starting run_analysis %s" % time.strftime("%H:%M:%S"))
     sess_dict = get_sess(session_id)
 
