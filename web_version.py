@@ -11,7 +11,8 @@ import subprocess
 import time
 import logging
 import pandas as pd
-from flask import Flask, request, redirect, url_for, jsonify, render_template, session, g
+from flask import Flask, request, redirect, url_for, jsonify, render_template, session
+from flask import CallbackDict, SessionMixin
 import indeed_scrape
 import jinja2
 from bokeh.embed import components
@@ -28,8 +29,14 @@ import json
 
 def mk_random_string():
     random_string = str(uuid.uuid4())
-
     return random_string
+
+class Session(CallbackDict, SessionMixin):
+    def __init__(self, initial=None, sid=None):
+        CallbackDict.__init__(self, initial)
+        self.sid = sid
+        self.modified = False
+
 
 sql_username = os.getenv("OPENSHIFT_MYSQL_DB_USERNAME")
 if sql_username is None:
@@ -102,7 +109,8 @@ def get_data():
 
     if request.method == "POST":
         session_id = mk_random_string()
-        session['session_id'] = session_id
+        Session(session_id)
+        #session['session_id'] = session_id
         logging.info("session id: %s" % session_id)
 
         type_ = request.form['type_']
