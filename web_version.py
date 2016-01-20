@@ -477,7 +477,9 @@ def compute_max_df(type_, num_samp, n_min=1):
 
 def get_sess():
     sql = "SELECT * FROM data WHERE session_id = '%s';"
-    sql = sql % session['session_id']
+    sql = sql % session.get('session_id', None)
+    logging.info("session id:%s" % session.get('session_id', None))
+    #sql = sql % session['session_id']
     sql_engine = sqlalchemy.create_engine(conn_string)
 
     return pd.read_sql(sql=sql, con=sql_engine)
