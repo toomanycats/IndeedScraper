@@ -98,12 +98,19 @@ def get_keywords():
 
 @app.route('/get_data/', methods=['GET', 'POST'])
 def get_data():
-    logging.info("starting get_data: %s" % time.strftime("%H:%M:%S"))
-
-    if request.method == "POST":
+    if request.method == "GET":
+        logging.info("starting get_data: %s" % time.strftime("%H:%M:%S"))
         session_id = mk_random_string()
         session['session_id'] = session_id
         logging.info("session id: %s" % session_id)
+
+        html = output_template.render()
+        return encode_utf8(html)
+
+    if request.method == "POST":
+
+        session_id = request.cookies.get('session_id')
+        logging.info("session id:%s" % session_id)
 
         type_ = request.form['type_']
         kws = request.form['kw'].lower()
@@ -125,10 +132,6 @@ def get_data():
         logging.info("key words:%s" % kws)
 
         html = render_template('output.html')
-        return encode_utf8(html)
-
-    if request.method == "GET":
-        html = output_template.render()
         return encode_utf8(html)
 
 def get_plot_comp(kw, count, df, session_id):
