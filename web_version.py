@@ -2,7 +2,6 @@
 # File Name : web_version.py
 # Author : Daniel Cuneo
 # Creation Date : 11-21-2015
-
 ######################################
 from MySQLdb import escape_string
 from fuzzywuzzy import fuzz
@@ -426,22 +425,16 @@ def grammar_parser():
 
 @app.route("/check_count/", methods=['GET', 'POST'])
 def check_for_low_count_using_title():
-    if request.method == 'POST':
-        session['session_id'] = request.data
-        logging.info("session_id ajax:%s" % request.data)
+    df = load_csv()
+    logging.info("title count:%i" % df.shape[0])
+
+    string = "<br><p><i>Your search by job title returned a small number of job \
+    postings. Click 'NEW SEARCH' and use the 'keyword' search.</i></p><br>"
+
+    if df.shape[0] < 25:
+        return encode_utf8(string)
+    else:
         return ""
-
-    elif request.method == 'GET':
-        df = load_csv()
-        logging.info("title count:%i" % df.shape[0])
-
-        string = "<br><p><i>Your search by job title returned a small number of job \
-        postings. Click 'NEW SEARCH' and use the 'keyword' search.</i></p><br>"
-
-        if df.shape[0] < 25:
-            return encode_utf8(string)
-        else:
-            return ""
 
 @app.route('/missing/', methods=['GET', 'POST'])
 def compute_missing_keywords():
@@ -483,7 +476,7 @@ def compute_max_df(type_, num_samp, n_min=1):
 
 def get_sess():
     sql = "SELECT * FROM data WHERE session_id = '%s';"
-    sql = sql % session['session_id']
+    sql = sql % session.get('session_id', None)
     sql_engine = sqlalchemy.create_engine(conn_string)
 
     return pd.read_sql(sql=sql, con=sql_engine)
@@ -533,4 +526,3 @@ def _escape_html(html):
 
 if __name__ == "__main__":
     app.run(threaded=True)
-
