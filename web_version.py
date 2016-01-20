@@ -131,7 +131,7 @@ def get_data():
         html = output_template.render()
         return encode_utf8(html)
 
-def get_plot_comp(kw, count, df):
+def get_plot_comp(kw, count, df, session_id):
         count = count.toarray().sum(axis=0)
 
         num = df['url'].count()
@@ -140,7 +140,7 @@ def get_plot_comp(kw, count, df):
         dff['kw'] = kw
         dff['count'] = count
 
-        kws = get_sess()['keyword'][0]
+        kws = get_sess(session_id)['keyword'][0]
 
         p = plot_fig(dff, num, kws)
         script, div = components(p)
@@ -149,8 +149,9 @@ def get_plot_comp(kw, count, df):
 
 @app.route('/titles/')
 def plot_titles():
-    df_file = get_sess()['df_file']
-    df = load_csv()
+    session_id = session.get('session_id')
+    df_file = get_sess(session_id)['df_file']
+    df = load_csv(session_id)
 
     df['jobtitle'] = df['jobtitle'].apply(lambda x:x.lower())
     ind = indeed_scrape.Indeed("kw")
@@ -175,7 +176,8 @@ def plot_titles():
 
 @app.route('/cities/')
 def plot_cities():
-    df = load_csv()
+    session_id = session.get('session_id')
+    df = load_csv(session_id)
 
     count = df.groupby("city").count()['url']
     cities = count.index.tolist()
@@ -199,7 +201,8 @@ def plot_cities():
 
 @app.route('/bigram/')
 def get_bigram_again():
-    sess_dict = get_sess()
+    session_id = session.get('session_id')
+    sess_dict = get_sess(session_id)
     html = sess_dict['bigram'][0]
     return render_template("bigram.html", html=html)
 
@@ -215,20 +218,20 @@ def look_up_in_db(kw_string, type_):
     else:
         return df['df_file'][0] # just in case there's more than one
 
-def process_data_in_db(df_file):
+def process_data_in_db(df_file, session_id):
     ind = indeed_scrape.Indeed("kw")
-    sess_dict = get_sess()
+    sess_dict = get_sess(session_id)
 
     df = pd.read_csv(df_file)
 
     # discard output
     map(ind.stemmer_, df['summary'])
     inv = json.dumps(ind.stem_inverse)
-    update_sql('stem_inv', inv, 'string')
+    update_sql('stem_inv', inv, 'string', session_id)
 
-    html = bigram(df, sess_dict['type_'][0], ind)
-    update_sql('bigram', html, 'string')
-    update_sql('count_thres', df.shape[0] + 20, 'int')
+    html = bigram(df, sess_dict['type_'][0], ind, session_id)
+    update_sql('bigram', html, 'string', session_id)
+    update_sql('count_thres', df.shape[0] + 20, 'int', session_id)
 
     return html
 
@@ -236,28 +239,30 @@ def process_data_in_db(df_file):
 def check_db():
     logging.info("checking DB")
 
-    sess_dict = get_sess()
+    session_id = session.get('session_id')
+    sess_dict = get_sess(session_id)
     kws = sess_dict['keyword'][0]
     type_ = sess_dict['type_'][0]
     df_file = look_up_in_db(kws, type_)
 
     if df_file is not None and os.path.exists(df_file):
         logging.info("df file found in DB")
-        update_sql('df_file', df_file, 'string')
-        html = process_data_in_db(df_file)
+        update_sql('df_file', df_file, 'string', session_id)
+        html = process_data_in_db(df_file, session_id)
         return html
 
     else:
         df_file = os.path.join(data_dir, 'df_dir', mk_random_string() + '.csv')
         logging.info("df file path: %s" % df_file)
-        update_sql('df_file', df_file, 'string')
+        update_sql('df_file', df_file, 'string', session_id)
         logging.info("no df file found in DB, run_analysis")
         return run_analysis()
 
 @app.route("/run_analysis/")
 def run_analysis():
+    session_id = session.get('session_id')
     logging.info("starting run_analysis %s" % time.strftime("%H:%M:%S"))
-    sess_dict = get_sess()
+    sess_dict = get_sess(session_id)
 
     ind = indeed_scrape.Indeed(query_type=sess_dict['type_'][0])
     ind.query = sess_dict['keyword'][0]
@@ -278,15 +283,15 @@ def run_analysis():
             logging.info("avoiding 502, break")
             break
 
-    update_sql('end', end, 'int')
-    update_sql('count_thres', 25, 'int')
+    update_sql('end', end, 'int', session_id)
+    update_sql('count_thres', 25, 'int', session_id)
 
     #scrub repeated words
     ind.clean_dup_words()
 
     # append existing df if second or more time here
     if os.path.exists(sess_dict['df_file'][0]):
-        df = load_csv()
+        df = load_csv(session_id)
         df = df.append(ind.df, ignore_index=True)
     else:
         df = ind.df
@@ -294,21 +299,21 @@ def run_analysis():
     df = ind.summary_similarity(df, 'summary', 80)
     df.dropna(subset=['summary', 'url', 'summary_stem'], how='any', inplace=True)
     df.reset_index(inplace=True, drop=True)
-    update_sql('ind', df.shape[0], 'int')
+    update_sql('ind', df.shape[0], 'int', session_id)
 
     # save df for additional analysis
     inv = json.dumps(ind.stem_inverse)
-    update_sql('stem_inv', inv, 'string')
+    update_sql('stem_inv', inv, 'string', session_id)
 
-    save_to_csv(df)
+    save_to_csv(df, session_id)
 
     html = bigram(df, sess_dict['type_'][0], ind)
 
-    update_sql('bigram', html, 'string')
+    update_sql('bigram', html, 'string', session_id)
 
     return html
 
-def bigram(df, type_, ind):
+def bigram(df, type_, ind, session_id):
     max_df = compute_max_df(type_, df.shape[0], n_min=2)
 
     try:
@@ -326,8 +331,8 @@ def bigram(df, type_, ind):
                                         max_df=1.0,
                                         min_df=1)
 
-    kw = get_inverse_stem(kw)
-    script, div = get_plot_comp(kw, count_array, df)
+    kw = get_inverse_stem(kw, session_id)
+    script, div = get_plot_comp(kw, count_array, df, session_id)
 
     output = """
 %(kw_div)s
@@ -340,11 +345,12 @@ def bigram(df, type_, ind):
 
 @app.route('/radius/', methods=['post'])
 def radius():
-    sess_dict = get_sess()
+    session_id = session.get('session_id')
+    sess_dict = get_sess(session_id)
     kw = request.form['word']
     logging.info("radius key word:%s" % kw)
 
-    df = load_csv()
+    df = load_csv(session_id)
     ind = indeed_scrape.Indeed('kw')
     ind.stop_words = stop_words
     ind.add_stop_words()
@@ -365,8 +371,8 @@ def radius():
     script, div = get_plot_comp(kw, count, df)
     return render_template('radius.html', div=div, script=script)
 
-def get_inverse_stem(kw):
-    sess_dict = get_sess()
+def get_inverse_stem(kw, session_id):
+    sess_dict = get_sess(session_id)
     inv = json.loads(sess_dict['stem_inv'][0])
 
     orig_keyword = []
@@ -387,9 +393,10 @@ def get_inverse_stem(kw):
 @app.route('/stem/')
 def stem():
     logging.info("running stem")
-    sess_dict = get_sess()
+    session_id = session.get('session_id')
+    sess_dict = get_sess(session_id)
     df_file = sess_dict['df_file'][0]
-    df = load_csv()
+    df = load_csv(session_id)
     summary_stem = df['summary_stem']
 
     ind = indeed_scrape.Indeed("kw")
@@ -399,16 +406,17 @@ def stem():
     count, kw = ind.vectorizer(summary_stem, n_min=1, n_max=2, max_features=80,
             max_df=compute_max_df(sess_dict['type_'][0], df.shape[0]))
 
-    orig_keywords = get_inverse_stem(kw)
-    script, div = get_plot_comp(orig_keywords, count, df)
+    orig_keywords = get_inverse_stem(kw, session_id)
+    script, div = get_plot_comp(orig_keywords, count, df, session_id)
 
     page = render_template('stem.html', script=script, div=div)
     return encode_utf8(page)
 
 @app.route('/grammar/')
 def grammar_parser():
+    session_id = session.get('session_id')
     logging.info("running grammar parser")
-    df = load_csv()
+    df = load_csv(session_id)
     df.dropna(subset=['grammar'], inplace=True)
 
     ind = indeed_scrape.Indeed('kw')
@@ -418,15 +426,18 @@ def grammar_parser():
     count, kw = ind.tfidf_vectorizer(df['grammar'], n_min=2, n_max=3, max_features=30,
             max_df=0.75, min_df=0.01)
 
-    script, div = get_plot_comp(kw, count, df)
+    script, div = get_plot_comp(kw, count, df, session_id)
 
     page = render_template('grammar.html', script=script, div=div)
     return encode_utf8(page)
 
-@app.route("/check_count/", methods=['GET', 'POST'])
+@app.route("/check_count/", methods=['GET'])
 def check_for_low_count_using_title():
-    df = load_csv()
-    logging.info("title count:%i" % df.shape[0])
+    session_id = session.get("session_id")
+    logging.info("session id:%s" % session_id)
+
+    df = load_csv(session_id)
+    logging.debug("title count:%i" % df.shape[0])
 
     string = "<br><p><i>Your search by job title returned a small number of job \
     postings. Click 'NEW SEARCH' and use the 'keyword' search.</i></p><br>"
@@ -439,13 +450,14 @@ def check_for_low_count_using_title():
 @app.route('/missing/', methods=['GET', 'POST'])
 def compute_missing_keywords():
     if request.method == "POST":
+        session_id = session.get('session_id')
         resume_file = request.files['File']
         logging.info("resume path: %s" % resume_file.filename)
 
         resume_path = os.path.join(data_dir, resume_file.filename)
         resume_file.save(resume_path)
 
-        df = load_csv()
+        df = load_csv(session_id)
         rows = missing_keywords.main(resume_path, df['summary'])
 
         return render_template('missing.html', rows=rows)
@@ -474,14 +486,14 @@ def compute_max_df(type_, num_samp, n_min=1):
 
     return base
 
-def get_sess():
+def get_sess(session_id):
     sql = "SELECT * FROM data WHERE session_id = '%s';"
-    sql = sql % session.get('session_id', None)
+    sql = sql % session_id
     sql_engine = sqlalchemy.create_engine(conn_string)
 
     return pd.read_sql(sql=sql, con=sql_engine)
 
-def update_sql(field, value, data_type):
+def update_sql(field, value, data_type, session_id):
     sql_engine = sqlalchemy.create_engine(conn_string)
 
     if data_type == 'string':
@@ -496,7 +508,7 @@ def update_sql(field, value, data_type):
 
     sql = sql % {'field':field,
                  'value':value,
-                 'id':session['session_id']
+                 'id':session_id
                  }
 
     conn = sql_engine.connect()
@@ -509,16 +521,17 @@ def to_sql(sess_dict):
     sql_engine = sqlalchemy.create_engine(conn_string)
     reference.to_sql(name='data', con=sql_engine, if_exists='append', index=False)
 
-def load_csv():
-    sess_dict = get_sess()
+def load_csv(session_id):
+    sess_dict = get_sess(session_id)
     df = pd.read_csv(sess_dict['df_file'][0])
 
     return df
 
-def save_to_csv(df):
+def save_to_csv(df, session_id):
     logging.info("saving df")
-    sess_dict = get_sess()
-    df.to_csv(sess_dict['df_file'][0], index=False, quoting=1, encoding='utf-8')
+    sess_dict = get_sess(session_id)
+    df_file = sess_dict['df_file'][0]
+    df.to_csv(df_file, index=False, quoting=1, encoding='utf-8')
 
 def _escape_html(html):
     return html.replace("%", "\%").replace("_", "\_").replace("'", "\'").replace('"', '\"')
