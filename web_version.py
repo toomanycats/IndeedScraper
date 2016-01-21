@@ -22,7 +22,6 @@ import numpy as np
 import json
 import pickle
 import compare
-import pdb
 import time
 import json
 
@@ -139,6 +138,41 @@ def get_plot_comp(kw, count, df, session_id):
         script, div = components(p)
 
         return script, div
+
+@app.route('/word_count', methods=['GET', 'POST'])
+def count_word_occurance():
+    if request.method == 'POST':
+        session_id = request.args.get("session_id")
+        word = request.form['word']
+        word_stem = indeed_scrape.stemmer.stem(word)
+
+        sess_dict = get_sess(session_id)
+        df = load_csv(session_id)
+
+        count = 0
+        for doc in df['summary_stem']:
+            tokens = np.array(indeed_scrape.toker(doc))
+            test = np.where(tokens == word_stem)[0].shape[0]
+            if test > 0:
+                count += 1
+
+        number = df.shape[0]
+        percent = 100 * np.round(float(count) / number, decimals=1)
+        percent = str(percent)
+
+        session_string = "?session_id=%s" % session_id
+
+        return render_template('word_count.html',
+                count=count,
+                session_id=session_string,
+                word=word,
+                number=number,
+                percent=percent)
+
+    if request.method == 'GET':
+        session_id = request.args.get("session_id")
+        session_string = "?session_id=%s" % session_id
+        return render_template('word_count.html', session_id=session_string)
 
 @app.route('/titles')
 def plot_titles():
@@ -412,7 +446,7 @@ def stem():
     ind.stop_words = stop_words
     ind.add_stop_words()
 
-    count, kw = ind.vectorizer(summary_stem, n_min=1, n_max=2, max_features=80,
+    count, kw = ind.vectorizer(summary_stem, n_min=1, n_max=1, max_features=80,
             max_df=compute_max_df(sess_dict['type_'][0], df.shape[0]))
 
     orig_keywords = get_inverse_stem(kw, session_id)
