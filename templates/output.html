@@ -39,13 +39,12 @@
         $('#blink').fadeToggle();
         }, 500);
     </script>
-
 </head>
 <body>
     <script type="text/javascript">
     $(function() {
-        $("#chart").load("/check_db/", function() {
-            $('#check_count').load('/check_count/', function() {
+        $("#chart").load("/check_db" + "{{session_id}}", function() {
+            $('#check_count').load('/check_count'+ "{{session_id}}", function() {
                 clearInterval(blink);
                 $("#blink").hide('fast', function() {
                     $("#radius").slideDown('fast');
@@ -58,11 +57,11 @@
     <div id='cssmenu'>
     <ul>
         <li><a href='/'><span>New Search</span></a></li>
-        <li><a href='/stem/'><span>Single Word</span></a></li>
-        <li><a href='/grammar/'><span>Soft Skills</span></a></li>
-        <li><a href='/cities/'><span>Cities</span></a></li>
-        <li><a href='/titles/'><span>Titles</span></a></li>
-        <li class='last'><a href='/missing/'><span>Analyze Your Resume</span></a></li>
+        <li><a href='/stem{{session_id}}'><span>Single Word</span></a></li>
+        <li><a href='/grammar{{session_id}}'><span>Soft Skills</span></a></li>
+        <li><a href='/cities{{session_id}}'<span>Cities</span></a></li>
+        <li><a href='/titles{{session_id}}'><span>Titles</span></a></li>
+        <li class='last'><a href='/missing{{session_id}}'><span>Analyze Your Resume</span></a></li>
     </ul>
     </div>
 
@@ -78,7 +77,7 @@
      $(function() {
         $("#more").click(function() {
             $('#blink').show('fast', function() {
-                $('#chart').load('/run_analysis/', function() {
+                $('#chart').load('/run_analysis' + '{{session_id}}', function() {
                     $("#blink").hide('fast');
                 });
             });
@@ -92,12 +91,11 @@
 
     <br><br>
 
-    <form  id=radius action="/radius/"  method="post" style="display: none">
+    <form  id=radius action="/radius" + "{{session_id}}",  method="post" style="display: none">
         Explore around the radius of a word across all posts.<br>
         The default is five words in front and in back. <br>
         <input type="text" name="word" placeholder="experience"><br>
         <input type="submit" value="Submit" name="submit">
     </form>
-
 </body>
 </html>
