@@ -12,7 +12,6 @@ import time
 import logging
 import pandas as pd
 from flask import Flask, request, redirect, url_for, jsonify, render_template, session
-from flask import CallbackDict, SessionMixin
 import indeed_scrape
 import jinja2
 from bokeh.embed import components
@@ -30,13 +29,6 @@ import json
 def mk_random_string():
     random_string = str(uuid.uuid4())
     return random_string
-
-class Session(CallbackDict, SessionMixin):
-    def __init__(self, initial=None, sid=None):
-        CallbackDict.__init__(self, initial)
-        self.sid = sid
-        self.modified = False
-
 
 sql_username = os.getenv("OPENSHIFT_MYSQL_DB_USERNAME")
 if sql_username is None:
@@ -109,8 +101,6 @@ def get_data():
 
     if request.method == "POST":
         session_id = mk_random_string()
-        Session(session_id)
-        #session['session_id'] = session_id
         logging.info("session id: %s" % session_id)
 
         type_ = request.form['type_']
@@ -132,11 +122,8 @@ def get_data():
         logging.info("type:%s" %  type_)
         logging.info("key words:%s" % kws)
 
-        html = render_template('output.html')
-        return encode_utf8(html)
-
-    if request.method == "GET":
-        html = output_template.render()
+        session_string = "?session_id=%s" % session_id
+        html = render_template('output.html', session_id=session_string)
         return encode_utf8(html)
 
 def get_plot_comp(kw, count, df, session_id):
@@ -155,9 +142,9 @@ def get_plot_comp(kw, count, df, session_id):
 
         return script, div
 
-@app.route('/titles/')
+@app.route('/titles')
 def plot_titles():
-    session_id = session.get('session_id')
+    session_id = request.args.get("session_id")
     df_file = get_sess(session_id)['df_file']
     df = load_csv(session_id)
 
@@ -179,12 +166,14 @@ def plot_titles():
         except:
            continue
 
-    page = render_template('titles.html', rows=rows)
+    session_string = "?session_id=%s" % session_id
+    page = render_template('titles.html', rows=rows, session_id=session_string)
     return encode_utf8(page)
 
-@app.route('/cities/')
+@app.route('/cities')
 def plot_cities():
-    session_id = session.get('session_id')
+    session_id = request.args.get("session_id")
+    logging.info("session id:%s" % session_id)
     df = load_csv(session_id)
 
     count = df.groupby("city").count()['url']
@@ -204,15 +193,18 @@ def plot_cities():
     p = plot_fig(df_city.loc[0:end,:], num_posts, 'Posts Per City in the Analysis:Top 20')
     script, div = components(p)
 
-    page = render_template('cities.html', div=div, script=script)
+    session_string = "?session_id=%s" % session_id
+    page = render_template('cities.html', div=div, script=script, session_id=session_string)
     return encode_utf8(page)
 
-@app.route('/bigram/')
+@app.route('/bigram')
 def get_bigram_again():
-    session_id = session.get('session_id')
+    session_id = request.args.get("session_id")
     sess_dict = get_sess(session_id)
     html = sess_dict['bigram'][0]
-    return render_template("bigram.html", html=html)
+
+    session_string = "?session_id=%s" % session_id
+    return render_template("bigram.html", html=html, session_id=session_string)
 
 def look_up_in_db(kw_string, type_):
     sql = "SELECT df_file FROM data WHERE keyword = '%s' and type_ = '%s';"
@@ -243,12 +235,15 @@ def process_data_in_db(df_file, session_id):
 
     return html
 
-@app.route('/check_db/')
+@app.route('/check_db')
 def check_db():
     logging.info("checking DB")
 
-    session_id = session.get('session_id')
+    session_id = request.args.get("session_id")
+    logging.info("session id: %s" % session_id)
     sess_dict = get_sess(session_id)
+
+
     kws = sess_dict['keyword'][0]
     type_ = sess_dict['type_'][0]
     df_file = look_up_in_db(kws, type_)
@@ -264,11 +259,16 @@ def check_db():
         logging.info("df file path: %s" % df_file)
         update_sql('df_file', df_file, 'string', session_id)
         logging.info("no df file found in DB, run_analysis")
+        session['session_id'] = session_id
         return run_analysis()
 
-@app.route("/run_analysis/")
+@app.route("/run_analysis")
 def run_analysis():
-    session_id = session.get('session_id')
+    session_id = request.args.get("session_id", None)
+    if session_id is None:
+        session_id = session['session_string']
+
+    logging.info("session id: %s" % session_id)
     logging.info("starting run_analysis %s" % time.strftime("%H:%M:%S"))
     sess_dict = get_sess(session_id)
 
@@ -351,10 +351,12 @@ def bigram(df, type_, ind, session_id):
     return output %{'kw_script':script,
                     'kw_div':div }
 
-@app.route('/radius/', methods=['post'])
+@app.route('/radius', methods=['post'])
 def radius():
-    session_id = session.get('session_id')
+    session_id = request.args.get("session_id")
+    logging.debug("session id: %s" % session_id)
     sess_dict = get_sess(session_id)
+
     kw = request.form['word']
     logging.info("radius key word:%s" % kw)
 
@@ -377,7 +379,8 @@ def radius():
         return "The body of words compiled did not contain substantially repeated terms."
 
     script, div = get_plot_comp(kw, count, df)
-    return render_template('radius.html', div=div, script=script)
+    session_string = "?session_id=%s" % session_id
+    return render_template('radius.html', div=div, script=script, session_id=session_string)
 
 def get_inverse_stem(kw, session_id):
     sess_dict = get_sess(session_id)
@@ -398,10 +401,10 @@ def get_inverse_stem(kw, session_id):
 
     return orig_keyword
 
-@app.route('/stem/')
+@app.route('/stem')
 def stem():
     logging.info("running stem")
-    session_id = session.get('session_id')
+    session_id = request.args.get("session_id")
     sess_dict = get_sess(session_id)
     df_file = sess_dict['df_file'][0]
     df = load_csv(session_id)
@@ -417,12 +420,13 @@ def stem():
     orig_keywords = get_inverse_stem(kw, session_id)
     script, div = get_plot_comp(orig_keywords, count, df, session_id)
 
-    page = render_template('stem.html', script=script, div=div)
+    session_string = "?session_id=%s" % session_id
+    page = render_template('stem.html', script=script, div=div, session_id=session_string)
     return encode_utf8(page)
 
-@app.route('/grammar/')
+@app.route('/grammar')
 def grammar_parser():
-    session_id = session.get('session_id')
+    session_id = request.args.get("session_id")
     logging.info("running grammar parser")
     df = load_csv(session_id)
     df.dropna(subset=['grammar'], inplace=True)
@@ -436,13 +440,14 @@ def grammar_parser():
 
     script, div = get_plot_comp(kw, count, df, session_id)
 
-    page = render_template('grammar.html', script=script, div=div)
+    session_string = "?session_id=%s" % session_id
+    page = render_template('grammar.html', script=script, div=div, session_id=session_string)
     return encode_utf8(page)
 
-@app.route("/check_count/", methods=['GET'])
+@app.route("/check_count", methods=['GET'])
 def check_for_low_count_using_title():
-    session_id = session.get("session_id")
-    logging.info("session id:%s" % session_id)
+    session_id = request.args.get("session_id")
+    logging.debug("session id:%s" % session_id)
 
     df = load_csv(session_id)
     logging.debug("title count:%i" % df.shape[0])
@@ -455,10 +460,10 @@ def check_for_low_count_using_title():
     else:
         return ""
 
-@app.route('/missing/', methods=['GET', 'POST'])
+@app.route('/missing', methods=['GET', 'POST'])
 def compute_missing_keywords():
     if request.method == "POST":
-        session_id = session.get('session_id')
+        session_id = request.args.get("session_id")
         resume_file = request.files['File']
         logging.info("resume path: %s" % resume_file.filename)
 
@@ -468,10 +473,12 @@ def compute_missing_keywords():
         df = load_csv(session_id)
         rows = missing_keywords.main(resume_path, df['summary'])
 
-        return render_template('missing.html', rows=rows)
+        session_string = "?session_id=%s" % session_id
+        return render_template('missing.html', rows=rows, session_id=session_string)
 
     else:
-        return render_template('missing.html')
+        session_string = "?session_id=%s" % session_id
+        return render_template('missing.html', rows='', session_id=session_string)
 
 def compute_max_df(type_, num_samp, n_min=1):
     if type_ == 'keywords':
