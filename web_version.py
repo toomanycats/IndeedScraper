@@ -253,21 +253,21 @@ def check_db():
         return html
 
     else:
+        logging.info("no df file found in DB, run_analysis")
+
         df_file = os.path.join(data_dir, 'df_dir', mk_random_string() + '.csv')
         logging.info("df file path: %s" % df_file)
+
         update_sql('df_file', df_file, 'string', session_id)
-        logging.info("no df file found in DB, run_analysis")
-        session['session_id'] = session_id
+        session_string = "?session_id=%s" % session_id
         return run_analysis()
 
 @app.route("/run_analysis")
 def run_analysis():
-    session_id = request.args.get("session_id", None)
-    if session_id is None:
-        session_id = session['session_string']
-
-    logging.info("session id: %s" % session_id)
     logging.info("starting run_analysis %s" % time.strftime("%H:%M:%S"))
+
+    session_id = request.args.get("session_id", None)
+    logging.info("session id: %s" % session_id)
     sess_dict = get_sess(session_id)
 
     ind = indeed_scrape.Indeed(query_type=sess_dict['type_'][0])
@@ -313,7 +313,7 @@ def run_analysis():
 
     save_to_csv(df, session_id)
 
-    html = bigram(df, sess_dict['type_'][0], ind)
+    html = bigram(df, sess_dict['type_'][0], ind, session_id)
 
     update_sql('bigram', html, 'string', session_id)
 

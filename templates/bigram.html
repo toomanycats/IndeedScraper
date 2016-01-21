@@ -53,7 +53,7 @@
     $(function() {
     $("#more").click(function() {
         $('#load_mess').show('fast', function() {
-            $('#chart').load('/run_analysis/', function() {
+            $('#chart').load('/run_analysis'+'{{session_id}}', function() {
                 $("#load_mess").hide('fast', function() {
                     $("#orig_chart").hide('fast', function () {
                     });
