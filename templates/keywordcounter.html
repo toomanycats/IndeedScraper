@@ -27,7 +27,7 @@
     <style>
     #header {
         font-size: 400%;
-        color:white;
+        color:#bdd8f3;
         text-align:center;
         font-family:grandhotel;
         padding:5px;
@@ -43,6 +43,7 @@
         width:1000px;
         float:left;
         padding:10px;
+        font-size:125%
     }
     #footer {
         color:white;
@@ -52,19 +53,25 @@
         font-size: 150%;
     }
 
+    h1 {
+        color:#bdd8f3;
+    }
+
+    h2 {
+        font-size:130%;
+    }
+
     a {
         color: #ffe5ff
       }
 
     p {
-        margin: 0.5cm 0.5cm 0.2cm 6cm;
+        margin: 0.5cm 1.5cm 0.2cm 0cm;
         font-family:"Verdana";
-        font-size:100%
       }
 
     li {
-        padding-left: 8cm;
-        font-size:110%
+        padding-left: 0cm;
        }
 
     html {
@@ -81,15 +88,16 @@
 </head>
 
 <body>
-    <div id='header' style="color:6699ff">Keyword Counter</br>
-        <center>Automatically Determine Keywords That Optimize Your Resume Or Social Media Content</center>
-    </div>
+    <div id='header'>Keyword Counter</div>
+    <h1><center>Automatically Determine Keywords That Optimize Your Resume Or Social Media Content</center></h1>
         <div id='nav'><img src=static/logo_trans.png alt="Sample Keyword Output"></div>
-        <div id='section'><h1>Enter a position title and optimize your keywords for resumes and LinkedIn.
-        <br><br>Find out which skills are in demand across domains by searching using your keywords.</h1></div>
-        <div id='section'><font color='#ffffb3'><h1>Enter the job title or
+        <div id='section'><h2>
+                <li>Enter a position title and optimize your keywords for resumes and LinkedIn</li>
+                <li>Find out which skills are in demand across domains by searching using your keywords</li>
+        </h2></div>
+        <div id='section'><font color='#ffffb3'><h2>Enter the job title or
         keywords you use on job boards when looking for
-        openings.</h1></font></div>
+        openings.</h2></font></div>
         <div id='section'><form action="/get_data/" method="POST">
             <input type="text" name="kw" placeholder="director marketing" spellcheck="true">
 
@@ -102,18 +110,27 @@
             </form>
         </div>
 
+        <div id='section'>
         <p>Many advice articles agree that you should optimize your resume and
-        other social media with keywords used in your industry. How does one go about
-        getting those? Typically you spend several hours reading job postings.
-        This tool will save you the time, by searching several job postings using your form input
-        and applying techniques to extract the relevant keywords and
-        phrases. In short, this tool empirically determines relevant keywords for a job position using job postings themselves.<p>
-<p>Select whether you will search for job postings using the title of the job, or a keyword approach. If I wanted to know which industries are seeking applicants with Micro Soft Excel skills, then I might use keywords, "excel".</p>
+        other social media with keywords used in your industry. How does one go
+        about getting those? Typically you spend several hours reading job
+        postings. This tool will save you the time, by searching several job
+        postings using your form input and applying techniques to extract the
+        relevant keywords and phrases. In short, this tool empirically
+        determines relevant keywords for a job position using job postings
+        themselves.</p>
+
+        <p>Select whether you will search for job postings using
+        the title of the job, or a keyword approach. If I wanted to know which
+        industries are seeking applicants with Micro Soft Excel skills, then I
+        might use keywords, "excel".</p>
+
         <p>If you know the title of the positions you're seeking information
         about, such as, "director of marketing", use "director marketing" and a
         title search.</p>
+        </div>
 
-        <center><p><a href='/gallery/'>Gallery of Outputs</a></p></center>
+        <div id='footer'><center><p><a href='/gallery/'>Gallery of Outputs</a></p></center></div>
 
 <!-- Social button bar -->
 <script type="text/javascript">stLight.options({publisher: "e8fcd386-83a6-40ab-80bb-7649867c948b", doNotHash: false, doNotCopy: false, hashAddressBar: false});</script>
