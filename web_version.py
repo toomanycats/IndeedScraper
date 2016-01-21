@@ -376,7 +376,7 @@ def radius():
     except ValueError:
         return "The body of words compiled did not contain substantially repeated terms."
 
-    script, div = get_plot_comp(kw, count, df)
+    script, div = get_plot_comp(kw, count, df, session_id)
     session_string = "?session_id=%s" % session_id
     return render_template('radius.html', div=div, script=script, session_id=session_string)
 
