@@ -53,7 +53,7 @@
 
 {{ script | safe }}
 
-<form  id=radius action="/radius/"  method="post">
+<form  id=radius action="/radius{{session_id}}"  method="post">
     Explore around the radius of a word across all posts.<br>
     The default is five words in front and in back. <br>
     <input type="text" name="word" placeholder="experience"><br>
