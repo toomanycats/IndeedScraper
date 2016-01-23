@@ -11,7 +11,7 @@ except IOError:
 # IMPORTANT: Put any additional includes below this line.  If placed above this
 # line, it's possible required libraries won't be in your searchable path
 #
-from web_version import app as application
+from keywordcounter import app as application
 #
 # Below for testing only
 #
