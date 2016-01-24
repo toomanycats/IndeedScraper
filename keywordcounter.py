@@ -24,6 +24,7 @@ import pickle
 import compare
 import time
 import json
+import re
 
 def mk_random_string():
     random_string = str(uuid.uuid4())
@@ -180,8 +181,10 @@ def plot_titles():
     df_file = get_sess(session_id)['df_file']
     df = load_csv(session_id)
 
-    df['jobtitle'] = df['jobtitle'].apply(lambda x:x.lower())
     ind = indeed_scrape.Indeed("kw")
+    df['jobtitle'] = df['jobtitle'].apply(lambda x: x.lower())
+    df['jobtitle'] = df['jobtitle'].apply(lambda x:' '.join(ind._split_on_spaces(x)))
+    df['jobtitle'] = df['jobtitle'].apply(lambda x: re.sub('[^a-z\d\s]', '', x))
     title_de_duped = ind.summary_similarity(df, 'jobtitle', 80)
 
     grp = title_de_duped.groupby("jobtitle").count().sort("url", ascending=False)
