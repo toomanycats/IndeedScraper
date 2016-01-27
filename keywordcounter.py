@@ -64,7 +64,7 @@ conn_string = "mysql://%s:%s@%s/indeed" %(sql_username, sql_password, mysql_ip)
 app = Flask(__name__)
 app.secret_key = mk_random_string()
 
-stop_words = 'resume affirmative cover letter equal religion sex disibility veteran status sexual orientation and work ability http https www gender com org'
+stop_words = 'resume affirmative cover letter equal religion sex disibility veteran status sexual orientation and work ability http https www gender com org the'
 
 def plot_fig(df, num, kws):
 
@@ -586,6 +586,20 @@ def save_to_csv(df, session_id):
 
 def _escape_html(html):
     return html.replace("%", "\%").replace("_", "\_").replace("'", "\'").replace('"', '\"')
+
+@app.route("/get_companies_w_degree")
+def get_experience_with_degree(degree):
+    res = Resume(degree)
+    companies, count = res.get_companies()
+
+    df = pd.DataFrame({'kw':companies,
+                       'count':count
+                       })
+
+    p = plot_fig(df, 10, kws)
+    script, div = components(p)
+
+    render_template("companies_by_degree.html", div=div, script=script)
 
 
 if __name__ == "__main__":
