@@ -169,6 +169,21 @@ class Resume(object):
 
         return count
 
+    def count_words_in_titles(self, titles):
+        counter = {}
+        bag = []
+
+        for t in titles:
+            bag.extend(indeed_scrape.toker(t))
+
+        for word in bag:
+            if not counter.has_key(word):
+                counter[word] = 1
+            else:
+                counter[word] += 1
+
+        return sorted(counter.items(), key=lambda x: x[1], reverse=True)
+
 
 
 
