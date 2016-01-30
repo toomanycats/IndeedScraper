@@ -71,7 +71,11 @@ class Resume(object):
             title_comp = self.remove_universities(companies, titles)
 
             if len(title_comp) != 0:
-                results.append(title_comp[-1])
+                for i in  [-3, -2, -1]:
+                    try:
+                        results.append(title_comp[i])
+                    except IndexError:
+                        pass
 
         return results
 
@@ -184,6 +188,14 @@ class Resume(object):
 
         return sorted(counter.items(), key=lambda x: x[1], reverse=True)
 
+    def match_words_to_titles(self, words, titles):
+        return_titles = []
+        for title in titles:
+            for word in words:
+                if word in title:
+                    return_titles.append(title)
+
+        return return_titles
 
 
 
