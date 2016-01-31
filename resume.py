@@ -5,6 +5,7 @@ import pandas as pd
 import indeed_scrape
 import pandas as pd
 import numpy as np
+import pandas as pd
 import pdb
 
 class Resume(object):
@@ -13,6 +14,9 @@ class Resume(object):
         self.subject = field
 
     def format_query(self):
+
+        if self.kw_string is None:
+            return None
 
         query_parts = indeed_scrape.Indeed._split_on_spaces(self.kw_string)
 
@@ -34,8 +38,12 @@ class Resume(object):
 
     def get_api(self, page=0):
         formatted_query = self.format_query()
+        if formatted_query is None:
+            keywords = '?q='
+        else:
+            keywords = '?q=%s+' % formatted_query
+
         base = "http://www.indeed.com/resumes"
-        keywords = '?q=%s+' % formatted_query
         degree = 'fieldofstudy%%3A%(field)s' % {'field':self.subject}
         suffix = '&co=US&rb=yoe%%3A12-24'
         pagination = '&start=%i' % page
@@ -53,7 +61,7 @@ class Resume(object):
     def parse_data(self, html):
         obj = re.compile('\s\-\s(?P<target>\w+.*?\<)')
 
-        soup = bs4.BeautifulSoup(html)
+        soup = bs4.BeautifulSoup(html, "lxml")
         persons = soup.find_all('li')
 
         results = []
@@ -71,7 +79,7 @@ class Resume(object):
             title_comp = self.remove_universities(companies, titles)
 
             if len(title_comp) != 0:
-                for i in  [-3, -2, -1]:
+                for i in  [-1]:
                     try:
                         results.append(title_comp[i])
                     except IndexError:
@@ -103,24 +111,6 @@ class Resume(object):
 
         return comp, count
 
-    def get_final_results(self, page=0):
-        api = self.get_api(page)
-        html = self.get_html_from_api(api)
-        num = self.get_number_of_resumes_found(html)
-        data = self.parse_data(html)
-
-        titles = map(lambda x: x[0], data)
-        companies = map(lambda x: x[1], data)
-
-        titles = self.normalize_titles(titles)
-        titles = self.filter_titles(titles)
-
-        titles, companies = self.sort_results(titles, companies)
-
-        #groups = self.group_companies(data)
-        #return groups
-        return titles, companies, num
-
     def normalize_titles(self, titles):
         ind = indeed_scrape.Indeed("kw")
 
@@ -131,7 +121,7 @@ class Resume(object):
         for title in titles:
             temp_list = indeed_scrape.toker(title)
             temp_list = ind.len_tester(temp_list)
-            temp_string = " ".join(temp_list[0:3])
+            temp_string = " ".join(temp_list)
             out.append(temp_string)
 
         out = map(lambda x: x.lower(), out)
@@ -197,6 +187,38 @@ class Resume(object):
 
         return return_titles
 
+    def get_final_results(self, page=0):
+        api = self.get_api(page)
+        html = self.get_html_from_api(api)
+        data = self.parse_data(html)
+
+        titles = map(lambda x: x[0], data)
+        companies = map(lambda x: x[1], data)
+
+        titles, companies = self.sort_results(titles, companies)
+
+        #groups = self.group_companies(data)
+        #return groups
+        return titles, companies
+
+    def run_loop(self):
+        api = self.get_api(page=0)
+        html = self.get_html_from_api(api)
+        num = self.get_number_of_resumes_found(html)
+
+        titles = []
+        for page in range(10):
+            temp_titles, _ = self.get_final_results(page * 50)
+            titles.extend(temp_titles)
+
+        titles = self.normalize_titles(titles)
+        titles = self.filter_titles(titles)
+
+        word_count = self.count_words_in_titles(titles)
+        sub_set = word_count[0][0]
+        match = np.unique(self.match_words_to_titles([sub_set], titles))
+
+        return match
 
 
 
