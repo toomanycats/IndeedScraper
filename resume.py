@@ -1,3 +1,4 @@
+import logging
 import urllib2
 import re
 import bs4
@@ -6,12 +7,25 @@ import indeed_scrape
 import pandas as pd
 import numpy as np
 import pandas as pd
+from sklearn.cluster import KMeans, DBSCAN
 import pdb
+
+try: # for calling these methods from CLI
+    logging = logging.getLogger(__name__)
+except:
+    pass
 
 class Resume(object):
     def __init__(self, field, keyword_string):
         self.kw_string = keyword_string
         self.subject = field
+
+    def format_degree(self):
+        subject_list = indeed_scrape.Indeed._split_on_spaces(self.subject)
+        formatted_subject = "+".join(subject_list)
+        logging.debug("formatted degree subject:%s" % formatted_subject)
+
+        return formatted_subject
 
     def format_query(self):
 
@@ -38,17 +52,21 @@ class Resume(object):
 
     def get_api(self, page=0):
         formatted_query = self.format_query()
+        logging.debug("formatted query:%s" % formatted_query)
         if formatted_query is None:
             keywords = '?q='
         else:
             keywords = '?q=%s+' % formatted_query
 
+        formated_subject = self.format_degree()
+
         base = "http://www.indeed.com/resumes"
-        degree = 'fieldofstudy%%3A%(field)s' % {'field':self.subject}
+        degree = 'fieldofstudy%%3A%(field)s' % {'field':formated_subject}
         suffix = '&co=US&rb=yoe%%3A12-24'
         pagination = '&start=%i' % page
 
         api = base + keywords + degree + suffix + pagination
+        logging.debug("api:%s" % api)
         return api
 
     def get_html_from_api(self, api):
@@ -137,6 +155,15 @@ class Resume(object):
 
         titles = map(lambda x: re.sub('^\s+', '', x), titles)
 
+        temp = []
+        for title in titles:
+            if titles == '':
+                continue
+            else:
+                temp.append(title)
+
+        titles = temp
+
         return titles
 
     def sort_results(self, titles, companies):
@@ -151,15 +178,21 @@ class Resume(object):
         return titles, companies
 
     def get_number_of_resumes_found(self, html):
-        soup = bs4.BeautifulSoup(html)
+        soup = bs4.BeautifulSoup(html, 'lxml')
         div = soup.find("div", {'id':'result_count'})
+
         count_string = re.search('\>\s*(?P<num>.*?\<)', str(div)).group("num")
         count_string = count_string.replace("<", "")
         count_string = count_string.replace(",", "")
         count_string = count_string.replace("resumes", "",)
         count_string = count_string.replace(" ", "",)
+        logging.info("number of resumes found:%s" % count_string)
 
-        count = int(count_string)
+        try:
+            count = int(count_string)
+        except ValueError, err:
+            logging.error(err)
+            raise ValueError
 
         return count
 
@@ -205,29 +238,50 @@ class Resume(object):
         api = self.get_api(page=0)
         html = self.get_html_from_api(api)
         num = self.get_number_of_resumes_found(html)
+        if num > 1000:
+            num = 1000
 
         titles = []
-        for page in range(10):
-            temp_titles, _ = self.get_final_results(page * 50)
+        for page in  np.arange(0, num, 50):
+            temp_titles, _ = self.get_final_results(page)
             titles.extend(temp_titles)
 
         titles = self.normalize_titles(titles)
         titles = self.filter_titles(titles)
 
-        word_count = self.count_words_in_titles(titles)
-        sub_set = word_count[0][0]
-        match = np.unique(self.match_words_to_titles([sub_set], titles))
+        return titles
 
-        return match
+    def top_words(self, df):
+        out = []
+        for i in range(20):
+            temp = df[df['group_index'] == i]['titles']
+            out.append(self.count_words_in_titles(temp)[0])
 
+        out.sort(key=lambda x:x[1], reverse=True)
 
+        return out
 
+    def kmeans(self, titles):
+        ind = indeed_scrape.Indeed("kw")
+        ind.stop_words = "and amp"
+        ind.add_stop_words()
+        matrix, features = ind.vectorizer(titles,
+                                max_features=300,
+                                max_df=1.0,
+                                min_df=3,
+                                n_min=1,
+                                n_max=1
+                                )
 
+        #km = DBSCAN(eps=0.1, min_samples=2)
+        km = KMeans(20)
+        assignments = km.fit_predict(matrix)
 
+        df = pd.DataFrame({'titles':titles,
+                           'group_index':assignments
+                           }
+                         )
 
-
-
-
-
+        return df, features
 
 
