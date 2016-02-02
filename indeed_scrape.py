@@ -317,14 +317,14 @@ class Indeed(object):
         self.build_api_string()
         self.add_stop_words()
 
-    def vectorizer(self, corpus, max_features=200, max_df=0.8, min_df=5, n_min=2, n_max=3):
+    def vectorizer(self, corpus, max_features=200, max_df=0.8, min_df=5, n_min=2, n_max=3, analyzer='word'):
         vectorizer = CountVectorizer(max_features=max_features,
                                     max_df=max_df,
                                     min_df=min_df,
-                                    lowercase=False,
+                                    lowercase=True,
                                     stop_words=self.stop_words,
                                     ngram_range=(n_min, n_max),
-                                    analyzer='word',
+                                    analyzer=analyzer,
                                     decode_error='ignore',
                                     strip_accents='unicode',
                                     binary=True
