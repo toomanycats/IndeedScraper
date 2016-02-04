@@ -8,7 +8,13 @@ import pandas as pd
 import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans, DBSCAN
+import pickle
 import pdb
+import os
+
+data_dir = os.getenv('OPENSHIFT_DATA_DIR')
+if data_dir is None:
+    data_dir = os.getenv('PWD')
 
 try: # for calling these methods from CLI
     logging = logging.getLogger(__name__)
@@ -97,7 +103,7 @@ class Resume(object):
             title_comp = self.remove_universities(companies, titles)
 
             if len(title_comp) != 0:
-                for i in  [-1]:
+                for i in [-1, -2]: # take last two job titles
                     try:
                         results.append(title_comp[i])
                     except IndexError:
@@ -109,12 +115,19 @@ class Resume(object):
         return string.replace("<", "").replace("...", "")
 
     def remove_universities(self, companies, titles):
-        obj = re.compile("(?i).*universit.*")
+        obj = re.compile("(?i)university")
+        obj_grad = re.compile("(?i)undergraduate|undergrad|graduate|grad|postdoc")
         remaining = []
 
         for tit, com in zip(titles, companies):
-            match = obj.search(com)
-            if not match:
+            match_com = obj.search(com)
+            match_tit = obj.search(tit)
+            match_grad= obj_grad.search(tit)
+
+            if match_com or match_tit or match_grad:
+               continue
+
+            else:
                 remaining.append((tit, com))
 
         return remaining
@@ -146,7 +159,7 @@ class Resume(object):
 
         return out
 
-    def filter_titles(self, titles):
+    def filter_titles(self, titles, companies):
 
         titles = map(lambda x: x.replace("sr.", ""), titles)
         titles = map(lambda x: x.replace("senior", ""), titles)
@@ -155,16 +168,16 @@ class Resume(object):
 
         titles = map(lambda x: re.sub('^\s+', '', x), titles)
 
-        temp = []
-        for title in titles:
+        temp_titles = []
+        temp_companies = []
+        for title, comp in zip(titles, companies):
             if titles == '':
                 continue
             else:
-                temp.append(title)
+                temp_titles.append(title)
+                temp_companies.append(comp)
 
-        titles = temp
-
-        return titles
+        return temp_titles, temp_companies
 
     def sort_results(self, titles, companies):
         titles = np.array(titles)
@@ -196,30 +209,6 @@ class Resume(object):
 
         return count
 
-    def count_words_in_titles(self, titles):
-        counter = {}
-        bag = []
-
-        for t in titles:
-            bag.extend(indeed_scrape.toker(t))
-
-        for word in bag:
-            if not counter.has_key(word):
-                counter[word] = 1
-            else:
-                counter[word] += 1
-
-        return sorted(counter.items(), key=lambda x: x[1], reverse=True)
-
-    def match_words_to_titles(self, words, titles):
-        return_titles = []
-        for title in titles:
-            for word in words:
-                if word in title:
-                    return_titles.append(title)
-
-        return return_titles
-
     def get_final_results(self, page=0):
         api = self.get_api(page)
         html = self.get_html_from_api(api)
@@ -242,14 +231,16 @@ class Resume(object):
             num = 1000
 
         titles = []
+        companies = []
         for page in  np.arange(0, num, 50):
-            temp_titles, _ = self.get_final_results(page)
+            temp_titles, temp_companies = self.get_final_results(page)
             titles.extend(temp_titles)
+            companies.extend(temp_companies)
 
         titles = self.normalize_titles(titles)
-        titles = self.filter_titles(titles)
+        titles, companies = self.filter_titles(titles, companies)
 
-        return titles
+        return titles, companies
 
     def top_words(self, df):
         out = []
@@ -261,27 +252,26 @@ class Resume(object):
 
         return out
 
-    def kmeans(self, titles):
-        ind = indeed_scrape.Indeed("kw")
-        ind.stop_words = "and amp"
-        ind.add_stop_words()
-        matrix, features = ind.vectorizer(titles,
-                                max_features=300,
-                                max_df=1.0,
-                                min_df=3,
-                                n_min=1,
-                                n_max=1
-                                )
+    def categorize_job_titles(self, titles):
+        # stop_words = set((ENGLISH_STOP_WORDS, ('and', 'amp', 'the', 'work', 'assistant', 'intern')))
 
-        #km = DBSCAN(eps=0.1, min_samples=2)
-        km = KMeans(20)
-        assignments = km.fit_predict(matrix)
+        f = open(os.path.join(data_dir, 'trained_classifier.pickle'))
+        clf = pickle.load(f)
+        f.close()
 
-        df = pd.DataFrame({'titles':titles,
-                           'group_index':assignments
-                           }
-                         )
+        g = open(os.path.join(data_dir, "trained_vectorizer.pickle"))
+        vec = pickle.load(g)
+        g.close()
 
-        return df, features
+        matrix = vec.transform(titles)
+
+        out = {}
+        for ind, title in enumerate(titles):
+            row = matrix[ind, :]
+            label = clf.predict(row)
+            out[title] = label
+
+        return out
+
 
 
