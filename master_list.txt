@@ -355,7 +355,6 @@
 "wind turbine technician"],
 "auction house":
 ["account manager ecommerce",
-"administrative assistant",
 "administrator american paintings  drawings and sculpture",
 "administrator antiquities",
 "administrator handbags and accessories",
@@ -532,7 +531,6 @@
 "thought leader liaison  hematology"],
 "business":
 ["actuary",
-"administrative manager",
 "assessor",
 "benefits officer",
 "branch manager",
@@ -648,8 +646,7 @@
 "tableau data analytics platform lead",
 "threat intelligence analyst"],
 "college admissions":
-["administrative assistant",
-"admissions advisor",
+[ "admissions advisor",
 "admissions communications coordinator",
 "admissions communications specialist",
 "admissions coordinator",
@@ -711,8 +708,7 @@
 
 "college alumni relations and development":
 
-["administrative assistant",
-"advancement writer",
+["advancement writer",
 "alumni and advancement officer",
 "alumni and parent engagement associate",
 "alumni engagement coordinator",
@@ -1079,7 +1075,6 @@
 ["account coordinator",
 "account manager",
 "account representative",
-"administrative assistant",
 "assistant account manager",
 "assistant customer care center manager",
 "bellman",
@@ -1442,7 +1437,6 @@
 "wildlife rehabilitator"],
 "fashion":
 ["account executive",
-"administrative assistant",
 "area brand coordinator",
 "assistant buyer",
 "assistant merchant",
@@ -1537,7 +1531,6 @@
 ["1st assistant camera",
 "2nd assistant camera",
 "actor",
-"administrative assistant",
 "animator",
 "art director",
 "assistant director",
@@ -1667,7 +1660,6 @@
 ["account executive",
 "account manager",
 "accountant",
-"administrative assistant",
 "administrative medical assistant",
 "administrator",
 "admissions director",
@@ -2121,7 +2113,6 @@
 "actuarial associate",
 "actuarial manager",
 "adjuster",
-"administrative assistant",
 "analyst",
 "appraiser",
 "auditor",
@@ -2290,7 +2281,7 @@
 "vice president of global data and platform"],
 "investment banking":
 ["accountant",
-"administrative assistant  investment banking",
+"investment banking",
 "analyst 1st year  corporate client banking",
 "analyst 2nd year  corporate client banking",
 "asset management analyst",
@@ -2434,8 +2425,7 @@
 "victim/witness investigator",
 "witness advocate"],
 "legal":
-["administrative assistant",
-"arbitrator",
+["arbitrator",
 "attorney",
 "case manager",
 "clerk",
@@ -2848,7 +2838,6 @@
 "vice president for marketing"],
 "media":
 ["account executive",
-"administrative assistant",
 "animator",
 "announcer",
 "art director",
@@ -2936,10 +2925,7 @@
 "webmaster",
 "writer"],
 "museum":
-["administrative assistant",
-"administrative intern",
-"advancement associate",
-"archive intern",
+[ "archive intern",
 "art gallery administrator",
 "art gallery sales associate",
 "artistic director",
@@ -3008,7 +2994,6 @@
 ["accompanist",
 "acoustics engineer",
 "activities coordinator  music camp",
-"administrative assistant",
 "analytics developer",
 "arranger",
 "artist and repertoire assistant",
@@ -3435,8 +3420,7 @@
 "social media specialist",
 "technical writer"],
 "purchasing":
-["administrative assistant",
-"administrative assistant buyer",
+["assistant buyer",
 "ap accounts payable/purchasing specialist",
 "assistant procurement manager",
 "associate buyer for baby care",
@@ -3496,9 +3480,7 @@
 "vendor coordinator",
 "womens fashion apparel buyer"],
 "radio":
-["account coordinator",
-"account executive",
-"advertising salesperson",
+["radio advertising salesperson",
 "afternoon drive anchor",
 "analyst  strategic initiatives",
 "assistant program director",
@@ -3558,8 +3540,7 @@
 "talk show host",
 "technology manager",
 "vice president  membership",
-"voice actor",
-"web development intern"],
+"voice actor"],
 "real estate":
 ["agent",
 "appraiser",
