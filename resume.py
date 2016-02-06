@@ -8,9 +8,13 @@ import pandas as pd
 import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans, DBSCAN
+from sklearn.feature_extraction.text import CountVectorizer, ENGLISH_STOP_WORDS
+import nltk
 import pickle
-import pdb
 import os
+import json
+import pdb
+import sklearn.linear_model.SGDClassifer
 
 data_dir = os.getenv('OPENSHIFT_DATA_DIR')
 if data_dir is None:
@@ -160,18 +164,23 @@ class Resume(object):
         return out
 
     def filter_titles(self, titles, companies):
+        obj = re.compile("(?i)volunteer|intern")
 
         titles = map(lambda x: x.replace("sr.", ""), titles)
         titles = map(lambda x: x.replace("senior", ""), titles)
         titles = map(lambda x: x.replace("jr.", ""), titles)
         titles = map(lambda x: x.replace("junior", ""), titles)
+        titles = map(lambda x: x.replace("vice", ""), titles)
+        titles = map(lambda x: x.replace("director", ""), titles)
+        titles = map(lambda x: x.replace("president", ""), titles)
+        titles = map(lambda x: x.replace("visiting", ""), titles)
 
         titles = map(lambda x: re.sub('^\s+', '', x), titles)
 
         temp_titles = []
         temp_companies = []
         for title, comp in zip(titles, companies):
-            if titles == '':
+            if titles == '' or obj.search(title):
                 continue
             else:
                 temp_titles.append(title)
@@ -253,7 +262,7 @@ class Resume(object):
         return out
 
     def categorize_job_titles(self, titles):
-        # stop_words = set((ENGLISH_STOP_WORDS, ('and', 'amp', 'the', 'work', 'assistant', 'intern')))
+        titles = map(lambda x:x.lower(), titles)
 
         f = open(os.path.join(data_dir, 'trained_classifier.pickle'))
         clf = pickle.load(f)
@@ -269,9 +278,40 @@ class Resume(object):
         for ind, title in enumerate(titles):
             row = matrix[ind, :]
             label = clf.predict(row)
-            out[title] = label
+            out[title] = label[0].decode("ascii", "ignore")
 
         return out
+
+class Train(object):
+    def __init__(self, master_file):
+        self.master_file = master_file
+
+    def main(self):
+       dict_ = json.load(open(self.master_file))
+       df = pd.DataFrame({"titles":dict_.keys(),
+                          "description":dict_.values()}
+                          )
+
+       stop_words = set((ENGLISH_STOP_WORDS, ('amp', 'and', 'the', 'assistant','intern')))
+       vec = CountVectorizer(stop_words=stop_words)
+       matrix = vec.fit_transform(df['description'])
+
+       clf = sklearn.linear_model.SGDClassifer()
+       clf.fit(matrix, df['titles'])
+
+       f = open(os.path.join(data_dir, 'trained_classifier.pickle'))
+       pickle.dump(clf, f)
+       f.close()
+
+       f = open(os.path.join(data_dir, 'trained_vectorizer.pickle'))
+       pickle.dump(vec, f)
+       f.close()
+
+
+
+
+
+
 
 
 
