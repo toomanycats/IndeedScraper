@@ -1039,12 +1039,13 @@
 "director of web analytics",
 "downstream processing scientist",
 "enterprise information architect",
-"hadoop bid data data scientist",
+"hadoop big mahout",
 "identity research and modeling data scientist",
 "insights data engineer",
 "junior data scientist",
 "lead data scientistintelligence platform",
 "machine learning engineer",
+"prediction regression",
 "machine learning specialist",
 "manager of analytics",
 "mass relevance data scientist",
@@ -1827,6 +1828,7 @@
 "youth specialist"],
 "information technology":
 ["application developer",
+"agile",
 "application support analyst",
 "applications engineer",
 "associate developer",
@@ -3380,8 +3382,7 @@
 "retail sales consultant",
 "retail sales representative",
 "retail team leader",
-"loss prevention specialist",
-],
+"loss prevention specialist"],
 "sales":
 ["account executive",
 "account manager",
@@ -3460,6 +3461,7 @@
 "wholesale sales manager"],
 "school":
 ["academic director",
+"tutor adjunct professor assistant teacher",
 "admissions recruiter",
 "american sign language education assistant",
 "art teacher",
@@ -3790,6 +3792,7 @@
 "strength and conditioning coach",
 "tennis pro",
 "travel secretary",
+"martial arts belt",
 "umpire",
 "yoga teacher"],
 "television":
