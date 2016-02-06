@@ -14,7 +14,7 @@ import pickle
 import os
 import json
 import pdb
-import sklearn.linear_model.SGDClassifer
+import sklearn
 
 data_dir = os.getenv('OPENSHIFT_DATA_DIR')
 if data_dir is None:
@@ -292,18 +292,20 @@ class Train(object):
                           "description":dict_.values()}
                           )
 
-       stop_words = set((ENGLISH_STOP_WORDS, ('amp', 'and', 'the', 'assistant','intern')))
+       df['description']  = df['description'].apply(" ".join)
+
+       stop_words = set((ENGLISH_STOP_WORDS, ('amp', 'and', 'the',' intern')))
        vec = CountVectorizer(stop_words=stop_words)
        matrix = vec.fit_transform(df['description'])
 
-       clf = sklearn.linear_model.SGDClassifer()
+       clf = sklearn.linear_model.SGDClassifier()
        clf.fit(matrix, df['titles'])
 
-       f = open(os.path.join(data_dir, 'trained_classifier.pickle'))
+       f = open(os.path.join(data_dir, 'trained_classifier.pickle'), 'wb')
        pickle.dump(clf, f)
        f.close()
 
-       f = open(os.path.join(data_dir, 'trained_vectorizer.pickle'))
+       f = open(os.path.join(data_dir, 'trained_vectorizer.pickle'), 'wb')
        pickle.dump(vec, f)
        f.close()
 
