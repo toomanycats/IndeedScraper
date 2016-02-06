@@ -586,9 +586,7 @@
 "transcript evaluator",
 "transfer admissions counselor",
 "vice president for enrollment management"],
-
 "college alumni relations and development":
-
 ["alumni and advancement officer",
 "alumni and parent engagement associate",
 "alumni engagement coordinator",
@@ -1343,12 +1341,6 @@
 "stylist",
 "technical designer",
 "textile fabric colorist"],
-"retail":
-["retail buyer",
-"retail fashion recruiter",
-"retail footwear buyer",
-"retail salesperson",
-"retail store planner"],
 "film":
 ["1st assistant camera",
 "2nd assistant camera",
@@ -1935,7 +1927,6 @@
 "manager of customer billing",
 "marketing manager",
 "office manager",
-
 "risk manager",
 "sales agency manager",
 "sales agent",
@@ -3369,6 +3360,11 @@
 "automotive sales manager",
 "automotive sales manager",
 "bilingual retail sales representative",
+"retail buyer",
+"retail fashion recruiter",
+"retail footwear buyer",
+"retail salesperson",
+"retail store planner",
 "buyer",
 "retail administration analyst",
 "retail associate store manager",
