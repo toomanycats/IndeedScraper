@@ -9,12 +9,20 @@ import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans, DBSCAN
 from sklearn.feature_extraction.text import CountVectorizer, ENGLISH_STOP_WORDS
+from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.linear_model import SGDClassifier
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.grid_search import GridSearchCV, RandomizedSearchCV
+from sklearn import cross_validation
+from sklearn import metrics
 import nltk
 import pickle
 import os
 import json
 import pdb
 import sklearn
+import nltk
 
 data_dir = os.getenv('OPENSHIFT_DATA_DIR')
 if data_dir is None:
@@ -282,6 +290,7 @@ class Resume(object):
 
         return out
 
+
 class Train(object):
     def __init__(self, master_file):
         self.master_file = master_file
@@ -292,28 +301,58 @@ class Train(object):
                           "description":dict_.values()}
                           )
 
-       df['description']  = df['description'].apply(" ".join)
+       df['description'] = df['description'].apply(" ".join)
 
-       stop_words = set((ENGLISH_STOP_WORDS, ('amp', 'and', 'the',' intern')))
-       vec = CountVectorizer(stop_words=stop_words)
-       matrix = vec.fit_transform(df['description'])
+       helper = Helper()
+       df = helper.stem_df(df, "description")
 
-       clf = sklearn.linear_model.SGDClassifier()
-       clf.fit(matrix, df['titles'])
+       stop_words = set((ENGLISH_STOP_WORDS, ('amp', 'and', 'the',' intern', 'manager', 'senior', 'junior','sr', 'jr', 'assistant')))
 
-       f = open(os.path.join(data_dir, 'trained_classifier.pickle'), 'wb')
-       pickle.dump(clf, f)
-       f.close()
+       title_clf = Pipeline([
+                            ('vec', CountVectorizer(stop_words=stop_words,
+                                                    binary=True,# hack uniq
+                                                    decode_error="ignore")),
+                            ('clf', SGDClassifier(loss='log'))
+                            ])
 
-       f = open(os.path.join(data_dir, 'trained_vectorizer.pickle'), 'wb')
-       pickle.dump(vec, f)
-       f.close()
+       title_clf.fit(df['description'], df['titles'])
+
+#       f = open(os.path.join(data_dir, 'trained_classifier.pickle'), 'wb')
+#       pickle.dump(title_clf, f)
+#       f.close()
+#
+       return title_clf
 
 
+class Helper(object):
+    def __init__(self):
+        self.stemmer = nltk.stem.LancasterStemmer()
 
+    def test_ending(self, word):
+        if len(word) >= 4 and  word[-1] == 's':
+            word = self.stemmer.stem(word)
 
+        elif len(word) >= 5 and word[-2] == "er":
+            word  = self.stemmer.stem(word)
 
+        elif len(word) >= 6 and word[-3] == 'ing':
+            word = self.stemmer.stem(word)
 
+        else:
+           pass
 
+        return word
 
+    def string_stemmer(self, string):
+        words = indeed_scrape.toker(string)
+        out = []
+        for word in words:
+            word = self.test_ending(word)
+            out.append(word)
+
+        return " ".join(out)
+
+    def stem_df(self, df, key):
+        df[key] = df[key].apply(self.string_stemmer)
+        return df
 
