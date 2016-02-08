@@ -7,7 +7,6 @@ import indeed_scrape
 import pandas as pd
 import numpy as np
 import pandas as pd
-from sklearn.cluster import KMeans, DBSCAN
 from sklearn.feature_extraction.text import CountVectorizer, ENGLISH_STOP_WORDS
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.pipeline import Pipeline
@@ -255,7 +254,7 @@ class Resume(object):
             companies.extend(temp_companies)
 
         titles = self.normalize_titles(titles)
-        titles, companies = self.filter_titles(titles, companies)
+        #titles, companies = self.filter_titles(titles, companies)
 
         return titles, companies
 
@@ -306,22 +305,42 @@ class Train(object):
        helper = Helper()
        df = helper.stem_df(df, "description")
 
-       stop_words = set((ENGLISH_STOP_WORDS, ('amp', 'and', 'the',' intern', 'manager', 'senior', 'junior','sr', 'jr', 'assistant')))
+       stop_words = set((ENGLISH_STOP_WORDS, ('amp', 'and', 'the' )))
 
        title_clf = Pipeline([
                             ('vec', CountVectorizer(stop_words=stop_words,
-                                                    binary=True,# hack uniq
+                                                    binary=True,# hack uniq,
+                                                    ngram_range=(1, 1),
                                                     decode_error="ignore")),
-                            ('clf', SGDClassifier(loss='log'))
+                            ('clf', SGDClassifier(loss='hinge',
+                                                  alpha=1e-1,
+                                                  shuffle=True,
+                                                  penalty='l1'))
                             ])
 
-       title_clf.fit(df['description'], df['titles'])
 
-#       f = open(os.path.join(data_dir, 'trained_classifier.pickle'), 'wb')
-#       pickle.dump(title_clf, f)
-#       f.close()
-#
+       title_clf.fit(df['description'], df['titles'])
+       f = open(os.path.join(data_dir, 'trained_classifier.pickle'), 'wb')
+       pickle.dump(title_clf, f)
+       f.close()
+
        return title_clf
+
+    def GridSearch(self, df):
+         cv = cross_validation.KFold(df.shape[0], 20)
+         params = {"vec__ngram_range":[(1,1), (1,2)],
+                   "clf__alpha":(1e-1, 1e-2, 1e-3, 1e-4),
+                   "clf__loss":['hinge', 'squared_hinge', 'squared_loss'],
+                   "clf__penalty":('l1', 'l2'),
+                   "clf__shuffle":[True, False]
+                   }
+
+         gs = GridSearchCV(title_clf, params, cv=cv, n_jobs=4)
+         gs.fit(df['description'], df['titles'])
+
+         best_parameters, score, _ = max(gs.grid_scores_, key=lambda x: x[1])
+         for param_name in sorted(params.keys()):
+             print("%s: %r" % (param_name, best_parameters[param_name]))
 
 
 class Helper(object):
