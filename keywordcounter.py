@@ -408,7 +408,7 @@ def radius():
     words = get_inverse_stem(words, session_id)
 
     try:
-        count, kw = ind.vectorizer(words, max_features=50, n_min=1, n_max=2,
+        count, kw = ind.vectorizer(words, max_features=None, n_min=1, n_max=2,
                max_df=0.90, min_df=2)
     except ValueError:
         return "The body of words compiled did not contain substantially repeated terms."
