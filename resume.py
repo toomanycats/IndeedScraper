@@ -313,9 +313,9 @@ class Train(object):
                                                     ngram_range=(1, 1),
                                                     decode_error="ignore")),
                             ('clf', SGDClassifier(loss='hinge',
-                                                  alpha=1e-1,
+                                                  alpha=1e-2,
                                                   shuffle=True,
-                                                  penalty='l1'))
+                                                  penalty='l2'))
                             ])
 
 
@@ -326,21 +326,42 @@ class Train(object):
 
        return title_clf
 
-    def GridSearch(self, df):
-         cv = cross_validation.KFold(df.shape[0], 20)
-         params = {"vec__ngram_range":[(1,1), (1,2)],
-                   "clf__alpha":(1e-1, 1e-2, 1e-3, 1e-4),
-                   "clf__loss":['hinge', 'squared_hinge', 'squared_loss'],
-                   "clf__penalty":('l1', 'l2'),
-                   "clf__shuffle":[True, False]
-                   }
+    def grid_search(self):
+        helper = Helper()
+        dict_ = json.load(open(self.master_file))
+        df = pd.DataFrame()
 
-         gs = GridSearchCV(title_clf, params, cv=cv, n_jobs=4)
-         gs.fit(df['description'], df['titles'])
+        # for cross validation, we need repeated labels
+        #df['description'] = df['description'].apply(" ".join)
+        for key, values in dict_.iteritems():
+            for ind, v in enumerate(values):
+                df.loc[ind, 'description'] = helper.string_stemmer(v)
+                df.loc[ind, 'title'] = key
 
-         best_parameters, score, _ = max(gs.grid_scores_, key=lambda x: x[1])
-         for param_name in sorted(params.keys()):
-             print("%s: %r" % (param_name, best_parameters[param_name]))
+        stop_words = set((ENGLISH_STOP_WORDS, ('amp', 'and', 'the' )))
+
+        title_clf = Pipeline([
+                             ('vec', CountVectorizer(stop_words=stop_words,
+                                                     binary=True,# hack uniq,
+                                                     ngram_range=(1, 1),
+                                                     decode_error="ignore")),
+                             ('clf', SGDClassifier(random_state=0))
+                             ])
+
+        cv = cross_validation.KFold(df.shape[0], 140)
+        params = {"vec__ngram_range":[(1,1), (1,2)],
+                  "clf__alpha":(1e-1, 1e-2, 1e-3, 1e-4),
+                  "clf__loss":['hinge', 'squared_hinge', 'squared_loss'],
+                  "clf__penalty":('l1', 'l2'),
+                  "clf__shuffle":[True, False]
+                  }
+
+        gs = GridSearchCV(title_clf, params, cv=cv, n_jobs=6)
+        gs.fit(df['description'], df['title'])
+
+        best_parameters, score, _ = max(gs.grid_scores_, key=lambda x: x[1])
+        for param_name in sorted(params.keys()):
+            print("%s: %r" % (param_name, best_parameters[param_name]))
 
 
 class Helper(object):
