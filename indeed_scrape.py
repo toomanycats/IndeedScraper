@@ -55,7 +55,7 @@ class Indeed(object):
             return string
 
         except Exception:
-            return string
+            return None
 
     @classmethod
     def _split_on_spaces(self, string):
