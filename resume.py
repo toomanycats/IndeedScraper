@@ -161,6 +161,9 @@ class Resume(object):
 
         out = []
         for title in titles:
+            temp_list = ind._decode(title)
+            if temp_list is None:
+                continue
             temp_list = indeed_scrape.toker(title)
             temp_list = ind.len_tester(temp_list)
             temp_string = " ".join(temp_list)
@@ -302,20 +305,21 @@ class Train(object):
 
        df['description'] = df['description'].apply(" ".join)
 
-       helper = Helper()
-       df = helper.stem_df(df, "description")
+       #helper = Helper()
+       #df = helper.stem_df(df, "description")
 
-       stop_words = set((ENGLISH_STOP_WORDS, ('amp', 'and', 'the' )))
+       stop_words = set((ENGLISH_STOP_WORDS, ('amp', 'and', 'the', 'intern')))
 
        title_clf = Pipeline([
                             ('vec', CountVectorizer(stop_words=stop_words,
                                                     binary=True,# hack uniq,
-                                                    ngram_range=(1, 1),
+                                                    ngram_range=(1, 2),
                                                     decode_error="ignore")),
                             ('clf', SGDClassifier(loss='hinge',
-                                                  alpha=1e-2,
-                                                  shuffle=True,
-                                                  penalty='l2'))
+                                                  alpha=1e-3,
+                                                  shuffle=False,
+                                                  penalty='l2',
+                                                  random_state=0))
                             ])
 
 
@@ -326,17 +330,24 @@ class Train(object):
 
        return title_clf
 
-    def grid_search(self):
+    def get_df_for_cv(self):
         helper = Helper()
         dict_ = json.load(open(self.master_file))
         df = pd.DataFrame()
 
         # for cross validation, we need repeated labels
         #df['description'] = df['description'].apply(" ".join)
+        index = 0
         for key, values in dict_.iteritems():
-            for ind, v in enumerate(values):
-                df.loc[ind, 'description'] = helper.string_stemmer(v)
-                df.loc[ind, 'title'] = key
+            for v in values:
+                df.loc[index, 'description'] = helper.string_stemmer(v)
+                df.loc[index, 'title'] = key
+                index += 1
+
+        return df
+
+    def grid_search(self):
+        df = self.get_df_for_cv()
 
         stop_words = set((ENGLISH_STOP_WORDS, ('amp', 'and', 'the' )))
 
@@ -348,10 +359,11 @@ class Train(object):
                              ('clf', SGDClassifier(random_state=0))
                              ])
 
-        cv = cross_validation.KFold(df.shape[0], 140)
+        labels = df['title'].unique()
+        cv = cross_validation.KFold(df.shape[0], 10)
         params = {"vec__ngram_range":[(1,1), (1,2)],
                   "clf__alpha":(1e-1, 1e-2, 1e-3, 1e-4),
-                  "clf__loss":['hinge', 'squared_hinge', 'squared_loss'],
+                  "clf__loss":['hinge', 'squared_hinge', 'log', 'squared_loss'],
                   "clf__penalty":('l1', 'l2'),
                   "clf__shuffle":[True, False]
                   }
