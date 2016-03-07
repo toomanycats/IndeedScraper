@@ -517,7 +517,7 @@ def compute_missing_keywords():
 
 def compute_max_df(type_, num_samp, n_min=1):
     if type_ == 'keywords':
-        base = 0.80
+        base = 0.76
 
     elif type_ == 'title':
         base = 0.85
