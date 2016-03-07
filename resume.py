@@ -313,12 +313,12 @@ class Train(object):
        title_clf = Pipeline([
                             ('vec', CountVectorizer(stop_words=stop_words,
                                                     binary=True,# hack uniq,
-                                                    ngram_range=(1, 2),
+                                                    ngram_range=(1, 1),
                                                     decode_error="ignore")),
-                            ('clf', SGDClassifier(loss='hinge',
-                                                  alpha=1e-3,
+                            ('clf', SGDClassifier(loss='log',
+                                                  alpha=1e-4,
                                                   shuffle=False,
-                                                  penalty='l2',
+                                                  penalty='l1',
                                                   random_state=0))
                             ])
 
@@ -331,7 +331,7 @@ class Train(object):
        return title_clf
 
     def get_df_for_cv(self):
-        helper = Helper()
+        #helper = Helper()
         dict_ = json.load(open(self.master_file))
         df = pd.DataFrame()
 
@@ -340,7 +340,7 @@ class Train(object):
         index = 0
         for key, values in dict_.iteritems():
             for v in values:
-                df.loc[index, 'description'] = helper.string_stemmer(v)
+                df.loc[index, 'description'] = v
                 df.loc[index, 'title'] = key
                 index += 1
 
