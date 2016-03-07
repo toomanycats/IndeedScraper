@@ -421,20 +421,19 @@ class Indeed(object):
             try:
                 string1 = df.loc[i, column]
                 string1 = self._decode(string1)
-            except UnicodeDecodeError:
-                continue
 
-            for j in range(i+1, df.shape[0] - 1):
-                try:
+                for j in range(i+1, df.shape[0] - 1):
                     string2 = df.loc[j+1, column]
                     string2 = self._decode(string2)
-                except UnicodeDecodeError:
-                    continue
 
-                ratio = fuzz.ratio(string1, string2)
+                    ratio = fuzz.ratio(string1, string2)
 
-                if ratio >= ratio_thres:
-                    dup_list.append(j)
+                    if ratio >= ratio_thres:
+                        dup_list.append(j)
+
+            except Exception, err:
+                logging.error("summary similarity error: %s" % err)
+                continue
 
         return df.drop(df.index[dup_list])
 
