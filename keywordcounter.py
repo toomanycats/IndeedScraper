@@ -590,21 +590,21 @@ def _escape_html(html):
 @app.route("/entry_point_careers", methods=['GET', 'POST'])
 def get_experience_with_degree():
     if request.method == 'GET':
-        render_template("entry_point_careers.html", div='', script='')
+        return render_template("entry_point_careers.html", div='', script='')
 
     if request.method == 'POST':
-        sought_title = request.form['title']
+        sought_title = request.form['sought_title']
         logging.info("entry point search title: %s" % sought_title)
 
         res = resume.Resume(sought_title)
         title, comp = res.run_loop()
-        title_data = res.prepare_plot(title)
+        title_df = res.prepare_plot(title)
 
         title_string = "Job Titles Held By People With Current Position: %s"
-        title_string = title_string % sought_title,
+        title_string = title_string % sought_title
 
         #TODO:refactor
-        p = Bar(df, 'data',
+        p = Bar(title_df,
                 values='count',
                 title=title_string,
                 title_text_font_size='20',
@@ -616,11 +616,9 @@ def get_experience_with_degree():
 
         script, div = components(p)
 
-        comp_data = res.prepare_plot(comp)
-        title_string = "Companies That Hired"
-        title_string = title_string % sought_title,
+        comp_df = res.prepare_plot(comp)
 
-        p = Bar(df, 'data',
+        p = Bar(comp_df,
                 values='count',
                 title=title_string,
                 title_text_font_size='20',
@@ -635,7 +633,7 @@ def get_experience_with_degree():
         script += comp_script
         div += comp_div
 
-        render_template("entry_point_careers.html", div=div, script=script)
+        return render_template("entry_point_careers.html", div=div, script=script)
 
 if __name__ == "__main__":
-    app.run(threaded=True)
+    app.run(threaded=False, debug=True)
