@@ -113,8 +113,9 @@ class Resume(object):
 
             title_comp = self.remove_universities(companies, titles)
 
+            #TODO: improve this
             if len(title_comp) != 0:
-                for i in [-1, -2]: # take last two job titles
+                for i in [-1, -2, -3]: # take last three job titles
                     try:
                         results.append(title_comp[i])
                     except IndexError:
@@ -224,6 +225,7 @@ class Resume(object):
             count = int(count_string)
         except ValueError, err:
             logging.error(err)
+            print "No pages found"
             raise ValueError
 
         return count
@@ -260,6 +262,18 @@ class Resume(object):
         #titles, companies = self.filter_titles(titles, companies)
 
         return titles, companies
+
+    def prepare_plot(self, data):
+        df = pd.DataFrame({"data":data,
+                           "count": np.ones(len(data))
+                          })
+
+        cnt = df.groupby("data").count()
+        thres = np.floor(cnt.mean() + cnt.std())
+        cnt = cnt[cnt >= thres]
+        cnt.dropna(how='any', inplace=True)
+
+        return cnt
 
     def top_words(self, df):
         out = []
