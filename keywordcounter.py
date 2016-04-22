@@ -312,6 +312,9 @@ def run_analysis():
     ind.stop_words = stop_words
     ind.main()
 
+    #scrub repeated words
+    ind.clean_dup_words()
+
     index = sess_dict['ind'][0]
     end = sess_dict['end'][0]
 
@@ -328,9 +331,6 @@ def run_analysis():
 
     update_sql('end', end, 'int', session_id)
     update_sql('count_thres', 25, 'int', session_id)
-
-    #scrub repeated words
-    ind.clean_dup_words()
 
     # append existing df if second or more time here
     if os.path.exists(sess_dict['df_file'][0]):
