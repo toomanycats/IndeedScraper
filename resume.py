@@ -33,12 +33,12 @@ except:
     pass
 
 class Resume(object):
-    def __init__(self, field, keyword_string):
+    def __init__(self, job_title=None, keyword_string=None):
         self.kw_string = keyword_string
-        self.subject = field
+        self.title= job_title
 
     def format_degree(self):
-        subject_list = indeed_scrape.Indeed._split_on_spaces(self.subject)
+        subject_list = indeed_scrape.Indeed._split_on_spaces(self.title)
         formatted_subject = "+".join(subject_list)
         logging.debug("formatted degree subject:%s" % formatted_subject)
 

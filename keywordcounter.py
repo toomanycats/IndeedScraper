@@ -13,6 +13,7 @@ import logging
 import pandas as pd
 from flask import Flask, request, redirect, url_for, jsonify, render_template, session
 import indeed_scrape
+import resume
 import jinja2
 from bokeh.embed import components
 from bokeh.util.string import encode_utf8
@@ -39,8 +40,7 @@ if sql_password is None:
     sql_password = 'test'
 
 mysql_ip = os.getenv("OPENSHIFT_MYSQL_DB_HOST")
-if mysql_ip is None:
-    mysql_ip = '127.0.0.1'
+if mysql_ip is None: mysql_ip = '127.0.0.1'
 
 repo_dir = os.getenv("OPENSHIFT_REPO_DIR")
 if repo_dir is None:
@@ -587,20 +587,55 @@ def save_to_csv(df, session_id):
 def _escape_html(html):
     return html.replace("%", "\%").replace("_", "\_").replace("'", "\'").replace('"', '\"')
 
-@app.route("/get_companies_w_degree")
-def get_experience_with_degree(degree):
-    res = Resume(degree)
-    companies, count = res.get_companies()
+@app.route("/entry_point_careers", methods=['GET', 'POST'])
+def get_experience_with_degree():
+    if request.method == 'GET':
+        render_template("entry_point_careers.html", div='', script='')
 
-    df = pd.DataFrame({'kw':companies,
-                       'count':count
-                       })
+    if request.method == 'POST':
+        sought_title = request.form['title']
+        logging.info("entry point search title: %s" % sought_title)
 
-    p = plot_fig(df, 10, kws)
-    script, div = components(p)
+        res = resume.Resume(sought_title)
+        title, comp = res.run_loop()
+        title_data = res.prepare_plot(title)
 
-    render_template("companies_by_degree.html", div=div, script=script)
+        title_string = "Job Titles Held By People With Current Position: %s"
+        title_string = title_string % sought_title,
 
+        #TODO:refactor
+        p = Bar(df, 'data',
+                values='count',
+                title=title_string,
+                title_text_font_size='20',
+                color='blue',
+                xlabel="",
+                ylabel="Count",
+                width=1500,
+                height=300)
+
+        script, div = components(p)
+
+        comp_data = res.prepare_plot(comp)
+        title_string = "Companies That Hired"
+        title_string = title_string % sought_title,
+
+        p = Bar(df, 'data',
+                values='count',
+                title=title_string,
+                title_text_font_size='20',
+                color='red',
+                xlabel="",
+                ylabel="Count",
+                width=1500,
+                height=300)
+
+        comp_script, comp_div = components(p)
+
+        script += comp_script
+        div += comp_div
+
+        render_template("entry_point_careers.html", div=div, script=script)
 
 if __name__ == "__main__":
     app.run(threaded=True)

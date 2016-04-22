@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <title>Find other people's entry point positions</title>
+    <meta charset="UTF-8">
+    <link rel='icon' href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Find entry point career job titles and companies that hire for your sought after title." />
+    <link href="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.css" rel="stylesheet" type="text/css">
+    <script src="http://cdn.pydata.org/bokeh/release/bokeh-0.9.0.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="{{ url_for('static', filename='script.js') }} "></script>
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <script type="text/javascript">var switchTo5x=true;</script>
+    <!-- Test1 -->
+    <ins class="adsbygoogle"
+        style="display:block"
+        data-ad-client="ca-pub-1784525550107476"
+        data-ad-slot="7237672146"
+        data-ad-format="auto"></ins>
+    <script>
+    (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+    <style>
+        h1 {
+            margin: 0.5cm 0.5cm 0.2cm 6cm;
+        }
+
+        body {
+            font-size: 100%;
+            background-color: #caf6f6;
+            }
+    </style>
+
+</head>
+<body>
+
+    <h1>Search for entry point positions and companies.</h1>
+    <p>Many times when starting a new career, we cannot jump right into our target position.
+    We must pursue jobs that will build up our skill set and help us to break into the next level.
+    In the form below, enter the job title you want to hit in a few years. The program will
+    search many resumes and pick off what those people have done BEFORE having your target
+    position title.</p>
+
+
+    <form  id=sought_title action="/entry_point_careers",  method="post" style="display: none">
+        <input type="text" name="sought_title" placeholder="project manager"><br>
+        <input type="submit" value="Submit" name="submit">
+    </form>
+
+    <p><i>The graph is interactive, scroll up and down to zoom</i></p>
+
+    {{div}}
+    {{script}}
+
+</body>
+</html>
+
