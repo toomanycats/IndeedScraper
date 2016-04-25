@@ -99,7 +99,9 @@ class Resume(object):
         soup = bs4.BeautifulSoup(html, "lxml")
         persons = soup.find_all('li')
 
-        results = []
+        title = []
+        comp = []
+
         for pers in persons:
             try:
                 titles = re.findall('class="experience"\>(?P<exp>.*?\<)', str(pers))
@@ -117,11 +119,12 @@ class Resume(object):
             if len(title_comp) != 0:
                 for i in [-1, -2, -3]: # take last three job titles
                     try:
-                        results.append(title_comp[i])
+                        title.append(title_comp[i][0])
+                        comp.append(title_comp[i][1])
                     except IndexError:
                         pass
 
-        return results
+        return list(np.unique(title)), list(np.unique(comp))
 
     def _clean_target(self, string):
         return string.replace("<", "").replace("...", "")
@@ -233,15 +236,9 @@ class Resume(object):
     def get_final_results(self, page=0):
         api = self.get_api(page)
         html = self.get_html_from_api(api)
-        data = self.parse_data(html)
+        titles, companies = self.parse_data(html)
+        #titles, companies = self.sort_results(titles, companies)
 
-        titles = map(lambda x: x[0], data)
-        companies = map(lambda x: x[1], data)
-
-        titles, companies = self.sort_results(titles, companies)
-
-        #groups = self.group_companies(data)
-        #return groups
         return titles, companies
 
     def run_loop(self):
@@ -253,13 +250,14 @@ class Resume(object):
 
         titles = []
         companies = []
+
         for page in  np.arange(0, num, 50):
             temp_titles, temp_companies = self.get_final_results(page)
             titles.extend(temp_titles)
             companies.extend(temp_companies)
 
         titles = self.normalize_titles(titles)
-        #titles, companies = self.filter_titles(titles, companies)
+        titles, companies = self.filter_titles(titles, companies)
 
         return titles, companies
 
