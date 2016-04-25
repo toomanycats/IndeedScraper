@@ -414,7 +414,7 @@ class Indeed(object):
 
         return new
 
-    def summary_similarity(self, df, column, ratio_thres):
+    def summary_similarity(self, df, column, ratio_thres, mode='remove'):
         dup_list = []
 
         for i in range(df.shape[0] - 1):
@@ -429,13 +429,19 @@ class Indeed(object):
                     ratio = fuzz.ratio(string1, string2)
 
                     if ratio >= ratio_thres:
-                        dup_list.append(j)
+                        if mode == 'remove':
+                            dup_list.append(j)
+                        else:
+                            df.loc[j+1, column] = string1
 
             except Exception, err:
                 logging.error("summary similarity error: %s" % err)
                 continue
 
-        return df.drop(df.index[dup_list])
+            if mode == "remove":
+                df.drop(df.index[dup_list])
+
+        return df
 
     def clean_dup_words(self):
         self.obj = re.compile(r'(\b.+\b)\s+\1\b')
