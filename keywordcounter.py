@@ -1,4 +1,4 @@
-#####################################
+#ssession_id####################################
 # File Name : web_version.py
 # Author : Daniel Cuneo
 # Creation Date : 11-21-2015
@@ -26,6 +26,7 @@ import compare
 import time
 import json
 import re
+import pdb
 
 def mk_random_string():
     random_string = str(uuid.uuid4())
@@ -589,23 +590,36 @@ def _escape_html(html):
 
 @app.route("/entry_point_careers", methods=['GET', 'POST'])
 def get_experience_with_degree():
+    session_id = request.args.get("session_id")
+    session_string = "?session_id=%s" % session_id
+
     if request.method == 'GET':
-        return render_template("entry_point_careers.html", div='', script='')
+        return render_template("entry_point_careers.html", session_id=session_string)
 
     if request.method == 'POST':
+        pdb.set_trace()
         sought_title = request.form['sought_title']
         logging.info("entry point search title: %s" % sought_title)
 
         res = resume.Resume(sought_title)
         title, comp = res.run_loop()
-        title_df = res.prepare_plot(title)
+        df = pd.DataFrame({"title": title,
+                           "comp": comp,
+                           "count": np.ones(len(title))
+                         })
+
+        df.dropna(how='any', inplace=True)
+
+        grp = df.groupby("title")
+        cnt = grp.count()['count']
+        cnt = cnt[cnt > cnt.mean()]
+        cnt.dropna(inplace=True)
 
         title_string = "Job Titles Held By People With Current Position: %s"
         title_string = title_string % sought_title
 
         #TODO:refactor
-        p = Bar(title_df,
-                values='count',
+        p = Bar(cnt,
                 title=title_string,
                 title_text_font_size='20',
                 color='blue',
@@ -616,24 +630,29 @@ def get_experience_with_degree():
 
         script, div = components(p)
 
-        comp_df = res.prepare_plot(comp)
+#        comp_df = res.prepare_plot(comp)
+#        comp_df.reset_index(inplace=True)
+#
+#        p = Bar(df,
+#                label='comp',
+#                values='count',
+#                title=title_string,
+#                title_text_font_size='20',
+#                color='red',
+#                xlabel="",
+#                ylabel="Count",
+#                width=1500,
+#                height=300)
+#
+#        comp_script, comp_div = components(p)
+#
+#        script += comp_script
+#        div += comp_div
 
-        p = Bar(comp_df,
-                values='count',
-                title=title_string,
-                title_text_font_size='20',
-                color='red',
-                xlabel="",
-                ylabel="Count",
-                width=1500,
-                height=300)
-
-        comp_script, comp_div = components(p)
-
-        script += comp_script
-        div += comp_div
-
-        return render_template("entry_point_careers.html", div=div, script=script)
+        return render_template("entry_point_careers.html",
+                               session_id=session_string,
+                               div=div,
+                               script=script)
 
 if __name__ == "__main__":
     app.run(threaded=False, debug=True)

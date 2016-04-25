@@ -13,6 +13,8 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <script src="{{ url_for('static', filename='script.js') }} "></script>
     <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <script type="text/javascript" src="http://w.sharethis.com/button/buttons.js"></script>
+    <script type="text/javascript" src="http://s.sharethis.com/loader.js"></script>
     <script type="text/javascript">var switchTo5x=true;</script>
     <!-- Test1 -->
     <ins class="adsbygoogle"
@@ -36,6 +38,18 @@
 
 </head>
 <body>
+<div id='cssmenu'>
+<ul>
+    <li><a href='/'><span>New Search</span></a></li>
+    <li><a href='/bigram{{session_id}}'><span>Keyword Pairs</span></a></li>
+    <li><a href='/stem{{session_id}}'><span>Single Word</span></a></li>
+    <li><a href='/grammar{{session_id}}'><span>Soft Skills</span></a></li>
+    <li><a href='/cities{{session_id}}'><span>Cities</span></a></li>
+    <li><a href='/titles{{session_id}}'><span>Titles</span></a></li>
+    <li><a href='/word_count{{session_id}}'>Count of Single Word</span></a></li>
+    <li class='last'><a href='/missing{{session_id}}'><span>Analyze Your Resume</span></a></li>
+</ul>
+</div>
 
     <h1>Search for entry point positions and companies.</h1>
     <p>Many times when starting a new career, we cannot jump right into our target position.
@@ -52,8 +66,8 @@
 
     <p><i>The graph is interactive, scroll up and down to zoom</i></p>
 
-    {{div}}
-    {{script}}
+    {{ div | safe }}
+    {{ script | safe }}
 
 </body>
 </html>
