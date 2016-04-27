@@ -245,8 +245,6 @@ class Resume(object):
         api = self.get_api(page=0)
         html = self.get_html_from_api(api)
         num = self.get_number_of_resumes_found(html)
-        if num > 1000:
-            num = 1000
 
         titles = []
         companies = []
