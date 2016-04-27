@@ -47,7 +47,7 @@ class Indeed(object):
         self.query = None
         self.title = None
         self.stem_inverse = {}
-        self.locations = None
+        self.location = None
 
     def _decode(self, string):
         try:
@@ -158,7 +158,8 @@ class Indeed(object):
 
     def get_url(self, start):
         api = self.api %{'pub_id':self.pub_id,
-                         'loc':'nationwide',
+                         #'loc':'nationwide',
+                         'loc': self.location,
                          'channel_name':self.channel_name,
                          'query':self.format_keywords(self.query),
                          'start':start
@@ -171,7 +172,11 @@ class Indeed(object):
             data = json.loads(response.read())
             response.close()
 
-            results = [(item['url'], item['city'], item['jobtitle'], item['jobkey'], item['snippet'])  for item in data['results']]
+            results = [(item['url'],
+                         item['city'],
+                         item['jobtitle'],
+                         item['jobkey'],
+                         item['snippet'])  for item in data['results']]
 
         except urllib2.HTTPError, err:
             logging.debug("get url: %s" % err)
@@ -317,7 +322,7 @@ class Indeed(object):
         self.build_api_string()
         self.add_stop_words()
 
-    def vectorizer(self, corpus, max_features=200, max_df=0.8, min_df=5, n_min=2, n_max=3, analyzer='word'):
+    def vectorizer(self, corpus, max_features=200, max_df=0.8, min_df=5, n_min=2, n_max=3, analyzer='word', binary=False):
         vectorizer = CountVectorizer(max_features=max_features,
                                     max_df=max_df,
                                     min_df=min_df,
@@ -461,6 +466,16 @@ class Indeed(object):
             logging.error(err)
 
         return x
+
+    def _prep_comp(self, company):
+        comp = company.split(" ")
+        return  "+".join(comp)
+
+    def get_comp_api(self, company):
+        self.build_api_string()
+
+        company = self._prep_comp(company)
+        self.api += "&as_cmp=%s%%%%29" % company
 
 
 if __name__ == "__main__":
