@@ -42,7 +42,7 @@ class Indeed(object):
         self.add_loc = None
         self.stop_words = None
         self.num_samp = 1000
-        self.df = pd.DataFrame(columns=['url', 'job_key', 'summary', 'summary_stem', 'city', 'jobtitle'])
+        self.df = pd.DataFrame(columns=['url', 'job_key', 'summary', 'summary_stem', 'city', 'jobtitle', 'grammar'])
         self.config_path = os.path.join(repo_dir, "tokens.cfg")
         self.query = None
         self.title = None
@@ -419,12 +419,16 @@ class Indeed(object):
 
         for i in range(df.shape[0] - 1):
             try:
-                string1 = df.loc[i, column]
-                string1 = self._decode(string1)
+                string = df.loc[i, column]
+                string1 = self._decode(string)
+                if string1 is None:
+                    string1 = string
 
                 for j in range(i+1, df.shape[0] - 1):
-                    string2 = df.loc[j+1, column]
-                    string2 = self._decode(string2)
+                    string  = df.loc[j+1, column]
+                    string2 = self._decode(string)
+                    if string2 is None:
+                        string2 = string
 
                     ratio = fuzz.ratio(string1, string2)
 

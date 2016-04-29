@@ -4,6 +4,7 @@ import subprocess
 import numpy as np
 import logging
 import os
+from os import path
 
 data_dir = os.getenv('OPENSHIFT_DATA_DIR')
 if data_dir is None:
@@ -63,7 +64,6 @@ class MissingKeywords(object):
             return row
 
     def main(self, resume_path, indeed_summaries):
-
         text = self.pdf_to_text(resume_path)
         resume_kw = grammar.main(text)
         resume_kw = resume_kw.split(' ')

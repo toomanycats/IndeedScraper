@@ -3,6 +3,7 @@
 # Author : Daniel Cuneo
 # Creation Date : 11-21-2015
 ######################################
+import pdb
 from MySQLdb import escape_string
 from fuzzywuzzy import fuzz
 import sqlalchemy
@@ -495,23 +496,42 @@ def check_for_low_count_using_title():
     else:
         return ""
 
+def check_path_already_exists(resume_path):
+    if os.path.exists(resume_path):
+        logging.info("resume path duplicate")
+        basename = os.path.basename(resume_path)
+        rand_str = mk_random_string()
+        basename = "%s_%s" % (rand_str, basename)
+        dir_name = os.path.dirname(resume_path)
+
+        new_path = os.path.join(dir_name, basename)
+        logging.info("new path for dup resume path:%s" % new_path)
+
+        return new_path
+
+    else:
+        return resume_path
+
 @app.route('/missing', methods=['GET', 'POST'])
 def compute_missing_keywords():
-    session_id = request.args.get("session_id")
-    session_string = "?session_id=%s" % session_id
     if request.method == "POST":
+        session_id = request.args.get("session_id")
         resume_file = request.files['File']
         logging.info("resume path: %s" % resume_file.filename)
 
         resume_path = os.path.join(data_dir, resume_file.filename)
+        resume_path = check_path_already_exists(resume_path)
         resume_file.save(resume_path)
 
         df = load_csv(session_id)
         rows = missing_keywords.main(resume_path, df['summary'])
 
+        session_string = "?session_id=%s" % session_id
         return render_template('missing.html', rows=rows, session_id=session_string)
 
     else:
+        session_id = request.args.get("session_id")
+        session_string = "?session_id=%s" % session_id
         return render_template('missing.html', rows='', session_id=session_string)
 
 def compute_max_df(type_, num_samp, n_min=1):
