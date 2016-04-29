@@ -156,7 +156,7 @@ class Indeed(object):
 
         return ind, end, num_res, count
 
-    def get_url(self, start):
+    def _fill_in_api(self, start):
         api = self.api %{'pub_id':self.pub_id,
                          #'loc':'nationwide',
                          'loc': self.location,
@@ -164,6 +164,10 @@ class Indeed(object):
                          'query':self.format_keywords(self.query),
                          'start':start
                         }
+        return api
+
+    def get_url(self, start):
+        api = self._fill_in_api(start)
 
         logging.debug("full api:%s" % api)
 
