@@ -497,8 +497,9 @@ def check_for_low_count_using_title():
 
 @app.route('/missing', methods=['GET', 'POST'])
 def compute_missing_keywords():
+    session_id = request.args.get("session_id")
+    session_string = "?session_id=%s" % session_id
     if request.method == "POST":
-        session_id = request.args.get("session_id")
         resume_file = request.files['File']
         logging.info("resume path: %s" % resume_file.filename)
 
@@ -508,11 +509,9 @@ def compute_missing_keywords():
         df = load_csv(session_id)
         rows = missing_keywords.main(resume_path, df['summary'])
 
-        session_string = "?session_id=%s" % session_id
         return render_template('missing.html', rows=rows, session_id=session_string)
 
     else:
-        session_string = "?session_id=%s" % session_id
         return render_template('missing.html', rows='', session_id=session_string)
 
 def compute_max_df(type_, num_samp, n_min=1):
