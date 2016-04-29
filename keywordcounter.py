@@ -587,19 +587,6 @@ def save_to_csv(df, session_id):
 def _escape_html(html):
     return html.replace("%", "\%").replace("_", "\_").replace("'", "\'").replace('"', '\"')
 
-@app.route("/get_companies_w_degree")
-def get_experience_with_degree(degree):
-    res = Resume(degree)
-    companies, count = res.get_companies()
-
-    df = pd.DataFrame({'kw':companies,
-                       'count':count
-                       })
-
-    p = plot_fig(df, 10, kws)
-    script, div = components(p)
-
-    render_template("companies_by_degree.html", div=div, script=script)
 
 
 if __name__ == "__main__":
