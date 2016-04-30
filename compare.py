@@ -64,15 +64,29 @@ class MissingKeywords(object):
             return row
 
     def main(self, resume_path, indeed_summaries):
-        text = self.pdf_to_text(resume_path)
-        resume_kw = grammar.main(text)
-        resume_kw = resume_kw.split(' ')
+        res_text = self.pdf_to_text(resume_path)
+        res_tokens = indeed_scrape.toker(res_text)
 
-        summaries = map(grammar.main, indeed_summaries)
-        summaries = map(self._len_tester, summaries)
+        vectorizer = CountVectorizer(max_features=20,
+                                    max_df=0.80,
+                                    min_df=5,
+                                    lowercase=True,
+                                    stop_words=self.stop_words,
+                                    ngram_range=(1, 1),
+                                    analyzer='word',
+                                    decode_error='ignore',
+                                    strip_accents='unicode'
+                                    )
 
-        _, job_kw = ind.vectorizer(summaries, n_min=1, n_max=1, max_features=60,
-                max_df=0.65, min_df=0.01)
+        matrix = vectorizer.fit_transform(corpus)
+        features = vectorizer.get_feature_names()
+
+        indeed_mat, indeed_kw = ind.vectorizer(indeed_summaries,
+                                               max_features=20,
+                                               n_min=1,
+                                               n_max=1)
+        res_mat, res_fea
+
 
         intersect = np.intersect1d(resume_kw, job_kw)
 
