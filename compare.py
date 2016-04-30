@@ -1,3 +1,4 @@
+from sklearn.feature_extraction.text import CountVectorizer
 import indeed_scrape
 import GrammarParser
 import subprocess
@@ -5,6 +6,7 @@ import numpy as np
 import logging
 import os
 from os import path
+import pdb
 
 data_dir = os.getenv('OPENSHIFT_DATA_DIR')
 if data_dir is None:
@@ -16,7 +18,8 @@ ind = indeed_scrape.Indeed('kw')
 
 class MissingKeywords(object):
     def __init__(self):
-        pass
+        self.stop_words = 'resume affirmative cover letter equal religion sex disibility veteran status sexual orientation and work ability http https www gender com org the'
+
 
     def pdf_to_text(self, infile):
         logging.debug("pdf_to_text, infile:%s" % infile)
@@ -39,14 +42,10 @@ class MissingKeywords(object):
 
         return out
 
-    def make_rows(self, words):
-        row = '<tr><td>%s</td></tr>'
-        rows = ''
-
-        for w in words:
-            rows += row % w
-
-        return rows
+    def make_row(self, kw, ind_cnt, res_cnt):
+        row = '<tr><td>%s</td><td>%s</td><td>%s</td></tr>'
+        row = row %(kw, ind_cnt, res_cnt)
+        return row
 
     def decode(self, text):
         try:
@@ -63,16 +62,18 @@ class MissingKeywords(object):
 
             return row
 
-    def main(self, resume_path, indeed_summaries):
-        res_text = self.pdf_to_text(resume_path)
-        res_tokens = indeed_scrape.toker(res_text)
+    def vectorizer(self, corpus):
+        ind = indeed_scrape.Indeed(None)
+        ind.stop_words = self.stop_words
+        ind.add_stop_words()
+        stop_words = ind.stop_words
 
-        vectorizer = CountVectorizer(max_features=20,
+        vectorizer = CountVectorizer(max_features=50,
                                     max_df=0.80,
                                     min_df=5,
                                     lowercase=True,
-                                    stop_words=self.stop_words,
-                                    ngram_range=(1, 1),
+                                    stop_words=stop_words,
+                                    ngram_range=(2, 2),
                                     analyzer='word',
                                     decode_error='ignore',
                                     strip_accents='unicode'
@@ -81,18 +82,30 @@ class MissingKeywords(object):
         matrix = vectorizer.fit_transform(corpus)
         features = vectorizer.get_feature_names()
 
-        indeed_mat, indeed_kw = ind.vectorizer(indeed_summaries,
-                                               max_features=20,
-                                               n_min=1,
-                                               n_max=1)
-        res_mat, res_fea
+        return matrix, features, vectorizer
 
+    def main(self, resume_path, indeed_summaries):
+        ind_mat, keywords, vec_obj = self.vectorizer(indeed_summaries)
+        ind_mat = ind_mat.toarray()
+        # recall: mat is docs x features
+        # we want count of features overall docs
+        ind_cnt = ind_mat.T.sum(axis=1)
+        # and really we want the percentage
+        ind_perc = ind_cnt / float(ind_mat.shape[0])
 
-        intersect = np.intersect1d(resume_kw, job_kw)
+        res_text = self.pdf_to_text(resume_path)
+        res_mat = vec_obj.transform([res_text])
+        # resume matrix is a 1 dim so no need to sum
+        # or transpose
+        res_mat = res_mat.toarray().squeeze()
 
-        for word in intersect:
-            job_kw.remove(word)
-
-        rows = self.make_rows(job_kw)
+        rows = ''
+        for i in range(len(ind_perc)):
+            rows += self.make_row(keywords[i], ind_perc[i], res_mat[i])
 
         return rows
+
+
+
+
+
