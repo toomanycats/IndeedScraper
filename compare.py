@@ -6,7 +6,7 @@ import numpy as np
 import logging
 import os
 from os import path
-import pdb
+import numpy as np
 
 data_dir = os.getenv('OPENSHIFT_DATA_DIR')
 if data_dir is None:
@@ -19,7 +19,6 @@ ind = indeed_scrape.Indeed('kw')
 class MissingKeywords(object):
     def __init__(self):
         self.stop_words = 'resume affirmative cover letter equal religion sex disibility veteran status sexual orientation and work ability http https www gender com org the'
-
 
     def pdf_to_text(self, infile):
         logging.debug("pdf_to_text, infile:%s" % infile)
@@ -47,33 +46,18 @@ class MissingKeywords(object):
         row = row %(kw, ind_cnt, res_cnt)
         return row
 
-    def decode(self, text):
-        try:
-            text = text.encode("ascii", "ignore")
-        except:
-            text = text.decode("utf-8", "ignore").encode("ascii", "ignore")
-        finally:
-            return text
-
-    def _len_tester(self, row):
-            row = row.split(" ")
-            row = indeed_scrape.Indeed.len_tester(row, thres=4)
-            row = " ".join(row)
-
-            return row
-
-    def vectorizer(self, corpus):
+    def vectorizer(self, corpus, max_fea, n_min, n_max):
         ind = indeed_scrape.Indeed(None)
         ind.stop_words = self.stop_words
         ind.add_stop_words()
         stop_words = ind.stop_words
 
-        vectorizer = CountVectorizer(max_features=50,
+        vectorizer = CountVectorizer(max_features=max_fea,
                                     max_df=0.80,
                                     min_df=5,
                                     lowercase=True,
                                     stop_words=stop_words,
-                                    ngram_range=(2, 2),
+                                    ngram_range=(n_min, n_max),
                                     analyzer='word',
                                     decode_error='ignore',
                                     strip_accents='unicode'
@@ -84,21 +68,48 @@ class MissingKeywords(object):
 
         return matrix, features, vectorizer
 
-    def main(self, resume_path, indeed_summaries):
-        ind_mat, keywords, vec_obj = self.vectorizer(indeed_summaries)
-        ind_mat = ind_mat.toarray()
+    def _trans_ind_agg_to_perc(self, mat):
+        ind_mat = mat.toarray()
         # recall: mat is docs x features
         # we want count of features overall docs
         ind_cnt = ind_mat.T.sum(axis=1)
         # and really we want the percentage
         ind_perc = ind_cnt / float(ind_mat.shape[0])
+        ind_perc = np.round(ind_perc, decimals=2)
 
+        return ind_perc
+
+    def main(self, resume_path, indeed_summaries):
         res_text = self.pdf_to_text(resume_path)
+
+        bi_rows = self.bi_gram_analysis(res_text, indeed_summaries)
+        uni_rows = self.unigram_analysis(res_text, indeed_summaries)
+
+        return bi_rows, uni_rows
+
+    def unigram_analysis(self, res_text, indeed_summaries):
+        ind_mat, keywords, vec_obj = self.vectorizer(indeed_summaries, 10, 1, 1)
+        ind_perc = self._trans_ind_agg_to_perc(ind_mat)
+
         res_mat = vec_obj.transform([res_text])
         # resume matrix is a 1 dim so no need to sum
         # or transpose
         res_mat = res_mat.toarray().squeeze()
 
+        rows = self.make_rows(keywords, ind_perc, res_mat)
+        return rows
+
+    def bi_gram_analysis(self, res_text, indeed_summaries):
+        ind_mat, keywords, vec_obj = self.vectorizer(indeed_summaries, 20, 2, 2)
+        ind_perc = self._trans_ind_agg_to_perc(ind_mat)
+
+        res_mat = vec_obj.transform([res_text])
+        res_mat = res_mat.toarray().squeeze()
+
+        rows = self.make_rows(keywords, ind_perc, res_mat)
+        return rows
+
+    def make_rows(self, keywords, ind_perc, res_mat):
         rows = ''
         for i in range(len(ind_perc)):
             rows += self.make_row(keywords[i], ind_perc[i], res_mat[i])

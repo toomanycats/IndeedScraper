@@ -524,15 +524,18 @@ def compute_missing_keywords():
         resume_file.save(resume_path)
 
         df = load_csv(session_id)
-        rows = missing_keywords.main(resume_path, df['summary'])
+        bi_rows, uni_rows = missing_keywords.main(resume_path, df['summary'])
 
         session_string = "?session_id=%s" % session_id
-        return render_template('missing.html', rows=rows, session_id=session_string)
+        return render_template('missing.html',
+                               bi_rows=bi_rows,
+                               uni_rows=uni_rows,
+                               session_id=session_string)
 
     else:
         session_id = request.args.get("session_id")
         session_string = "?session_id=%s" % session_id
-        return render_template('missing.html', rows='', session_id=session_string)
+        return render_template('missing.html', session_id=session_string)
 
 def compute_max_df(type_, num_samp, n_min=1):
     if type_ == 'keywords':
@@ -609,4 +612,4 @@ def _escape_html(html):
 
 
 if __name__ == "__main__":
-    app.run(threaded=True)
+    app.run(debug=True, threaded=True)

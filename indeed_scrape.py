@@ -262,10 +262,10 @@ class Indeed(object):
             output = self.len_tester(output)
 
             if len(output) > 5:
-                parsed = " ".join(output).replace('\n', '')
+                parsed = " ".join(output).replace('\n', ' ')
                 return parsed
             else:
-                corpus = class_data.get_text().replace('\n', '')
+                corpus = class_data.get_text().replace('\n', ' ')
                 return grammar.main(corpus)
         else:
             return False
@@ -326,8 +326,7 @@ class Indeed(object):
                                     ngram_range=(n_min, n_max),
                                     analyzer=analyzer,
                                     decode_error='ignore',
-                                    strip_accents='unicode',
-                                    binary=True
+                                    strip_accents='unicode'
                                     )
 
         matrix = vectorizer.fit_transform(corpus)

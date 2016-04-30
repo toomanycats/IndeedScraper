@@ -68,12 +68,20 @@ keywords not included in your resume that were found in the job postings.</p>
 
 <br><br>
 
-<h2>Comparison of your resume with the single keyword analysis</h2>
+<h2>Comparison of your resume with the top 20 bi-grams</h2>
     <table>
-    <tr>
-        <th>Missing Keywords in Your Resume</th>
-    </tr>
-        {{ rows | safe }}
+    <tr><th>Keyword</th><th>Aggregate Percentage</th><th>Your Resume Count</th></tr>
+        {{ bi_rows | safe }}
+    <tr></tr>
+    <tr></tr>
+    </table>
+
+<h2>Comparison of your resume with the top 10 uni-grams</h2>
+    <table>
+    <tr><th>Keyword</th><th>Aggregate Percentage</th><th>Your Resume Count</th></tr>
+        {{ uni_rows | safe }}
+    <tr></tr>
+    <tr></tr>
     </table>
 
 <!-- Social button bar -->
