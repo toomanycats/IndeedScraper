@@ -79,7 +79,8 @@ class Indeed(object):
         loc = '&l=%(loc)s'
         query = self.format_query()
         start = '&start=%(start)s'
-        frm = '&fromage=360'
+        frm = '&fromage='
+        #frm = '&fromage=360'
         limit = '&limit=25'
         site = '&st=jobsite'
         format = '&format=json'
