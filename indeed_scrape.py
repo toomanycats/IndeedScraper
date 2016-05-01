@@ -3,7 +3,6 @@
 # Author : Daniel Cuneo
 # Creation Date : 11-05-2015
 ######################################
-import pdb
 from fuzzywuzzy import fuzz
 import GrammarParser
 import codecs
@@ -66,6 +65,7 @@ class Indeed(object):
         if self.stop_words is not None:
             words = self._split_on_spaces(self.stop_words)
             self.stop_words = ENGLISH_STOP_WORDS.union(words)
+            logging.debug("stop words:%s" % self.stop_words)
 
     def build_api_string(self):
         if self.query is None:
