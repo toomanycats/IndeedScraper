@@ -162,6 +162,7 @@ class Resume(object):
 
         titles = map(lambda x: x.replace("/", " "), titles)
         titles = map(lambda x: x.replace("-", " "), titles)
+        titles = map(lambda x: x.replace(",", " "), titles)
 
         out = []
         for title in titles:
