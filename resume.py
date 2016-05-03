@@ -164,6 +164,9 @@ class Resume(object):
         titles = map(lambda x: x.replace("-", " "), titles)
         titles = map(lambda x: x.replace(",", " "), titles)
 
+        obj = re.compile("^\s")
+        titles = map(lambda x: obj.sub('', x), titles)
+
         out = []
         for title in titles:
             temp_list = ind._decode(title)
