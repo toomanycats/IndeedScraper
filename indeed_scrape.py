@@ -443,20 +443,22 @@ class Indeed(object):
 
     def clean_dup_words(self):
         try:
-            self.dup_obj = re.compile(r'(\b.+\b)\s+\1\b')
-            self.df['summary'] = self.df['summary'].apply(lambda x: self._clean_helper(x) if self.dup_obj.search(x) else x)
-            self.df['summary_stem'] = self.df['summary_stem'].apply(lambda x: self._clean_helper(x) if self.dup_obj.search(x) else x)
-            self.df['grammar' ] = self.df['grammar'].apply(lambda x: self._clean_helper(x) if self.dup_obj.search(x) else x)
+            self.dup_obj = re.compile(r'(\b\w+\b)\s+\1\b')
+            self.df['summary'] = self.df['summary'].apply(self._clean_helper)
+            self.df['summary_stem'] = self.df['summary_stem'].apply(self._clean_helper)
+            self.df['grammar' ] = self.df['grammar'].apply(self._clean_helper)
 
         except Exception, err:
+            print err
             logging.error(err)
 
     def _clean_helper(self, x):
+        # only detects and cleans one dup occurance at a time
         reg = self.dup_obj.search(x)
-        words = reg.groups()
-        if len(words) > 0:
-            for word in words:
-                x = re.sub(word, '', x)
+        if reg:
+            word = reg.groups()[0]
+            x = re.sub(word, '', x)
+            self._clean_helper(x)
 
         return x
 
