@@ -5,3 +5,4 @@ df_dir
 python.log
 *.pdf.gz
 *.pdf
+*.swp
