@@ -442,21 +442,21 @@ class Indeed(object):
         return df.drop(df.index[dup_list])
 
     def clean_dup_words(self):
-        self.dup_obj = re.compile(r'(\b.+\b)\s+\1\b')
-        self.df['summary'] = self.df['summary'].apply(lambda x: self._clean_helper(x) if self.obj.search(x) else x)
-        self.df['summary_stem'] = self.df['summary_stem'].apply(lambda x: self._clean_helper(x) if self.obj.search(x) else x)
-        self.df['grammar' ] = self.df['grammar'].apply(lambda x: self._clean_helper(x) if self.obj.search(x) else x)
-
-    def _clean_helper(self, x):
         try:
-            reg = self.dup_obj.search(x)
-            words = reg.groups()
-            for word in words:
-                x = re.sub(word, '', x)
+            self.dup_obj = re.compile(r'(\b.+\b)\s+\1\b')
+            self.df['summary'] = self.df['summary'].apply(lambda x: self._clean_helper(x) if self.dup_obj.search(x) else x)
+            self.df['summary_stem'] = self.df['summary_stem'].apply(lambda x: self._clean_helper(x) if self.dup_obj.search(x) else x)
+            self.df['grammar' ] = self.df['grammar'].apply(lambda x: self._clean_helper(x) if self.dup_obj.search(x) else x)
 
         except Exception, err:
-            logging.error("dup clean helper fail with word:%s" % word)
             logging.error(err)
+
+    def _clean_helper(self, x):
+        reg = self.dup_obj.search(x)
+        words = reg.groups()
+        if len(words) > 0:
+            for word in words:
+                x = re.sub(word, '', x)
 
         return x
 
