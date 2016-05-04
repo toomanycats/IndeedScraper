@@ -313,9 +313,6 @@ def run_analysis():
     ind.stop_words = stop_words
     ind.main()
 
-    #scrub repeated words
-    ind.clean_dup_words()
-
     index = sess_dict['ind'][0]
     end = sess_dict['end'][0]
 
@@ -329,6 +326,8 @@ def run_analysis():
         if (end_time - start_time) / 60.0 > 3.0: # avoid 502
             logging.info("avoiding 502, break")
             break
+
+    ind.clean_dup_words()
 
     update_sql('end', end, 'int', session_id)
     update_sql('count_thres', 25, 'int', session_id)
