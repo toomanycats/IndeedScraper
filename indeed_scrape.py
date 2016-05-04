@@ -442,14 +442,14 @@ class Indeed(object):
         return df.drop(df.index[dup_list])
 
     def clean_dup_words(self):
-        self.obj = re.compile(r'(\b.+\b)\s+\1\b')
+        self.dup_obj = re.compile(r'(\b.+\b)\s+\1\b')
         self.df['summary'] = self.df['summary'].apply(lambda x: self._clean_helper(x) if self.obj.search(x) else x)
         self.df['summary_stem'] = self.df['summary_stem'].apply(lambda x: self._clean_helper(x) if self.obj.search(x) else x)
         self.df['grammar' ] = self.df['grammar'].apply(lambda x: self._clean_helper(x) if self.obj.search(x) else x)
 
     def _clean_helper(self, x):
         try:
-            reg = self.obj.search(x)
+            reg = self.dup_obj.search(x)
             words = reg.groups()
             for word in words:
                 x = re.sub(word, '', x)
