@@ -37,6 +37,8 @@ class MissingKeywords(object):
 
         if err or errcode:
             logging.error(err)
+            logging.error(out)
+            logging.error(errcode)
             raise Exception
 
         return out
