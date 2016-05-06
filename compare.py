@@ -35,7 +35,7 @@ class MissingKeywords(object):
         out, err = process.communicate()
         errcode = process.returncode
 
-        if err or errcode:
+        if errcode > 0:
             logging.error(err)
             logging.error(out)
             logging.error(errcode)
