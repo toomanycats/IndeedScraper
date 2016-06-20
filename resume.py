@@ -33,9 +33,11 @@ except:
     pass
 
 class Resume(object):
-    def __init__(self, field=None, keyword_string=None):
+    def __init__(self, field=None, title=None, keyword_string=None):
         self.kw_string = keyword_string
         self.subject = field
+        self.title = title
+        self.api_base = "http://www.indeed.com/resumes"
 
     def format_degree(self):
         subject_list = indeed_scrape.Indeed._split_on_spaces(self.subject)
@@ -44,7 +46,7 @@ class Resume(object):
 
         return formatted_subject
 
-    def format_query(self):
+    def format_kw_query(self):
 
         if self.kw_string is None:
             return None
@@ -67,7 +69,27 @@ class Resume(object):
 
         return format
 
-    def get_api(self, page=0):
+    def get_title_string(self):
+        string = ''
+        title_parts = indeed_scrape.Indeed._split_on_spaces(self.title)
+        string += "+".join(title_parts)
+
+        return string
+
+    def get_title_api(self, page=0):
+        title_string = self.get_title_string()
+
+        title = "?q=title%%3A%%28%(title_string)s%%29"
+        title = title % {'title_string':title_string}
+        suffix = '&co=US&rb=yoe%%3A12-24'
+        pagination = '&start=%i' % page
+
+        api = self.api_base + title + suffix + pagination
+        logging.debug("api:%s" % api)
+
+        return api
+
+    def get_kw_api(self, page=0):
         formatted_query = self.format_query()
         logging.debug("formatted query:%s" % formatted_query)
         if formatted_query is None:
@@ -77,13 +99,13 @@ class Resume(object):
 
         formated_subject = self.format_degree()
 
-        base = "http://www.indeed.com/resumes"
         degree = 'fieldofstudy%%3A%(field)s' % {'field':formated_subject}
         suffix = '&co=US&rb=yoe%%3A12-24'
         pagination = '&start=%i' % page
 
-        api = base + keywords + degree + suffix + pagination
+        api = self.api_base + keywords + degree + suffix + pagination
         logging.debug("api:%s" % api)
+
         return api
 
     def get_html_from_api(self, api):
@@ -121,7 +143,7 @@ class Resume(object):
 
             #TODO: improve this, use dates on resume
             if len(title_comp) != 0:
-                for i in [-1]: # take last three job titles
+                for i in [-1, -2, -3, -4, -5]: # take last 5 job titles
                     try:
                         results.append(title_comp[i])
                     except IndexError:
@@ -237,7 +259,8 @@ class Resume(object):
         return count
 
     def get_final_results(self, page=0):
-        api = self.get_api(page)
+        #TODO: logic for diff types of api
+        api = self.get_title_api(page)
         html = self.get_html_from_api(api)
 
         if html is None:
@@ -248,19 +271,15 @@ class Resume(object):
         titles = map(lambda x: x[0], data)
         companies = map(lambda x: x[1], data)
 
-        #titles, companies = self.sort_results(titles, companies)
-
-        #groups = self.group_companies(data)
-        #return groups
         return titles, companies
 
     def run_loop(self):
-        api = self.get_api(page=0)
+        api = self.get_title_api(page=0)
         html = self.get_html_from_api(api)
 
         num = self.get_number_of_resumes_found(html)
-        if num > 1000:
-            num = 1000
+        if num > 5000:
+            num = 5000
 
         titles = []
         companies = []
@@ -287,20 +306,17 @@ class Resume(object):
 
         df.drop_duplicates(subset="comp", inplace=True)
 
-        cnt = df.groupby("title").count()
-        thres = np.floor(cnt.mean() + cnt.std())
-        cnt = cnt[cnt >= thres]
+        cnt = df.groupby("title").count()['count']
         cnt.dropna(how='any', inplace=True)
 
         cnt.sort("count", inplace=True)
 
         return cnt
 
-    def top_words(self, df):
+    def top_words(self, titles):
         out = []
-        for i in range(20):
-            temp = df[df['group_index'] == i]['titles']
-            out.append(self.count_words_in_titles(temp)[0])
+        for title in titles:
+            out.append(self.count_words_in_titles(title))
 
         out.sort(key=lambda x:x[1], reverse=True)
 
@@ -327,6 +343,12 @@ class Resume(object):
 
         return out
 
+    def print_number_resumes_found(self):
+        api = self.get_title_api()
+        html = self.get_html_from_api(api)
+        n = self.get_number_of_resumes_found(html)
+
+        print n
 
 class Train(object):
     def __init__(self, master_file):
