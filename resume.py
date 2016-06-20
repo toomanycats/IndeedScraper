@@ -33,7 +33,7 @@ except:
     pass
 
 class Resume(object):
-    def __init__(self, field, keyword_string):
+    def __init__(self, field=None, keyword_string=None):
         self.kw_string = keyword_string
         self.subject = field
 
@@ -87,11 +87,17 @@ class Resume(object):
         return api
 
     def get_html_from_api(self, api):
+        try:
             response = urllib2.urlopen(api)
             html = response.read()
             response.close()
 
             return html
+
+        except Exception, err:
+            logging.error(err)
+
+            return None
 
     def parse_data(self, html):
         obj = re.compile('\s\-\s(?P<target>\w+.*?\<)')
@@ -113,9 +119,9 @@ class Resume(object):
 
             title_comp = self.remove_universities(companies, titles)
 
-            #TODO: improve this
+            #TODO: improve this, use dates on resume
             if len(title_comp) != 0:
-                for i in [-1, -2, -3]: # take last three job titles
+                for i in [-1]: # take last three job titles
                     try:
                         results.append(title_comp[i])
                     except IndexError:
@@ -128,7 +134,7 @@ class Resume(object):
 
     def remove_universities(self, companies, titles):
         obj = re.compile("(?i)university")
-        obj_grad = re.compile("(?i)undergraduate|undergrad|graduate|grad|postdoc")
+        obj_grad = re.compile("(?i)undergraduate|undergrad|graduate|grad|postdoc|college")
         remaining = []
 
         for tit, com in zip(titles, companies):
@@ -233,12 +239,16 @@ class Resume(object):
     def get_final_results(self, page=0):
         api = self.get_api(page)
         html = self.get_html_from_api(api)
+
+        if html is None:
+            return None, None
+
         data = self.parse_data(html)
 
         titles = map(lambda x: x[0], data)
         companies = map(lambda x: x[1], data)
 
-        titles, companies = self.sort_results(titles, companies)
+        #titles, companies = self.sort_results(titles, companies)
 
         #groups = self.group_companies(data)
         #return groups
@@ -247,14 +257,20 @@ class Resume(object):
     def run_loop(self):
         api = self.get_api(page=0)
         html = self.get_html_from_api(api)
+
         num = self.get_number_of_resumes_found(html)
         if num > 1000:
             num = 1000
 
         titles = []
         companies = []
+
         for page in  np.arange(0, num, 50):
             temp_titles, temp_companies = self.get_final_results(page)
+
+            if temp_titles is None:
+                continue
+
             titles.extend(temp_titles)
             companies.extend(temp_companies)
 
@@ -263,15 +279,20 @@ class Resume(object):
 
         return titles, companies
 
-    def prepare_plot(self, data):
-        df = pd.DataFrame({"data":data,
-                           "count": np.ones(len(data))
+    def prepare_plot_titles(self, titles, comps):
+        df = pd.DataFrame({"title":titles,
+                           "comp":comps,
+                           "count": np.ones(len(titles))
                           })
 
-        cnt = df.groupby("data").count()
+        df.drop_duplicates(subset="comp", inplace=True)
+
+        cnt = df.groupby("title").count()
         thres = np.floor(cnt.mean() + cnt.std())
         cnt = cnt[cnt >= thres]
         cnt.dropna(how='any', inplace=True)
+
+        cnt.sort("count", inplace=True)
 
         return cnt
 
