@@ -197,6 +197,8 @@ class Resume(object):
             temp_list = indeed_scrape.toker(title)
             temp_list = ind.len_tester(temp_list)
             temp_string = " ".join(temp_list)
+            temp_list = re.sub('\samp\s', ' ', temp_string)
+            temp_list = re.sub('\sand\s', ' ', temp_string)
             out.append(temp_string)
 
         out = map(lambda x: x.lower(), out)
@@ -345,7 +347,8 @@ class Resume(object):
         print n
 
     def ratio_norm_titles(self, df, column, ratio_thres):
-        """Provide a data frame of titles and count after removing dup companies"""
+        """Provide a data frame of titles and count after
+        removing dup companies"""
 
         for i in range(df.shape[0] - 1):
             try:
