@@ -22,6 +22,7 @@ import json
 import pdb
 import sklearn
 import nltk
+from fuzzywuzzy import fuzz
 
 data_dir = os.getenv('OPENSHIFT_DATA_DIR')
 if data_dir is None:
@@ -298,18 +299,11 @@ class Resume(object):
 
         return titles, companies
 
-    def prepare_plot_titles(self, titles, comps):
-        df = pd.DataFrame({"title":titles,
-                           "comp":comps,
-                           "count": np.ones(len(titles))
-                          })
-
-        df.drop_duplicates(subset="comp", inplace=True)
-
-        cnt = df.groupby("title").count()['count']
+    def prepare_plot_titles(self, df, key="title", count="count"):
+        cnt = df.groupby(key).count()[count]
         cnt.dropna(how='any', inplace=True)
 
-        cnt.sort("count", inplace=True)
+        cnt.sort(count, inplace=True)
 
         return cnt
 
@@ -350,87 +344,44 @@ class Resume(object):
 
         print n
 
-class Train(object):
-    def __init__(self, master_file):
-        self.master_file = master_file
+    def ratio_norm_titles(self, df, column, ratio_thres):
+        """Provide a data frame of titles and count after removing dup companies"""
 
-    def main(self):
-       dict_ = json.load(open(self.master_file))
-       df = pd.DataFrame({"titles":dict_.keys(),
-                          "description":dict_.values()}
-                          )
+        for i in range(df.shape[0] - 1):
+            try:
+                string1 = df.loc[i, column]
 
-       df['description'] = df['description'].apply(" ".join)
+                for j in range(i+1, df.shape[0] - 1):
+                    string2  = df.loc[j+1, column]
+                    ratio = fuzz.ratio(string1, string2)
 
-       #helper = Helper()
-       #df = helper.stem_df(df, "description")
+                    if ratio >= ratio_thres:
+                        df.loc[j+1, column] = string1
 
-       stop_words = set((ENGLISH_STOP_WORDS, ('amp', 'and', 'the', 'intern')))
-
-       title_clf = Pipeline([
-                            ('vec', CountVectorizer(stop_words=stop_words,
-                                                    binary=True,# hack uniq,
-                                                    ngram_range=(1, 1),
-                                                    decode_error="ignore")),
-                            ('clf', SGDClassifier(loss='log',
-                                                  alpha=1e-4,
-                                                  shuffle=False,
-                                                  penalty='l1',
-                                                  random_state=0))
-                            ])
-
-
-       title_clf.fit(df['description'], df['titles'])
-       f = open(os.path.join(data_dir, 'trained_classifier.pickle'), 'wb')
-       pickle.dump(title_clf, f)
-       f.close()
-
-       return title_clf
-
-    def get_df_for_cv(self):
-        #helper = Helper()
-        dict_ = json.load(open(self.master_file))
-        df = pd.DataFrame()
-
-        # for cross validation, we need repeated labels
-        #df['description'] = df['description'].apply(" ".join)
-        index = 0
-        for key, values in dict_.iteritems():
-            for v in values:
-                df.loc[index, 'description'] = v
-                df.loc[index, 'title'] = key
-                index += 1
+            except Exception, err:
+                print err
+                logging.error("summary similarity error: %s" % err)
+                continue
 
         return df
 
-    def grid_search(self):
-        df = self.get_df_for_cv()
+    def main(self):
+        titles, comps = self.run_loop()
+        df = pd.DataFrame({"title":titles,
+                           "comp":comps,
+                           "count":np.ones(len(titles))},
+                           index=np.arange(len(titles))
+                        )
 
-        stop_words = set((ENGLISH_STOP_WORDS, ('amp', 'and', 'the' )))
+        df.drop_duplicates(subset='comp', inplace=True)
 
-        title_clf = Pipeline([
-                             ('vec', CountVectorizer(stop_words=stop_words,
-                                                     binary=True,# hack uniq,
-                                                     ngram_range=(1, 1),
-                                                     decode_error="ignore")),
-                             ('clf', SGDClassifier(random_state=0))
-                             ])
+        df.sort("title", inplace=True)
+        df.reset_index(inplace=True)
+        df = self.ratio_norm_titles(df, 'title', 70)
 
-        labels = df['title'].unique()
-        cv = cross_validation.KFold(df.shape[0], 10)
-        params = {"vec__ngram_range":[(1,1), (1,2)],
-                  "clf__alpha":(1e-1, 1e-2, 1e-3, 1e-4),
-                  "clf__loss":['hinge', 'squared_hinge', 'log', 'squared_loss'],
-                  "clf__penalty":('l1', 'l2'),
-                  "clf__shuffle":[True, False]
-                  }
+        cnt = self.prepare_plot_titles(df)
 
-        gs = GridSearchCV(title_clf, params, cv=cv, n_jobs=6)
-        gs.fit(df['description'], df['title'])
-
-        best_parameters, score, _ = max(gs.grid_scores_, key=lambda x: x[1])
-        for param_name in sorted(params.keys()):
-            print("%s: %r" % (param_name, best_parameters[param_name]))
+        return cnt
 
 
 class Helper(object):
