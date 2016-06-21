@@ -68,7 +68,8 @@ class Resume(object):
 
         title = "?q=anytitle%%3A%%28%(title_string)s%%29"
         title = title % {'title_string':title_string}
-        suffix = '&co=US&rb=yoe%%3A12-24'
+        #suffix = '&co=US&rb=yoe%%3A12-24'
+        suffix = '&co=US'
         pagination = '&start=%i' % page
 
         api = self.api_base + title + suffix + pagination
@@ -128,7 +129,7 @@ class Resume(object):
 
             title_comp = self.remove_universities(companies, titles)
 
-            if len(title_comp) != 0:
+            if len(title_comp) > 1:
                 results.extend(title_comp)
 
         return results
@@ -169,6 +170,9 @@ class Resume(object):
 
         titles = map(lambda x: x.replace("/", " "), titles)
         titles = map(lambda x: x.replace("-", " "), titles)
+        titles = map(lambda x: re.sub("^\s+", "", x), titles)
+        titles = map(lambda x: re.sub("$\s+", "", x), titles)
+        titles = map(lambda x: re.sub("\s{2,}", " ", x), titles)
 
         out = []
         for title in titles:
@@ -180,7 +184,6 @@ class Resume(object):
             temp_string = " ".join(temp_list)
             temp_string = re.sub('\s+amp\s+', ' ', temp_string)
             temp_string = re.sub('\s+and\s+', ' ', temp_string)
-
             out.append(temp_string)
 
         out = map(lambda x: x.lower(), out)
@@ -188,12 +191,11 @@ class Resume(object):
         return out
 
     def filter_hier_titles(self, titles, companies):
-        pattern = "(?i)sr\.|senior|jr\.|junior|vice|director|president|visiting|lead"
+        pattern = "sr\.|senior|jr\.|junior|vice|director|president|visiting|lead"
+        pattern += "associate|assistant|"
+        pattern += "(?i)" # must always be last
 
         titles = map(lambda x: re.sub(pattern, '', x), titles)
-        titles = map(lambda x: re.sub("^\s+", "", x), titles)
-        titles = map(lambda x: re.sub("$\s+", "", x), titles)
-        titles = map(lambda x: re.sub("\s{2,}", " ", x), titles)
 
         temp_titles = []
         temp_companies = []
@@ -255,8 +257,8 @@ class Resume(object):
         html = self.get_html_from_api(api)
 
         num = self.get_number_of_resumes_found(html)
-        if num > 1000:
-            num = 1000
+        if num > 5000:
+            num = 5000
 
         titles = []
         companies = []
@@ -275,10 +277,9 @@ class Resume(object):
 
         return titles, companies
 
-    def prepare_plot_titles(self, df, key="title", count="count"):
-        cnt = df.groupby(key).count()[count]
+    def group(self, df, key="title", count="count"):
+        cnt = df.groupby(key).count()
         cnt.dropna(how='any', inplace=True)
-
         cnt.sort(count, inplace=True)
 
         return cnt
@@ -320,29 +321,23 @@ class Resume(object):
 
         print n
 
-    def ratio_norm_titles(self, df, column, ratio_thres):
-        """Provide a data frame of titles and count after
-        removing dup companies"""
+    def ratio_norm_titles(self, labels, df, column, ratio_thres):
+        """Use on grouped df"""
 
-        df.sort("title", inplace=True)
-        df.reset_index(inplace=True)
-
-        for i in range(df.shape[0] - 1):
+        n = len(labels)
+        for i in range(n):
             try:
-                string1 = df.loc[i, column]
-                if not len(string1) > 0:
-                    continue
+                string1 = labels[i]
+                best_r = 0.0
 
-                for j in range(i+1, df.shape[0]-1):
+                for j in range(df.shape[0]-1):
                     string2  = df.loc[j, column]
-                    if not len(string2) > 0:
-                        continue
-                    if string1[0] == string2[0]:
-                        ratio = fuzz.ratio(string1, string2)
+                    ratio = fuzz.ratio(string1, string2)
 
-                        if ratio < 100.0 and ratio >= ratio_thres:
-                            print "str1:%s str2:%s" %(string1, string2)
-                            df.loc[j, column] = string2
+                    if ratio < 100.0 and ratio >= ratio_thres and ratio > best_r:
+                        r_best = ratio
+                        print "orig:%s new:%s" %(string2, labels[i])
+                        df.loc[j, column] = labels[i]
 
             except Exception, err:
                 print err
@@ -367,6 +362,7 @@ class Resume(object):
         ind = indeed_scrape.Indeed(None)
         titles = map(ind.stemmer_, titles)
         ind.stem_inverse[''] = "None"
+        self.inv_title_dict = ind.stem_inverse
 
         df = pd.DataFrame({"title":titles,
                            "comp":comps,
@@ -374,16 +370,25 @@ class Resume(object):
                            index=np.arange(len(titles))
                         )
 
-        #df = self.ratio_norm_titles(df, 'title', 95)
+        df.drop_duplicates(subset=['comp', 'title'], inplace=True)
+        df.reset_index(inplace=True)
 
-        cnt = self.prepare_plot_titles(df)
-        new_titles = self.inverse_stem_titles(cnt.index, ind.stem_inverse)
-        dff = pd.DataFrame({'title':new_titles,
-                            'count':cnt}
-                          )
 
-        return dff
+        ### final steps ###
+        labels = list(self.group(df)[-30:].index)
+        test = self.ratio_norm_titles(labels, df, 'title', 80)
+        out = self.group(test)
+        inv_titles = self.inv_title_dict(out.index, self.inv_title_dict)
+        out['inv_title'] = inv_title
+
+        return df, out
 
     def plot(self, df):
-         df.plot(kind='bar', x="title", y='perc', rot=90, fontsize="large", grid=True)
+         df.plot(kind='bar', x="inv_title", y='perc', rot=90, fontsize="large", grid=True)
 
+    def add_perc_col_to_cnt(self, cnt, thres=20):
+
+        cnt = cnt[-thres:].copy()
+        cnt['perc'] = 100.0 * cnt['count'] / cnt['count'].sum()
+
+        return cnt
