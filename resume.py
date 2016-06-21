@@ -66,7 +66,8 @@ class Resume(object):
     def get_title_api(self, page=0):
         title_string = self.get_title_string()
 
-        title = "?q=anytitle%%3A%%28%(title_string)s%%29"
+        title = "?q=%(title_string)s"
+        #title = "?q=title%%3A%%28%(title_string)s%%29"
         title = title % {'title_string':title_string}
         #suffix = '&co=US&rb=yoe%%3A12-24'
         suffix = '&co=US'
@@ -373,22 +374,21 @@ class Resume(object):
         df.drop_duplicates(subset=['comp', 'title'], inplace=True)
         df.reset_index(inplace=True)
 
-
         ### final steps ###
         labels = list(self.group(df)[-30:].index)
         test = self.ratio_norm_titles(labels, df, 'title', 80)
         out = self.group(test)
-        inv_titles = self.inv_title_dict(out.index, self.inv_title_dict)
-        out['inv_title'] = inv_title
+        inv_titles = self.inverse_stem_titles(out.index, self.inv_title_dict)
+        out['inv_title'] = inv_titles
 
         return df, out
 
-    def plot(self, df):
-         df.plot(kind='bar', x="inv_title", y='perc', rot=90, fontsize="large", grid=True)
+    def plot(self, df, x='inv_title', y='count'):
+         df.plot(kind='bar', x=x, y=y, rot=90, fontsize="large", grid=True)
 
-    def add_perc_col_to_cnt(self, cnt, thres=20):
+    def add_perc_col_to_cnt(self, df):
 
-        cnt = cnt[-thres:].copy()
-        cnt['perc'] = 100.0 * cnt['count'] / cnt['count'].sum()
+        df = df.copy()
+        df['perc'] = 100.0 * df['count'] / df['count'].sum()
 
-        return cnt
+        return df
