@@ -4,24 +4,10 @@ import re
 import bs4
 import pandas as pd
 import indeed_scrape
-import pandas as pd
 import numpy as np
-import pandas as pd
-from sklearn.feature_extraction.text import CountVectorizer, ENGLISH_STOP_WORDS
-from sklearn.feature_extraction.text import TfidfTransformer
-from sklearn.pipeline import Pipeline
-from sklearn.linear_model import SGDClassifier
-from sklearn.naive_bayes import MultinomialNB
-from sklearn.grid_search import GridSearchCV, RandomizedSearchCV
-from sklearn import cross_validation
-from sklearn import metrics
-import nltk
-import pickle
 import os
 import json
 import pdb
-import sklearn
-import nltk
 from fuzzywuzzy import fuzz
 
 data_dir = os.getenv('OPENSHIFT_DATA_DIR')
@@ -206,6 +192,7 @@ class Resume(object):
 
         titles = map(lambda x: re.sub(pattern, '', x), titles)
         titles = map(lambda x: re.sub("^\s+", "", x), titles)
+        titles = map(lambda x: re.sub("$\s+", "", x), titles)
         titles = map(lambda x: re.sub("\s{2,}", " ", x), titles)
 
         temp_titles = []
@@ -268,8 +255,8 @@ class Resume(object):
         html = self.get_html_from_api(api)
 
         num = self.get_number_of_resumes_found(html)
-        if num > 5000:
-            num = 5000
+        if num > 1000:
+            num = 1000
 
         titles = []
         companies = []
@@ -337,17 +324,25 @@ class Resume(object):
         """Provide a data frame of titles and count after
         removing dup companies"""
 
+        df.sort("title", inplace=True)
+        df.reset_index(inplace=True)
+
         for i in range(df.shape[0] - 1):
             try:
                 string1 = df.loc[i, column]
+                if not len(string1) > 0:
+                    continue
 
-                for j in range(i+1, df.shape[0] - 1):
-                    string2  = df.loc[j+1, column]
-                    ratio = fuzz.ratio(string1, string2)
+                for j in range(i+1, df.shape[0]-1):
+                    string2  = df.loc[j, column]
+                    if not len(string2) > 0:
+                        continue
+                    if string1[0] == string2[0]:
+                        ratio = fuzz.ratio(string1, string2)
 
-                    if ratio >= ratio_thres and ratio < 100:
-                        print "str1:%s : str2:%s\n" %(string1, string2)
-                        df.loc[j+1, column] = string1
+                        if ratio < 100.0 and ratio >= ratio_thres:
+                            print "str1:%s str2:%s" %(string1, string2)
+                            df.loc[j, column] = string2
 
             except Exception, err:
                 print err
@@ -356,22 +351,39 @@ class Resume(object):
 
         return df
 
+    def inverse_stem_titles(self, titles, inv_stem):
+        new_titles = []
+        for t in titles:
+            words = indeed_scrape.Indeed._split_on_spaces(t)
+            temp = map(lambda x: inv_stem[x], words)
+            string = " ".join(temp)
+            new_titles.append(string)
+
+        return new_titles
+
     def main(self):
         titles, comps = self.run_loop()
+
+        ind = indeed_scrape.Indeed(None)
+        titles = map(ind.stemmer_, titles)
+        ind.stem_inverse[''] = "None"
+
         df = pd.DataFrame({"title":titles,
                            "comp":comps,
                            "count":np.ones(len(titles))},
                            index=np.arange(len(titles))
                         )
 
-        df.drop_duplicates(subset='comp', inplace=True)
-
-        df.sort("title", inplace=True)
-        df.reset_index(inplace=True)
         #df = self.ratio_norm_titles(df, 'title', 95)
 
         cnt = self.prepare_plot_titles(df)
+        new_titles = self.inverse_stem_titles(cnt.index, ind.stem_inverse)
+        dff = pd.DataFrame({'title':new_titles,
+                            'count':cnt}
+                          )
 
-        return cnt
+        return dff
 
+    def plot(self, df):
+         df.plot(kind='bar', x="title", y='perc', rot=90, fontsize="large", grid=True)
 
