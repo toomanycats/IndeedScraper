@@ -80,7 +80,7 @@ class Resume(object):
     def get_title_api(self, page=0):
         title_string = self.get_title_string()
 
-        title = "?q=title%%3A%%28%(title_string)s%%29"
+        title = "?q=anytitle%%3A%%28%(title_string)s%%29"
         title = title % {'title_string':title_string}
         suffix = '&co=US&rb=yoe%%3A12-24'
         pagination = '&start=%i' % page
@@ -142,13 +142,8 @@ class Resume(object):
 
             title_comp = self.remove_universities(companies, titles)
 
-            #TODO: improve this, use dates on resume
             if len(title_comp) != 0:
-                for i in [-1, -2, -3, -4, -5]: # take last 5 job titles
-                    try:
-                        results.append(title_comp[i])
-                    except IndexError:
-                        pass
+                results.extend(title_comp)
 
         return results
 
@@ -191,42 +186,34 @@ class Resume(object):
 
         out = []
         for title in titles:
-            temp_list = ind._decode(title)
-            if temp_list is None:
-                continue
+            #temp_list = ind._decode(title)
+            #if temp_list is None:
+                #continue
             temp_list = indeed_scrape.toker(title)
             temp_list = ind.len_tester(temp_list)
             temp_string = " ".join(temp_list)
-            temp_list = re.sub('\samp\s', ' ', temp_string)
-            temp_list = re.sub('\sand\s', ' ', temp_string)
+            temp_string = re.sub('\s+amp\s+', ' ', temp_string)
+            temp_string = re.sub('\s+and\s+', ' ', temp_string)
+
             out.append(temp_string)
 
         out = map(lambda x: x.lower(), out)
 
         return out
 
-    def filter_titles(self, titles, companies):
-        obj = re.compile("(?i)volunteer|intern")
+    def filter_hier_titles(self, titles, companies):
+        pattern = "(?i)sr\.|senior|jr\.|junior|vice|director|president|visiting|lead"
 
-        titles = map(lambda x: x.replace("sr.", ""), titles)
-        titles = map(lambda x: x.replace("senior", ""), titles)
-        titles = map(lambda x: x.replace("jr.", ""), titles)
-        titles = map(lambda x: x.replace("junior", ""), titles)
-        titles = map(lambda x: x.replace("vice", ""), titles)
-        titles = map(lambda x: x.replace("director", ""), titles)
-        titles = map(lambda x: x.replace("president", ""), titles)
-        titles = map(lambda x: x.replace("visiting", ""), titles)
-
-        titles = map(lambda x: re.sub('^\s+', '', x), titles)
+        titles = map(lambda x: re.sub(pattern, '', x), titles)
+        titles = map(lambda x: re.sub("^\s+", "", x), titles)
+        titles = map(lambda x: re.sub("\s{2,}", " ", x), titles)
 
         temp_titles = []
         temp_companies = []
+
         for title, comp in zip(titles, companies):
-            if titles == '' or obj.search(title):
-                continue
-            else:
-                temp_titles.append(title)
-                temp_companies.append(comp)
+            temp_titles.append(title)
+            temp_companies.append(comp)
 
         return temp_titles, temp_companies
 
@@ -297,7 +284,7 @@ class Resume(object):
             companies.extend(temp_companies)
 
         titles = self.normalize_titles(titles)
-        #titles, companies = self.filter_titles(titles, companies)
+        titles, companies = self.filter_hier_titles(titles, companies)
 
         return titles, companies
 
@@ -358,7 +345,8 @@ class Resume(object):
                     string2  = df.loc[j+1, column]
                     ratio = fuzz.ratio(string1, string2)
 
-                    if ratio >= ratio_thres:
+                    if ratio >= ratio_thres and ratio < 100:
+                        print "str1:%s : str2:%s\n" %(string1, string2)
                         df.loc[j+1, column] = string1
 
             except Exception, err:
@@ -380,42 +368,10 @@ class Resume(object):
 
         df.sort("title", inplace=True)
         df.reset_index(inplace=True)
-        df = self.ratio_norm_titles(df, 'title', 70)
+        #df = self.ratio_norm_titles(df, 'title', 95)
 
         cnt = self.prepare_plot_titles(df)
 
         return cnt
 
-
-class Helper(object):
-    def __init__(self):
-        self.stemmer = nltk.stem.LancasterStemmer()
-
-    def test_ending(self, word):
-        if len(word) >= 4 and  word[-1] == 's':
-            word = self.stemmer.stem(word)
-
-        elif len(word) >= 5 and word[-2] == "er":
-            word  = self.stemmer.stem(word)
-
-        elif len(word) >= 6 and word[-3] == 'ing':
-            word = self.stemmer.stem(word)
-
-        else:
-           pass
-
-        return word
-
-    def string_stemmer(self, string):
-        words = indeed_scrape.toker(string)
-        out = []
-        for word in words:
-            word = self.test_ending(word)
-            out.append(word)
-
-        return " ".join(out)
-
-    def stem_df(self, df, key):
-        df[key] = df[key].apply(self.string_stemmer)
-        return df
 
