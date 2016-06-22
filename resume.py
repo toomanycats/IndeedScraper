@@ -379,6 +379,8 @@ class Resume(object):
 
                 for j in range(df.shape[0]-1):
                     string2  = df.loc[j, column]
+                    if string2 in labels:
+                        continue # don't affect labels
                     ratio = fuzz.ratio(string1, string2)
 
                     if ratio < 100.0 and ratio >= ratio_thres and ratio > best_r:
@@ -422,7 +424,7 @@ class Resume(object):
 
         ### final steps ###
         labels = list(self.group(df)[-30:].index)
-        test = self.ratio_norm_titles(labels, df, 'title', 90)
+        test = self.ratio_norm_titles(labels, df, 'title', 80)
         out = self.group(test)
         inv_titles = self.inverse_stem_titles(out.index, self.inv_title_dict)
         out['inv_title'] = inv_titles
