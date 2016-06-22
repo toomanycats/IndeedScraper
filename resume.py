@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import logging
 import urllib2
 import re
@@ -428,6 +429,7 @@ class Resume(object):
         out = self.group(test)
         inv_titles = self.inverse_stem_titles(out.index, self.inv_title_dict)
         out['inv_title'] = inv_titles
+        out.set_index('inv_title', inplace=True)
 
         return df, out
 
