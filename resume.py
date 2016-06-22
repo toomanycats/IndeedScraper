@@ -20,10 +20,11 @@ except:
     pass
 
 class Resume(object):
-    def __init__(self, field=None, title=None, keyword_string=None):
+    def __init__(self, field=None, title=None, location=None, keyword_string=None):
         self.kw_string = keyword_string
         self.subject = field
         self.title = title
+        self.loc = location
         self.api_base = "http://www.indeed.com/resumes"
 
     def format_degree(self):
@@ -56,6 +57,13 @@ class Resume(object):
 
         return format
 
+    def format_location_string(self):
+        loc_string = ''
+        loc_parts = indeed_scrape.Indeed._split_on_spaces(self.loc)
+        loc_string += "+".join(loc_parts)
+
+        return loc_string
+
     def get_title_string(self):
         string = ''
         title_parts = indeed_scrape.Indeed._split_on_spaces(self.title)
@@ -65,15 +73,15 @@ class Resume(object):
 
     def get_title_api(self, page=0):
         title_string = self.get_title_string()
+        location_string = self.format_location_string()
 
-        title = "?q=%(title_string)s"
-        #title = "?q=title%%3A%%28%(title_string)s%%29"
+        title = '?q=%(title_string)s'
         title = title % {'title_string':title_string}
         #suffix = '&co=US&rb=yoe%%3A12-24'
-        suffix = '&co=US'
+        where = '&l=%s' % location_string
         pagination = '&start=%i' % page
 
-        api = self.api_base + title + suffix + pagination
+        api = self.api_base + title + where + pagination
         logging.debug("api:%s" % api)
 
         return api
@@ -110,7 +118,61 @@ class Resume(object):
 
             return None
 
-    def parse_data(self, html):
+    def get_full_resume_links(self, html):
+        soup = bs4.BeautifulSoup(html, 'lxml')
+        divs = soup.find_all('div', {'class': 'clickable_resume_card'})
+        divs = map(str, divs)
+
+        pat = '\<div class=\"clickable_resume_card\" onclick=\"window\.open\(.*?\)'
+        obj = re.compile(pat)
+
+        links_noisy = map(lambda x: obj.search(x).group(), divs)
+
+        path_pat = '\/r\/.*?(\')'
+        clean_links = []
+
+        for l in links_noisy:
+            match = re.search(path_pat, l)
+            if match:
+                ll = match.group().replace("'", "")
+                clean_links.append(ll)
+
+        return clean_links
+
+    def get_des_from_res(self, link):
+        try:
+            base = "http://www.indeed.com"
+
+            resp = urllib2.urlopen(base + link)
+            html = resp.read()
+            resp.close()
+
+            soup = bs4.BeautifulSoup(html, 'lxml')
+            des_list = soup.find_all("p", {"class":"work_description"})
+
+            pat = '\<p class\=\"work_description\"\>(?P<des>.*?)(\>)'
+            ob = re.compile(pat)
+
+            descriptions = []
+            for des in des_list:
+                des = str(des)
+                match = ob.search(des)
+                if match:
+                    descriptions.append(match.group("des"))
+
+            des = self._clean_res_des(descriptions)
+
+            return des
+
+        except Exception, err:
+            print err
+            logging.error(err)
+            return None
+
+    def _clean_res_des(self, des_list):
+        return map(lambda x: x.decode("ascii", "ignore").replace("&amp;", "and").replace("<br/", ""), des_list)
+
+    def parse_html(self, html):
         obj = re.compile('\s\-\s(?P<target>\w+.*?\<)')
 
         soup = bs4.BeautifulSoup(html, "lxml")
@@ -246,7 +308,7 @@ class Resume(object):
         if html is None:
             return None, None
 
-        data = self.parse_data(html)
+        data = self.parse_html(html)
 
         titles = map(lambda x: x[0], data)
         companies = map(lambda x: x[1], data)
@@ -285,15 +347,6 @@ class Resume(object):
 
         return cnt
 
-    def top_words(self, titles):
-        out = []
-        for title in titles:
-            out.append(self.count_words_in_titles(title))
-
-        out.sort(key=lambda x:x[1], reverse=True)
-
-        return out
-
     def categorize_job_titles(self, titles):
         titles = map(lambda x:x.lower(), titles)
 
@@ -314,13 +367,6 @@ class Resume(object):
             out[title] = label[0].decode("ascii", "ignore")
 
         return out
-
-    def print_number_resumes_found(self):
-        api = self.get_title_api()
-        html = self.get_html_from_api(api)
-        n = self.get_number_of_resumes_found(html)
-
-        print n
 
     def ratio_norm_titles(self, labels, df, column, ratio_thres):
         """Use on grouped df"""
@@ -376,7 +422,7 @@ class Resume(object):
 
         ### final steps ###
         labels = list(self.group(df)[-30:].index)
-        test = self.ratio_norm_titles(labels, df, 'title', 80)
+        test = self.ratio_norm_titles(labels, df, 'title', 90)
         out = self.group(test)
         inv_titles = self.inverse_stem_titles(out.index, self.inv_title_dict)
         out['inv_title'] = inv_titles
@@ -384,7 +430,11 @@ class Resume(object):
         return df, out
 
     def plot(self, df, x='inv_title', y='count'):
-         df.plot(kind='bar', x=x, y=y, rot=90, fontsize="large", grid=True)
+        df.plot(kind='bar', x=x, y=y, rot=90, fontsize="large", grid=True)
+
+        plt.title("Titles From Resume Search Results:'Product Manager'", fontsize="large")
+        plt.xlabel("Titles", fontsize="large")
+        plt.ylabel("Counts", fontsize="large")
 
     def add_perc_col_to_cnt(self, df):
 
