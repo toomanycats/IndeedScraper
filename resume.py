@@ -171,7 +171,17 @@ class Resume(object):
             return None
 
     def _clean_res_des(self, des_list):
-        return map(lambda x: x.decode("ascii", "ignore").replace("&amp;", "and").replace("<br/", ""), des_list)
+        """operates on a complete list of lines forming a description
+        from a single resume"""
+
+        des_list = map(lambda x: x.decode("ascii", "ignore") \
+                                  .replace("&amp;", "and") \
+                                  .replace("<br/", ""), des_list)
+
+        pat = "/|-"
+        des_list = map(lambda x: re.sub(pat, " ", x), des_list)
+
+        return des_list
 
     def parse_html(self, html):
         obj = re.compile('\s\-\s(?P<target>\w+.*?\<)')
@@ -218,16 +228,6 @@ class Resume(object):
                 remaining.append((tit, com))
 
         return remaining
-
-    def group_companies(self, companies):
-        df = pd.DataFrame({'company_name':companies})
-        df['count'] = df['company_name'].apply(lambda x: 1)
-        grp = df.groupby("company_name")
-
-        count = grp.count()
-        comp = grp.count().index
-
-        return comp, count
 
     def normalize_titles(self, titles):
         ind = indeed_scrape.Indeed("kw")
@@ -432,17 +432,3 @@ class Resume(object):
         out.set_index('inv_title', inplace=True)
 
         return df, out
-
-    def plot(self, df, x='inv_title', y='count'):
-        df.plot(kind='bar', x=x, y=y, rot=90, fontsize="large", grid=True)
-
-        plt.title("Titles From Resume Search Results:'Product Manager'", fontsize="large")
-        plt.xlabel("Titles", fontsize="large")
-        plt.ylabel("Counts", fontsize="large")
-
-    def add_perc_col_to_cnt(self, df):
-
-        df = df.copy()
-        df['perc'] = 100.0 * df['count'] / df['count'].sum()
-
-        return df
