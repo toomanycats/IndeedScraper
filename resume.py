@@ -37,21 +37,16 @@ class Resume(object):
 
     def format_kw_query(self):
 
-        if self.kw_string is None:
-            return None
-
         query_parts = indeed_scrape.Indeed._split_on_spaces(self.kw_string)
 
         if len(query_parts) == 1:
             format = "%s" % query_parts[0]
 
         elif len(query_parts) == 2:
-            format = "(%s-OR-%s)" % (query_parts[0], query_parts[1])
+            format = "%s+OR+%s" % (query_parts[0], query_parts[1])
 
         elif len(query_parts) > 2:
-            format = "("
-            format += "-OR-".join(query_parts)
-            format += ")"
+            format += "+OR+".join(query_parts)
 
         else:
             raise ValueError, "Length of query string must be greater than zero"
@@ -76,13 +71,22 @@ class Resume(object):
         title_string = self.get_title_string()
         location_string = self.format_location_string()
 
-        title = '?q=%(title_string)s'
-        title = title % {'title_string':title_string}
-        #suffix = '&co=US&rb=yoe%%3A12-24'
+        if self.kw_string is not None:
+            title = '?q=%%28%(kw_string)s%%29+anytitle%%3A%%28%(title_string)s%%29'
+            title = title %{"kw_string": self.format_kw_query(),
+                            "title_string": title_string
+                            }
+        else:
+            title = '?q=%(title_string)s'
+            title = title % {'title_string':title_string}
+
         where = '&l=%s' % location_string
         pagination = '&start=%i' % page
 
         api = self.api_base + title + where + pagination
+
+
+
         logging.debug("api:%s" % api)
 
         return api
@@ -432,3 +436,15 @@ class Resume(object):
         out.set_index('inv_title', inplace=True)
 
         return df, out
+
+    def get_all_des(self):
+        api = self.get_title_api()
+        html = self.get_html_from_api(api)
+        links = self.get_full_resume_links(html)
+        des = []
+        for link in links:
+            des.append( self.get_des_from_res(link) )
+
+        return des
+
+
