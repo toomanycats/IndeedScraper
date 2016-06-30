@@ -67,6 +67,17 @@ app.secret_key = mk_random_string()
 
 stop_words = 'resume affirmative cover letter equal religion sex disibility veteran status sexual orientation and work ability http https www gender com org the'
 
+def determine_w_h(kw_list):
+    n = len(kw_list)
+    height = n * 20 + 200
+
+    string_lens = map(len, kw_list)
+    longest_string = max(string_lens)
+
+    width = longest_string * 14 + 500
+
+    return width, height
+
 def plot_fig(df, num, kws):
     title_string = "Analysis of %i Postings for:'%s'" % (num, kws.strip())
 
@@ -74,21 +85,23 @@ def plot_fig(df, num, kws):
     df.set_index("kw", inplace=True)
     series = df['count']
 
-    p = figure(width=1000, height=1000, y_range=series.index.tolist())
+    width, height = determine_w_h(df.index.tolist())
+    p = figure(width=width, height=height, y_range=series.index.tolist())
 
     p.background_fill = "#EAEAF2"
 
-    p.grid.grid_line_alpha=1.0
+    p.grid.grid_line_alpha = 1.0
     p.grid.grid_line_color = "white"
 
     p.xaxis.axis_label = 'Count'
-    p.yaxis.axis_label = 'Keyword'
+    p.yaxis.axis_label = ''
 
     p.xaxis.axis_label_text_font_size = '14pt'
     p.yaxis.axis_label_text_font_size = '14pt'
+    p.xaxis.location = 'above'
 
     p.xaxis.major_label_text_font_size = '14pt'
-    p.yaxis.major_label_text_font_size = '14pt'
+    p.yaxis.major_label_text_font_size= '14pt'
 
     j = 1
     for k, v in series.iteritems():
@@ -98,8 +111,8 @@ def plot_fig(df, num, kws):
                width=w,
                height=0.4,
                color=(76, 114, 176),
-               width_units="screen",
-               height_units="screen"
+               width_units="data",
+               height_units="data"
                )
         j += 1
 
@@ -241,6 +254,9 @@ def plot_cities():
     df_city = pd.DataFrame({'kw':cities, 'count':count})
     df_city.sort('count', ascending=False, inplace=True)
     df_city.reset_index(inplace=True)
+
+    df_city[df_city['count'] == 0] = None
+    df_city.dropna(inplace=True)
 
     n = df_city.shape[0]
     if n > 20:
@@ -430,7 +446,7 @@ def radius():
     words = get_inverse_stem(words, session_id)
 
     try:
-        count, kw = ind.vectorizer(words, max_features=None, n_min=1, n_max=2,
+        count, kw = ind.vectorizer(words, max_features=30, n_min=1, n_max=2,
                max_df=0.90, min_df=2)
     except ValueError:
         return "The body of words compiled did not contain substantially repeated terms."
