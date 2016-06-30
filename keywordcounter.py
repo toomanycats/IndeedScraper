@@ -17,7 +17,7 @@ import indeed_scrape
 import jinja2
 from bokeh.embed import components
 from bokeh.util.string import encode_utf8
-from bokeh.charts import Bar
+from bokeh.plotting import figure, output_file, show
 import os
 import numpy as np
 import json
@@ -68,18 +68,40 @@ app.secret_key = mk_random_string()
 stop_words = 'resume affirmative cover letter equal religion sex disibility veteran status sexual orientation and work ability http https www gender com org the'
 
 def plot_fig(df, num, kws):
-
     title_string = "Analysis of %i Postings for:'%s'" % (num, kws.strip())
 
-    p = Bar(df, 'kw',
-            values='count',
-            title=title_string,
-            title_text_font_size='20',
-            color='blue',
-            xlabel="",
-            ylabel="Number of Posts Containing Keyword",
-            width=1500,
-            height=500)
+    df.sort("count", inplace=True)
+    df.set_index("kw", inplace=True)
+    series = df['count']
+
+    p = figure(width=1000, height=1000, y_range=series.index.tolist())
+
+    p.background_fill = "#EAEAF2"
+
+    p.grid.grid_line_alpha=1.0
+    p.grid.grid_line_color = "white"
+
+    p.xaxis.axis_label = 'Count'
+    p.yaxis.axis_label = 'Keyword'
+
+    p.xaxis.axis_label_text_font_size = '14pt'
+    p.yaxis.axis_label_text_font_size = '14pt'
+
+    p.xaxis.major_label_text_font_size = '14pt'
+    p.yaxis.major_label_text_font_size = '14pt'
+
+    j = 1
+    for k, v in series.iteritems():
+        w = v / 2 * 2
+        p.rect(x=v/2,
+               y=j,
+               width=w,
+               height=0.4,
+               color=(76, 114, 176),
+               width_units="screen",
+               height_units="screen"
+               )
+        j += 1
 
     return p
 
@@ -611,4 +633,6 @@ def _escape_html(html):
 
 
 if __name__ == "__main__":
-    app.run(threaded=True)
+    app.run(debug=True,
+            threaded=True
+            )
