@@ -1,8 +1,3 @@
-#####################################
-# File Name : web_version.py
-# Author : Daniel Cuneo
-# Creation Date : 11-21-2015
-######################################
 import pdb
 from MySQLdb import escape_string
 from fuzzywuzzy import fuzz
