@@ -79,7 +79,7 @@ def determine_w_h(kw_list):
     return width, height
 
 def plot_fig(df, num, kws):
-    title_string = "Analysis of %i Postings for:'%s'" % (num, kws.strip())
+    title_string = "Analysis of %i Postings for: '%s'" % (num, kws.strip())
 
     df.sort("count", inplace=True)
     df.set_index("kw", inplace=True)
@@ -88,6 +88,7 @@ def plot_fig(df, num, kws):
     width, height = determine_w_h(df.index.tolist())
     p = figure(width=width, height=height, y_range=series.index.tolist())
 
+    p.title = title_string
     p.background_fill = "#EAEAF2"
 
     p.grid.grid_line_alpha = 1.0
@@ -266,7 +267,8 @@ def plot_cities():
         end = n
 
     kws = get_sess(session_id)['keyword'][0]
-    p = plot_fig(df_city.loc[0:end, :], num_posts, kws)
+    slice = df_city.loc[0:end, :].copy()
+    p = plot_fig(slice, num_posts, kws)
     script, div = components(p)
 
     session_string = "?session_id=%s" % session_id
