@@ -255,6 +255,7 @@ def plot_cities():
     df_city.sort('count', ascending=False, inplace=True)
     df_city.reset_index(inplace=True)
 
+    # hack
     df_city[df_city['count'] == 0] = None
     df_city.dropna(inplace=True)
 
@@ -264,7 +265,8 @@ def plot_cities():
     else:
         end = n
 
-    p = plot_fig(df_city.loc[0:end,:], num_posts, 'Posts Per City in the Analysis:Top 20')
+    kws = get_sess(session_id)['keyword'][0]
+    p = plot_fig(df_city.loc[0:end, :], num_posts, kws)
     script, div = components(p)
 
     session_string = "?session_id=%s" % session_id
@@ -649,6 +651,5 @@ def _escape_html(html):
 
 
 if __name__ == "__main__":
-    app.run(debug=True,
-            threaded=True
+    app.run(threaded=True
             )
