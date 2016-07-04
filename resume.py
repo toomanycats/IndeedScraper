@@ -10,6 +10,8 @@ import os
 import json
 import pdb
 from fuzzywuzzy import fuzz
+import GrammarParser
+import indeed_scrape
 
 data_dir = os.getenv('OPENSHIFT_DATA_DIR')
 if data_dir is None:
@@ -43,10 +45,12 @@ class Resume(object):
             format = "%s" % query_parts[0]
 
         elif len(query_parts) == 2:
-            format = "%s+OR+%s" % (query_parts[0], query_parts[1])
+            format = []
+            format = "%s+AND+%s" % (query_parts[0], query_parts[1])
 
         elif len(query_parts) > 2:
-            format += "+OR+".join(query_parts)
+            format = []
+            format += "+AND+".join(query_parts)
 
         else:
             raise ValueError, "Length of query string must be greater than zero"
@@ -54,6 +58,9 @@ class Resume(object):
         return format
 
     def format_location_string(self):
+        if self.loc is None:
+            return None
+
         loc_string = ''
         loc_parts = indeed_scrape.Indeed._split_on_spaces(self.loc)
         loc_string += "+".join(loc_parts)
@@ -67,11 +74,11 @@ class Resume(object):
 
         return string
 
-    def get_title_api(self, page=0):
+    def get_title_api(self):
         title_string = self.get_title_string()
         location_string = self.format_location_string()
 
-        if self.kw_string is not None:
+        if self.kw_string is not None and self.title is not None:
             title = '?q=%%28%(kw_string)s%%29+anytitle%%3A%%28%(title_string)s%%29'
             title = title %{"kw_string": self.format_kw_query(),
                             "title_string": title_string
@@ -80,32 +87,24 @@ class Resume(object):
             title = '?q=%(title_string)s'
             title = title % {'title_string':title_string}
 
-        where = '&l=%s' % location_string
-        pagination = '&start=%i' % page
+        if location_string is not None:
+            where = '&l=%s' % location_string
+        else:
+            where = ""
 
-        api = self.api_base + title + where + pagination
-
-
-
+        api = self.api_base + title + where
         logging.debug("api:%s" % api)
 
         return api
 
-    def get_kw_api(self, page=0):
-        formatted_query = self.format_query()
-        logging.debug("formatted query:%s" % formatted_query)
-        if formatted_query is None:
-            keywords = '?q='
-        else:
-            keywords = '?q=%s+' % formatted_query
+    def get_kw_api(self):
+        formatted_query = self.format_kw_query()
+        keywords = '?q=%s+' % formatted_query
 
-        formated_subject = self.format_degree()
+        #formated_subject = self.format_degree()
+        #degree = 'fieldofstudy%%3A%(field)s' % {'field':formated_subject}
 
-        degree = 'fieldofstudy%%3A%(field)s' % {'field':formated_subject}
-        suffix = '&co=US&rb=yoe%%3A12-24'
-        pagination = '&start=%i' % page
-
-        api = self.api_base + keywords + degree + suffix + pagination
+        api = self.api_base + keywords
         logging.debug("api:%s" % api)
 
         return api
@@ -305,9 +304,8 @@ class Resume(object):
 
         return count
 
-    def get_final_results(self, page=0):
+    def get_results(self, api):
         #TODO: logic for diff types of api
-        api = self.get_title_api(page)
         html = self.get_html_from_api(api)
 
         if html is None:
@@ -320,19 +318,41 @@ class Resume(object):
 
         return titles, companies
 
+    def set_api_type(self):
+        if self.title is None and self.kw_string is not None:
+            self.api_type = "keyword"
+
+        elif self.title is not None:
+            self.api_type = 'title'
+
+        else:
+            raise Exception, "api type not determined"
+
     def run_loop(self):
-        api = self.get_title_api(page=0)
-        html = self.get_html_from_api(api)
+        if self.api_type == "title":
+            api = self.get_title_api()
+        else:
+            api = self.get_kw_api()
+
+        pagination = '&start=%(start)i' % {"start":0}
+        api_ = api + pagination
+        html = self.get_html_from_api(api_)
+
+        if html is None:
+            raise Exception, "no resumes found"
 
         num = self.get_number_of_resumes_found(html)
+
         if num > 5000:
             num = 5000
 
         titles = []
         companies = []
 
-        for page in  np.arange(0, num, 50):
-            temp_titles, temp_companies = self.get_final_results(page)
+        for page in np.arange(0, num, 50):
+            pagination = '&start=%(start)i' % {"start": page}
+            api_ = api + pagination
+            temp_titles, temp_companies = self.get_results(api_)
 
             if temp_titles is None:
                 continue
@@ -410,7 +430,9 @@ class Resume(object):
 
         return new_titles
 
-    def main(self):
+    def analyze_titles(self):
+        """Return a count of job titles"""
+        self.set_api_type()
         titles, comps = self.run_loop()
 
         ind = indeed_scrape.Indeed(None)
@@ -430,21 +452,54 @@ class Resume(object):
         ### final steps ###
         labels = list(self.group(df)[-30:].index)
         test = self.ratio_norm_titles(labels, df, 'title', 80)
-        out = self.group(test)
+        grp = self.group(test)
         inv_titles = self.inverse_stem_titles(out.index, self.inv_title_dict)
-        out['inv_title'] = inv_titles
-        out.set_index('inv_title', inplace=True)
+        grp['inv_title'] = inv_titles
+        grp.set_index('inv_title', inplace=True)
 
-        return df, out
+        return grp
 
     def get_all_des(self):
-        api = self.get_title_api()
+        if self.api_type == "title":
+            api = self.get_title_api()
+        else:
+            api = self.get_kw_api()
+
+        #pdb.set_trace()
+        pagination = '&start=%(start)i' % {"start": 0}
+        api += pagination
         html = self.get_html_from_api(api)
         links = self.get_full_resume_links(html)
         des = []
         for link in links:
-            des.append( self.get_des_from_res(link) )
+            des.extend( self.get_des_from_res(link) )
 
         return des
+
+    def get_keywords_from_des(self):
+        """Get grammar processed count of keywords from job descriptions."""
+        self.set_api_type()
+        des = self.get_all_des()
+        gram = GrammarParser.GrammarParser()
+        grammar = map(gram.main, des)
+
+        ind = indeed_scrape.Indeed(None)
+        mat, fea = ind.vectorizer(grammar,
+                max_features=35,
+                n_min=1,
+                n_max=3,
+                max_df=1.0,
+                min_df=5
+                )
+
+        cnt = mat.toarray().sum(0)
+        df = pd.DataFrame({"kw": fea,
+                           "count": cnt}
+                           )
+        return df
+
+
+
+
 
 
