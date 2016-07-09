@@ -12,6 +12,12 @@ import pdb
 from fuzzywuzzy import fuzz
 import GrammarParser
 import indeed_scrape
+import nltk
+from nltk import tokenize
+
+pat = "^V" # defined here for speed
+verb_matcher = re.compile(pat)
+
 
 data_dir = os.getenv('OPENSHIFT_DATA_DIR')
 if data_dir is None:
@@ -500,6 +506,42 @@ class Resume(object):
                            "count": cnt}
                            )
         return df
+
+    def _get_pos(self, string):
+        test = string.encode('ascii', 'ignore')
+        test = tokenize.word_tokenize(test)
+        pos = nltk.pos_tag(test)
+
+        return pos
+
+    def _filter_pos(self, pos):
+        out = []
+        for item in pos:
+            if verb_matcher.match(item[1]):
+                out.append(item[0])
+
+        return out
+
+    def count_verbs(self, verbs):
+        verbs_cnt = {}
+        for verb in verbs:
+            if verbs_cnt.has_key(verb):
+                verbs_cnt[verb] += 1
+            else:
+                verbs_cnt[verb] = 1
+
+        return verbs_cnt
+
+    def get_verbs(self, des):
+        verbs = []
+        for string in des:
+            pos = self._get_pos(string)
+            if pos is not None:
+                verbs.extend(self._filter_pos(pos))
+
+        return verbs
+
+
 
 
 
