@@ -470,9 +470,12 @@ class Resume(object):
         api += pagination
         html = self.get_html_from_api(api)
         links = self.get_full_resume_links(html)
+
         des = []
         for link in links:
-            des.extend( self.get_des_from_res(link) )
+            d = self.get_des_from_res(link)
+            if d is not None:
+                des.extend(d )
 
         return des
 
