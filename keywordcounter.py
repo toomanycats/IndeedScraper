@@ -101,8 +101,13 @@ def plot_fig(df, num, kws):
 
     j = 1
     for k, v in series.iteritems():
-        w = v / 2 * 2
-        p.rect(x=v/2,
+        if v == 1:
+            w = 1
+            x = 0.5
+        else:
+            w = v / 2 * 2
+            x = v/2
+        p.rect(x=x,
                y=j,
                width=w,
                height=0.4,
