@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en-US">
 <head>
-    <title>keyword counter gallery or sample outputs</title>
+    <title>Keyword Counter gallery of sample outputs</title>
     <meta charset="UTF-8">
     <meta name="description" content="Optimize Your Resume and Social Media Keywords, Provide statistics on the keywords used in job postings Group the cities they are from Report the job titles searched." />
     <style>
@@ -22,39 +22,54 @@
             background-color: #caf6f6;
             }
     </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="{{ url_for('static', filename='script.js') }} "></script>
+    <script type="text/javascript">var switchTo5x=true;</script>
 
 </head>
 <body>
+    <div id='cssmenu'>
+    <ul>
+        <li><a href='/'><span>Start Your Keyword Count</span></a></li>
+    </ul>
+    </div>
 
-    <h1>Keywordcounter Sample Output</h1>
-    <p>This bar charts are samples of keywordcounter.com's outputs for a given
-    job search on indeed.com by <i>title</i>.
+    <h1>Keyword Counter Example for "director of marketing"</h1>
+    <h2>This bar charts are samples of keywordcounter.com's outputs for a
+        given job search on indeed.com by <i>title</i>.</h2>
 
-    In this case, <b><i>digital marketing</i></b>.
 
     <p>The first you'll see is an analysis of keyword pairs. The program
     searches the job postings for bullet points and gathers all the text in
     those points. Then the text is analyzed for common word pairs. Pairs which
     occur too often or not few times, are not considered.</p>
 
-    <p><img src='/static/digital_marketing.png' alt="keyword pairs from analysis of jobs"></p>
+    <p><img src='/static/director_marketing_bi-gram.png' alt="keyword pairs from analysis of jobs"></p>
 
-    <p>This analysis is similar to the one above, except the words are not pairs but
-    single words. Also, the words have been reduced to their "stems" before analysis.
-    This is helpful, because now words like:
+    <h2>This analysis is similar to the one above, except the words are not pairs but
+        single words. Also, the words have been reduced to their "stems" before analysis.</h2>
+
+    <p>This is helpful, because now words like:</p>
     <li>work</li>
     <li>worked</li>
     <li>working</li>
 
     <p>Are grouped as the same word.</p>
 
-    <p><img src='/static/digital_marketing_monograms.png' alt="single keywords
+    <p><img src='/static/director_marketing_mono-gram.png' alt="single keywords
     from analysis of jobs"></p>
 
-    <p>It's often helpful to know which job titles were found, especially if you are
-    searching by <i><b>keyword</b></i> rather than <i><b>title</b></i>.</p>
+    <h2>You can compare your resume's content to the keywords returned from the search</h2>
 
-    <p><img src='/static/digital_marketing_titles.png' alt="job titles found for the analysis"></p>
+    <p><img src="/static/director_marketing_resume_comp.png" alt="comparison of resume keywords to those discovered"></p>
+
+    <h2>It's often helpful to know which job titles were found, especially if you are
+        searching by <i><b>keyword</b></i> rather than <i><b>title</b></i>.</h2>
+
+    <!--<p><img src='/static/director_marketing_titles.png' alt="job titles found for the analysis"></p> -->
+
+    <h2>The count of postings found aggregated by city are also available.</h2>
+    <p><img src="/static/director_marketing_cities.png" alt="count of cities where postings where found">
 
 
 <!-- Start of StatCounter Code for Default Guide -->

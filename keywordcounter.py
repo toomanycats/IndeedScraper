@@ -217,25 +217,24 @@ def plot_titles():
     df['jobtitle'] = df['jobtitle'].apply(lambda x: x.lower())
     df['jobtitle'] = df['jobtitle'].apply(lambda x:' '.join(ind._split_on_spaces(x)))
     df['jobtitle'] = df['jobtitle'].apply(lambda x: re.sub('[^a-z\d\s]', '', x))
+    num = df.shape[0]
     title_de_duped = ind.summary_similarity(df, 'jobtitle', 80)
 
     grp = title_de_duped.groupby("jobtitle").count().sort("url", ascending=False)
     cities = grp.index.tolist()
     counts = grp['city'] # any key will do here
+    dff = pd.DataFrame({'kw':cities,
+                        'count':counts
+                        })
 
-    row = u'<tr><td>%s</td><td>%s</td></tr>'
-    rows = u''
-
-    for cty, cnt in zip(cities, counts):
-        try:
-            cty = cty.encode("utf-8", "ignore")
-            rows += row % (cty, cnt)
-        except:
-           continue
+    kws = get_sess(session_id)['keyword'][0]
+    p = plot_fig(dff, num, kws)
+    script, div = components(p)
 
     session_string = "?session_id=%s" % session_id
-    page = render_template('titles.html', rows=rows, session_id=session_string)
+    page = render_template('titles.html', div=div, script=script, session_id=session_string)
     return encode_utf8(page)
+
 
 @app.route('/cities')
 def plot_cities():
@@ -648,5 +647,6 @@ def _escape_html(html):
 
 
 if __name__ == "__main__":
-    app.run(threaded=True
+    app.run(threaded=True,
+            debug=True
             )

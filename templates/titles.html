@@ -6,6 +6,8 @@
     <link rel='icon' href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="http://cdn.pydata.org/bokeh/release/bokeh-0.10.0.min.css" rel="stylesheet" type="text/css">
+    <script src="http://cdn.pydata.org/bokeh/release/bokeh-0.10.0.min.js"></script>
     <script src="{{ url_for('static', filename='script.js') }} "></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
@@ -25,22 +27,6 @@
         font-size:110%
         }
 
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
-
-        th, td {
-            text-align: left;
-            padding: 8px;
-        }
-
-        tr:nth-child(even){background-color: #66ffff}
-
-        th {
-            background-color: #00d5ff;
-            color: black;
-        }
     </style>
 </head>
 
@@ -61,16 +47,11 @@
     results. This table can provide some insights:</p>
 
     <p>More unique titles is a measure of how your keywords/title search terms, track across domains.</p>
-    <li> A zero count for a title, means that the job posting(s) were not analyzed
-    due to formatting concerns. However, the title was found in the search.</li>
-    <li>All titles are reduced to lower case and fuzzy matched, so that very similar titles are grouped together</li>
+    <li>A zero count for a title means the title was found but not counted</li>
+    <li>Titles are matched so that very similar titles are grouped together</li>
 
-    <table>
-    <tr>
-        <th>Job Title From Posting</th><th>Count</th>
-    </tr>
-        {{ rows | safe }}
-    </table>
+        {{ div | safe }}
+        {{ script | safe }}
 
 <!-- Social button bar -->
 <script type="text/javascript">stLight.options({publisher: "e8fcd386-83a6-40ab-80bb-7649867c948b", doNotHash: false, doNotCopy: false, hashAddressBar: false});</script>
