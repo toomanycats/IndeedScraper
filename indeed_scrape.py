@@ -62,15 +62,10 @@ class Indeed(object):
         return ob.split(string.strip())
 
     def add_stop_words(self):
-        if self.stop_words is None:
-            self.stop_words = list(ENGLISH_STOP_WORDS)
-            logging.info("using default stop words")
-
-        else:
-            words = self._split_on_spaces(self.stop_words)
-            self.stop_words = list(ENGLISH_STOP_WORDS.union(words))
-            logging.info("using custom stop words")
-            logging.debug("stop words:%s" % self.stop_words)
+        words = self._split_on_spaces(self.stop_words)
+        self.stop_words = list(ENGLISH_STOP_WORDS.union(words))
+        logging.info("using custom stop words")
+        logging.debug("stop words:%s" % self.stop_words)
 
     def build_api_string(self):
         if self.query is None:
