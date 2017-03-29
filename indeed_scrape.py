@@ -20,6 +20,8 @@ from nltk import tokenize
 import re
 import os
 
+stop_words = 'resume affirmative cover letter equal religion sex disibility veteran status sexual orientation and work ability http https www gender com org the'
+
 grammar = GrammarParser.GrammarParser()
 
 toker = tokenize.word_tokenize
@@ -62,7 +64,7 @@ class Indeed(object):
         return ob.split(string.strip())
 
     def add_stop_words(self):
-        words = self._split_on_spaces(self.stop_words)
+        words = self._split_on_spaces(stop_words)
         self.stop_words = list(ENGLISH_STOP_WORDS.union(words))
         logging.info("using custom stop words")
         logging.debug("stop words:%s" % self.stop_words)

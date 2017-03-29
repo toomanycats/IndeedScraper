@@ -60,7 +60,6 @@ conn_string = "mysql://%s:%s@%s/indeed" %(sql_username, sql_password, mysql_ip)
 app = Flask(__name__)
 app.secret_key = mk_random_string()
 
-stop_words = 'resume affirmative cover letter equal religion sex disibility veteran status sexual orientation and work ability http https www gender com org the'
 
 def determine_w_h(kw_list):
     n = len(kw_list)
@@ -351,7 +350,6 @@ def run_analysis():
 
     ind = indeed_scrape.Indeed(query_type=sess_dict['type_'][0])
     ind.query = sess_dict['keyword'][0]
-    ind.stop_words = stop_words
     ind.main()
 
     index = sess_dict['ind'][0]
@@ -438,7 +436,6 @@ def radius():
 
     df = load_csv(session_id)
     ind = indeed_scrape.Indeed('kw')
-    ind.stop_words = stop_words
     ind.add_stop_words()
     ind.df = df
 
@@ -487,7 +484,6 @@ def stem():
     summary_stem = df['summary_stem']
 
     ind = indeed_scrape.Indeed("kw")
-    ind.stop_words = stop_words
     ind.add_stop_words()
 
     count, kw = ind.vectorizer(summary_stem, n_min=1, n_max=1, max_features=80,
@@ -508,7 +504,6 @@ def grammar_parser():
     df.dropna(subset=['grammar'], inplace=True)
 
     ind = indeed_scrape.Indeed('kw')
-    ind.stop_words = stop_words
     ind.add_stop_words()
 
     count, kw = ind.tfidf_vectorizer(df['grammar'], n_min=2, n_max=3, max_features=30,
