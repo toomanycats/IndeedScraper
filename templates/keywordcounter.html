@@ -74,11 +74,16 @@
         padding:5px;
         float:left;
     }
-    #section {
-        width:1000px;
+    #left_section {
+        width:900px;
         float:left;
-        padding:10px;
-        font-size:125%
+        padding:5px;
+        font-size:90%
+    }
+    #right_section {
+        width:800px;
+        float:right;
+        padding:5px;
     }
     #footer {
         color:white;
@@ -121,6 +126,11 @@
             color: #e5ffff;
          }
 
+    input {
+            width:  190px;
+            height: 30px;
+            font-size: 30%
+          }
     </style>
 
 </head>
@@ -128,14 +138,7 @@
 <body>
     <div id='header'>Keyword Counter</div>
     <h1><center>Discover Keywords Directly From Job Postings To Optimize Your Resume</center></h1>
-    <div><center><a href="https://www.linkedin.com/pub/daniel-cuneo/34/b93/95b">
-        <img src="https://static.licdn.com/scds/common/u/img/webpromo/btn_viewmy_160x33.png"
-             width="160" height="33" border="0" alt="View Daniel Cuneo's profile on LinkedIn"></a>
-        </center>
-    </div>
-        <div id='nav'><img src=static/logo_trans.png alt="Sample Keyword Output"></div>
-
-        <div id='section'><form action="/get_data/" method="POST">
+        <div id='header'><form action="/get_data/" method="POST">
             <input type="text" name="kw" placeholder="director marketing" spellcheck="true">
 
             <select name="type_">
@@ -147,10 +150,11 @@
 
             </form>
 
-            <div id='footer'><center><p><a href='/gallery/'>Example and Use Case</a></p></center></div>
         </div>
 
-        <div id='section'>
+        <div id='right_section'><img src='/static/director_marketing_screen_shot.png' alt="keyword pairs from analysis of jobs"></div>
+
+        <div id='left_section'>
         <p>Many advice articles agree that you should optimize your resume and
         other content with keywords used by your target audience.</p>
 
@@ -163,6 +167,8 @@
         <p>If you know the title of the positions you're seeking information
         about, such as, "director of marketing", use "director marketing" in a
         title search.</p>
+
+        <div id='footer'><center><p><a href='/gallery/'>Examples and Use Case</a></p></center></div>
         </div>
 
     <ins class="adsbygoogle"
