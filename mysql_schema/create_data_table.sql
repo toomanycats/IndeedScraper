@@ -1,11 +1,8 @@
 USE indeed;
 
-CREATE TABLE data ( 
-    ENGINE=InnoDB, 
-    AUTO_INCREMENT=1,
-    DEFAULT CHARSET=Latin1,
-    `keyword` varchar(100) UNIQUE NOT NULL,
-    `df_file` varchar(50) UNIQUE NOT NULL,
+CREATE TABLE data (
+    `keyword` varchar(100),
+    `df_file` varchar(255) DEFAULT NULL,
     `type_` ENUM('keyword', 'title') NOT NULL,
     `session_id` VARCHAR(36) UNIQUE NOT NULL,
     `ind` MEDIUMINT(9) UNSIGNED DEFAULT NULL,
@@ -15,6 +12,6 @@ CREATE TABLE data (
     `bigram` TEXT,
     `pri_key` MEDIUMINT(9) UNSIGNED NOT NULL AUTO_INCREMENT,
     PRIMARY KEY (pri_key)
-    ) 
+    ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=Latin1
 
 

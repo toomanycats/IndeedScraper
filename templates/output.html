@@ -34,7 +34,7 @@
 <body>
     <script type="text/javascript">
     $(function() {
-        $("#chart").load("/check_db" + "{{session_id}}", function() {
+        $("#chart").load("/run_analysis" + "{{session_id}}", function() {
             $('#check_count').load('/check_count'+ "{{session_id}}", function() {
                 clearInterval(blink);
                 $("#blink").hide('fast', function() {

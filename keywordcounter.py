@@ -135,6 +135,7 @@ def get_keywords():
 def get_data():
 
     if request.method == "POST":
+        pdb.set_trace()
         session_id = mk_random_string()
         logging.info("session id: %s" % session_id)
 
@@ -143,13 +144,27 @@ def get_data():
         kws = indeed_scrape.Indeed._split_on_spaces(kws)
         kws = " ".join(kws) #enter into DB normalized
 
-        # key used for sql to recover other info
+        df_file = look_up_in_db(kws, type_)
+
+        if df_file is not None and os.path.exists(df_file):
+            logging.info("df file found in DB")
+            old_sess = get_sess_for_df(df_file)
+            ind = old_sess ['ind'][0]
+            end = old_sess['end'][0]
+
+        else:
+            logging.info("df file not found in DB")
+            df_file = os.path.join(data_dir, 'df_dir', session_id + '.csv')
+            ind = 0
+            end = 0
+
         to_sql({'session_id':session_id,
                 'type_':type_,
                 'keyword':kws,
-                'ind':0,
-                'end':0,
-                'count_thres':50
+                'ind':ind,
+                'end':end,
+                'count_thres':50,
+                'df_file': df_file
                 })
 
         logging.info("running get_data:%s" % time.strftime("%d-%m-%Y:%H:%M:%S"))
@@ -159,6 +174,15 @@ def get_data():
         session_string = "?session_id=%s" % session_id
         html = render_template('output.html', session_id=session_string)
         return encode_utf8(html)
+
+def get_sess_for_df(df_file):
+    sql = "select * from data where df_file = %s"
+    sql = sql % df_file
+
+    sql_engine = sqlalchemy.create_engine(conn_string)
+    df = pd.read_sql(sql=sql, con=sql_engine)
+
+    return df
 
 def get_plot_comp(kw, count, df, session_id):
         count = count.toarray().sum(axis=0)
@@ -239,7 +263,6 @@ def plot_titles():
     page = render_template('titles.html', div=div, script=script, session_id=session_string)
     return encode_utf8(page)
 
-
 @app.route('/cities')
 def plot_cities():
     session_id = request.args.get("session_id")
@@ -282,6 +305,15 @@ def get_bigram_again():
     session_string = "?session_id=%s" % session_id
     return render_template("bigram.html", html=html, session_id=session_string)
 
+def get_sess_by_df_file(df_file):
+    sql = "select ind, end, count_thres from data where df_file = '%s';"
+    sql = sql % df_file
+
+    sql_engine = sqlalchemy.create_engine(conn_string)
+    df = pd.read_sql(sql=sql, con=sql_engine)
+
+    return df
+
 def look_up_in_db(kw_string, type_):
     sql = "SELECT df_file FROM data WHERE keyword = '%s' and type_ = '%s';"
     sql = sql %(kw_string, type_)
@@ -292,7 +324,7 @@ def look_up_in_db(kw_string, type_):
     if df.shape[0] == 0:
         return None
     else:
-        return df['df_file'][0] # just in case there's more than one
+        return df['df_file'][0]
 
 def process_data_in_db(df_file, session_id):
     ind = indeed_scrape.Indeed("kw")
@@ -311,39 +343,11 @@ def process_data_in_db(df_file, session_id):
 
     return html
 
-@app.route('/check_db')
-def check_db():
-    logging.info("checking DB")
-
-    session_id = request.args.get("session_id")
-    logging.info("session id: %s" % session_id)
-    sess_dict = get_sess(session_id)
-
-
-    kws = sess_dict['keyword'][0]
-    type_ = sess_dict['type_'][0]
-    df_file = look_up_in_db(kws, type_)
-
-    if df_file is not None and os.path.exists(df_file):
-        logging.info("df file found in DB")
-        update_sql('df_file', df_file, 'string', session_id)
-        html = process_data_in_db(df_file, session_id)
-        return html
-
-    else:
-        logging.info("no df file found in DB, run_analysis")
-
-        df_file = os.path.join(data_dir, 'df_dir', mk_random_string() + '.csv')
-        logging.info("df file path: %s" % df_file)
-
-        update_sql('df_file', df_file, 'string', session_id)
-        session_string = "?session_id=%s" % session_id
-        return run_analysis()
-
 @app.route("/run_analysis")
 def run_analysis():
     logging.info("starting run_analysis %s" % time.strftime("%H:%M:%S"))
 
+    pdb.set_trace()
     session_id = request.args.get("session_id", None)
     logging.info("session id: %s" % session_id)
     sess_dict = get_sess(session_id)
@@ -598,8 +602,9 @@ def get_sess(session_id):
     sql = sql % session_id
 
     sql_engine = sqlalchemy.create_engine(conn_string)
+    query_results = pd.read_sql(sql=sql, con=sql_engine)
 
-    return pd.read_sql(sql=sql, con=sql_engine)
+    return query_results
 
 def update_sql(field, value, data_type, session_id):
     sql_engine = sqlalchemy.create_engine(conn_string)
@@ -629,9 +634,12 @@ def to_sql(sess_dict):
     sql_engine = sqlalchemy.create_engine(conn_string)
     reference.to_sql(name='data', con=sql_engine, if_exists='append', index=False)
 
-def load_csv(session_id):
-    sess_dict = get_sess(session_id)
-    df = pd.read_csv(sess_dict['df_file'][0])
+def load_csv(session_id=None, df_path=None):
+    if sessions_id is not None:
+        sess_dict = get_sess(session_id)
+        df = pd.read_csv(sess_dict['df_file'][0])
+    else:
+        df = pd.read_csv(df_path)
 
     return df
 
@@ -639,7 +647,7 @@ def save_to_csv(df, session_id):
     logging.info("saving df")
     sess_dict = get_sess(session_id)
     df_file = sess_dict['df_file'][0]
-    df.to_csv(df_file, index=False, quoting=1, encoding='utf-8')
+    df.to_csv(df_file, mode='a', index=False, quoting=1, encoding='utf-8')
 
 def _escape_html(html):
     return html.replace("%", "\%").replace("_", "\_").replace("'", "\'").replace('"', '\"')
