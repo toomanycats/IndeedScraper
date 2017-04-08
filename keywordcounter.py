@@ -135,7 +135,6 @@ def get_keywords():
 def get_data():
 
     if request.method == "POST":
-        pdb.set_trace()
         session_id = mk_random_string()
         logging.info("session id: %s" % session_id)
 
@@ -176,7 +175,7 @@ def get_data():
         return encode_utf8(html)
 
 def get_sess_for_df(df_file):
-    sql = "select * from data where df_file = %s"
+    sql = "select * from data where df_file = '%s';"
     sql = sql % df_file
 
     sql_engine = sqlalchemy.create_engine(conn_string)
@@ -326,28 +325,38 @@ def look_up_in_db(kw_string, type_):
     else:
         return df['df_file'][0]
 
-def process_data_in_db(df_file, session_id):
-    ind = indeed_scrape.Indeed("kw")
+@app.route('/display')
+def process_data_in_db():
+    session_id = request.args.get("session_id")
     sess_dict = get_sess(session_id)
+    kw = sess_dict['keyword'][0]
+    type_ = sess_dict['type_'][0]
 
-    df = pd.read_csv(df_file)
+    df_file = look_up_in_db(kw, type_)
+    if df_file is None:
+        run_analysis()
 
-    # discard output
-    map(ind.stemmer_, df['summary'])
-    inv = json.dumps(ind.stem_inverse)
-    update_sql('stem_inv', inv, 'string', session_id)
+    else:
+        ind = indeed_scrape.Indeed("kw")
+        ind.add_stop_words()
+        sess_dict = get_sess(session_id)
 
-    html = bigram(df, sess_dict['type_'][0], ind, session_id)
-    update_sql('bigram', html, 'string', session_id)
-    update_sql('count_thres', df.shape[0] + 20, 'int', session_id)
+        df = pd.read_csv(df_file)
 
-    return html
+        map(ind.stemmer_, df['summary'])
+        inv = json.dumps(ind.stem_inverse)
+        update_sql('stem_inv', inv, 'string', session_id)
+
+        html = bigram(df, sess_dict['type_'][0], ind, session_id)
+        update_sql('bigram', html, 'string', session_id)
+        update_sql('count_thres', df.shape[0] + 20, 'int', session_id)
+
+        return html
 
 @app.route("/run_analysis")
 def run_analysis():
     logging.info("starting run_analysis %s" % time.strftime("%H:%M:%S"))
 
-    pdb.set_trace()
     session_id = request.args.get("session_id", None)
     logging.info("session id: %s" % session_id)
     sess_dict = get_sess(session_id)
@@ -377,7 +386,7 @@ def run_analysis():
 
     # append existing df if second or more time here
     if os.path.exists(sess_dict['df_file'][0]):
-        df = load_csv(session_id)
+        df = load_csv(session_id=session_id)
         df = df.append(ind.df, ignore_index=True)
     else:
         df = ind.df
@@ -635,7 +644,7 @@ def to_sql(sess_dict):
     reference.to_sql(name='data', con=sql_engine, if_exists='append', index=False)
 
 def load_csv(session_id=None, df_path=None):
-    if sessions_id is not None:
+    if session_id is not None:
         sess_dict = get_sess(session_id)
         df = pd.read_csv(sess_dict['df_file'][0])
     else:
