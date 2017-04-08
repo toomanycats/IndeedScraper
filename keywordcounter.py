@@ -336,7 +336,7 @@ def process_data_in_db():
     if df_file is None:
         run_analysis()
 
-    else:
+    elif df_file is not None and os.path.exists(df_file):
         ind = indeed_scrape.Indeed("kw")
         ind.add_stop_words()
         sess_dict = get_sess(session_id)
@@ -352,6 +352,9 @@ def process_data_in_db():
         update_sql('count_thres', df.shape[0] + 20, 'int', session_id)
 
         return html
+
+    else:
+        run_analysis()
 
 @app.route("/run_analysis")
 def run_analysis():
