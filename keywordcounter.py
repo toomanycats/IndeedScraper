@@ -332,7 +332,7 @@ def process_data_in_db():
     type_ = sess_dict['type_'][0]
 
     df_file = look_up_in_db(kw, type_)
-    if df_file is None or df_file = 'NULL':
+    if df_file is None or df_file == 'NULL':
         run_analysis()
 
     else:
