@@ -1,4 +1,3 @@
-import pdb
 from MySQLdb import escape_string
 from fuzzywuzzy import fuzz
 import sqlalchemy
@@ -145,15 +144,15 @@ def get_data():
 
         df_file = look_up_in_db(kws, type_)
 
-        if df_file is not None:
+        if df_file is not None or df_file != "NULL":
             logging.info("df file found in DB")
             old_sess = get_sess_for_df(df_file)
             ind = old_sess ['ind'][0]
             end = old_sess['end'][0]
 
         else:
+            df_file = "NULL"
             logging.info("df file not found in DB")
-            df_file = os.path.join(data_dir, 'df_dir', session_id + '.csv')
             ind = 0
             end = 0
 
@@ -333,10 +332,10 @@ def process_data_in_db():
     type_ = sess_dict['type_'][0]
 
     df_file = look_up_in_db(kw, type_)
-    if df_file is None:
+    if df_file is None or df_file = 'NULL':
         run_analysis()
 
-    elif df_file is not None and os.path.exists(df_file):
+    else:
         ind = indeed_scrape.Indeed("kw")
         ind.add_stop_words()
         sess_dict = get_sess(session_id)
@@ -353,8 +352,6 @@ def process_data_in_db():
 
         return html
 
-    else:
-        run_analysis()
 
 @app.route("/run_analysis")
 def run_analysis():
@@ -667,4 +664,4 @@ def _escape_html(html):
 
 
 if __name__ == "__main__":
-    app.run(threaded=True, debug=True)
+    app.run(threaded=True)
