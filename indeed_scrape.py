@@ -219,7 +219,7 @@ class Indeed(object):
     def len_tester(self, word_list, thres=3):
         new_list = []
         for word in word_list:
-            if len(word) < thres:
+            if len(word) < thres and work != "r":
                 continue
             else:
                 new_list.append(word)
