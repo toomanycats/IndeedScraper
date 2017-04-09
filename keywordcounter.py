@@ -145,7 +145,7 @@ def get_data():
 
         df_file = look_up_in_db(kws, type_)
 
-        if df_file is not None and os.path.exists(df_file):
+        if df_file is not None:
             logging.info("df file found in DB")
             old_sess = get_sess_for_df(df_file)
             ind = old_sess ['ind'][0]
