@@ -176,7 +176,7 @@ def get_data():
         return encode_utf8(html)
 
 def get_sess_for_df(df_file):
-    sql = "select * from data where df_file = '%s';"
+    sql = "select ind, end, df_file, type_, keyword from data where df_file = '%s';"
     sql = sql % df_file
 
     sql_engine = sqlalchemy.create_engine(conn_string)
@@ -361,6 +361,12 @@ def look_for_existing_data():
         return run_analysis()
 
     else:
+        meta = get_sess_for_df(df_file):
+        update_sql('ind', meta['ind'][0], 'int', session_id)
+        update_sql('end', meta['end'][0], 'int', session_id)
+        update_sql('count_thres', 25, 'int', session_id)
+        update_sql('df_file', df_file, 'string', session_id)
+
         return process_data_in_db(df_file)
 
 def check_df_file_path_status(session_id):
