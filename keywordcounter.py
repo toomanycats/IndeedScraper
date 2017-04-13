@@ -361,7 +361,7 @@ def look_for_existing_data():
         return run_analysis()
 
     else:
-        meta = get_sess_for_df(df_file):
+        meta = get_sess_for_df(df_file)
         update_sql('ind', meta['ind'][0], 'int', session_id)
         update_sql('end', meta['end'][0], 'int', session_id)
         update_sql('count_thres', 25, 'int', session_id)
