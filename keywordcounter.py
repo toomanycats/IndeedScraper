@@ -1,3 +1,4 @@
+import pdb
 from MySQLdb import escape_string
 from fuzzywuzzy import fuzz
 import sqlalchemy
@@ -142,9 +143,10 @@ def get_data():
         kws = indeed_scrape.Indeed._split_on_spaces(kws)
         kws = " ".join(kws) #enter into DB normalized
 
+        #pdb.set_trace()
         df_file = look_up_in_db(kws, type_)
 
-        if df_file is not None or df_file != "NULL":
+        if df_file is not None and df_file != "NULL":
             logging.info("df file found in DB")
             old_sess = get_sess_for_df(df_file)
             ind = old_sess ['ind'][0]
@@ -313,7 +315,13 @@ def get_sess_by_df_file(df_file):
     return df
 
 def look_up_in_db(kw_string, type_):
-    sql = "SELECT df_file FROM data WHERE keyword = '%s' and type_ = '%s';"
+    sql = """SELECT df_file FROM data
+             WHERE keyword = '%s' AND
+             type_ = '%s' AND
+             df_file != 'NULL'
+             ORDER BY end DESC
+             limit 1;"""
+
     sql = sql %(kw_string, type_)
 
     sql_engine = sqlalchemy.create_engine(conn_string)
@@ -324,34 +332,52 @@ def look_up_in_db(kw_string, type_):
     else:
         return df['df_file'][0]
 
+def process_data_in_db(df_file):
+    session_id = request.args.get("session_id")
+    sess_dict = get_sess(session_id)
+
+    ind = indeed_scrape.Indeed("kw")
+    df = pd.read_csv(df_file)
+
+    map(ind.stemmer_, df['summary'])
+    inv = json.dumps(ind.stem_inverse)
+    update_sql('stem_inv', inv, 'string', session_id)
+
+    html = bigram(df, sess_dict['type_'][0], ind, session_id)
+    update_sql('bigram', html, 'string', session_id)
+    update_sql('count_thres', df.shape[0] + 20, 'int', session_id)
+
+    return html
+
 @app.route('/display')
-def process_data_in_db():
+def look_for_existing_data():
     session_id = request.args.get("session_id")
     sess_dict = get_sess(session_id)
     kw = sess_dict['keyword'][0]
     type_ = sess_dict['type_'][0]
 
     df_file = look_up_in_db(kw, type_)
-    if df_file is None or df_file == 'NULL':
-        run_analysis()
+    if df_file is None:
+        return run_analysis()
 
     else:
-        ind = indeed_scrape.Indeed("kw")
-        ind.add_stop_words()
-        sess_dict = get_sess(session_id)
+        return process_data_in_db(df_file)
 
-        df = pd.read_csv(df_file)
+def check_df_file_path_status(session_id):
+    sess_dict = get_sess(session_id)
+    # append existing df if second or more time here
+    df_file = sess_dict['df_file'][0]
+    if os.path.exists(df_file):
+        return df_file
 
-        map(ind.stemmer_, df['summary'])
-        inv = json.dumps(ind.stem_inverse)
-        update_sql('stem_inv', inv, 'string', session_id)
+    elif df_file == 'NULL':
+        df_file = os.path.join(data_dir, 'df_dir', session_id + '.csv')
+        update_sql('df_file', df_file, 'string', session_id)
 
-        html = bigram(df, sess_dict['type_'][0], ind, session_id)
-        update_sql('bigram', html, 'string', session_id)
-        update_sql('count_thres', df.shape[0] + 20, 'int', session_id)
+        return False
 
-        return html
-
+    else:
+       raise Exception("df file path not understood")
 
 @app.route("/run_analysis")
 def run_analysis():
@@ -384,23 +410,25 @@ def run_analysis():
     update_sql('end', end, 'int', session_id)
     update_sql('count_thres', 25, 'int', session_id)
 
-    # append existing df if second or more time here
-    if os.path.exists(sess_dict['df_file'][0]):
+    df_file = check_df_file_path_status(session_id)
+
+    if df_file:
         df = load_csv(session_id=session_id)
         df = df.append(ind.df, ignore_index=True)
-    else:
+
+    elif df_file is False:
         df = ind.df
 
-    df = ind.summary_similarity(df, 'summary', 80)
-    df.dropna(subset=['summary', 'url', 'summary_stem'], how='any', inplace=True)
-    df.reset_index(inplace=True, drop=True)
-    update_sql('ind', df.shape[0], 'int', session_id)
+        df = ind.summary_similarity(df, 'summary', 80)
+        df.dropna(subset=['summary', 'url', 'summary_stem'], how='any', inplace=True)
+        df.reset_index(inplace=True, drop=True)
+        update_sql('ind', df.shape[0], 'int', session_id)
 
-    # save df for additional analysis
-    inv = json.dumps(ind.stem_inverse)
-    update_sql('stem_inv', inv, 'string', session_id)
+        # save df for additional analysis
+        inv = json.dumps(ind.stem_inverse)
+        update_sql('stem_inv', inv, 'string', session_id)
 
-    save_to_csv(df, session_id)
+        save_to_csv(df, session_id)
 
     html = bigram(df, sess_dict['type_'][0], ind, session_id)
 
@@ -656,6 +684,7 @@ def save_to_csv(df, session_id):
     logging.info("saving df")
     sess_dict = get_sess(session_id)
     df_file = sess_dict['df_file'][0]
+
     df.to_csv(df_file, mode='a', index=False, quoting=1, encoding='utf-8')
 
 def _escape_html(html):
@@ -664,4 +693,4 @@ def _escape_html(html):
 
 
 if __name__ == "__main__":
-    app.run(threaded=True)
+    app.run(threaded=False, debug=True)

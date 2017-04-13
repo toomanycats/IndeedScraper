@@ -35,14 +35,12 @@
     <script type="text/javascript">
     $(function() {
         $("#chart").load("/display" + "{{session_id}}", function() {
-            $('#check_count').load('/check_count'+ "{{session_id}}", function() {
-                clearInterval(blink);
-                $("#blink").hide('fast', function() {
-                    $("#radius").slideDown('fast');
+            clearInterval(blink);
+            $("#blink").hide('fast', function() {
+                $("#radius").slideDown('fast');
                 });
             });
         });
-    });
     </script>
 
     <div id='cssmenu'>
