@@ -434,8 +434,7 @@ def run_analysis():
         inv = json.dumps(ind.stem_inverse)
         update_sql('stem_inv', inv, 'string', session_id)
 
-        save_to_csv(df, session_id)
-
+    save_to_csv(df, session_id)
     html = bigram(df, sess_dict['type_'][0], ind, session_id)
 
     update_sql('bigram', html, 'string', session_id)
