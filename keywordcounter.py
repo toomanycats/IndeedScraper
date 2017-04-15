@@ -357,7 +357,7 @@ def look_for_existing_data():
     type_ = sess_dict['type_'][0]
 
     df_file = look_up_in_db(kw, type_)
-    if df_file is None:
+    if df_file is None and df_file != 'NULL':
         return run_analysis()
 
     else:
