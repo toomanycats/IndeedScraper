@@ -1,3 +1,4 @@
+from MySQLdb import escape_string
 from fuzzywuzzy import fuzz
 import sqlalchemy
 import uuid
@@ -703,4 +704,4 @@ def _escape_html(html):
 
 
 if __name__ == "__main__":
-    app.run(threaded=True, debug=False)
+    app.run(threaded=False, debug=True)
