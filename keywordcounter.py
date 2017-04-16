@@ -1,5 +1,3 @@
-import pdb
-from MySQLdb import escape_string
 from fuzzywuzzy import fuzz
 import sqlalchemy
 import uuid
@@ -143,7 +141,6 @@ def get_data():
         kws = indeed_scrape.Indeed._split_on_spaces(kws)
         kws = " ".join(kws) #enter into DB normalized
 
-        #pdb.set_trace()
         df_file = look_up_in_db(kws, type_)
 
         if df_file is not None and df_file != "NULL":
@@ -156,7 +153,7 @@ def get_data():
             df_file = "NULL"
             logging.info("df file not found in DB")
             ind = 0
-            end = 0
+            end = 50
 
         to_sql({'session_id':session_id,
                 'type_':type_,
@@ -402,6 +399,11 @@ def run_analysis():
 
     start_time = time.time()
     index, end, num_res, count = ind.get_data(ind=index, start=end)
+
+    if count == 0:
+       msg = "Those keywords returned no matching posts from Indeed."
+       return msg
+
     logging.debug("end:%i" % end)
 
     while count < sess_dict['count_thres'][0] and end < num_res:
@@ -459,17 +461,20 @@ def bigram(df, type_, ind, session_id):
                                         max_df=1.0,
                                         min_df=1)
 
-    kw = get_inverse_stem(kw, session_id)
-    script, div = get_plot_comp(kw, count_array, df, session_id)
+        kw = get_inverse_stem(kw, session_id)
 
-    output = """
-%(kw_div)s
-%(kw_script)s
-"""
-    logging.debug("run_analysis returning components")
-    logging.debug("bokeh div:%s" % div)
-    return output %{'kw_script':script,
-                    'kw_div':div }
+        script, div = get_plot_comp(kw, count_array, df, session_id)
+
+        output = """
+            %(kw_div)s
+            %(kw_script)s
+            """
+        logging.debug("run_analysis returning components")
+        logging.debug("bokeh div:%s" % div)
+
+        return output %{'kw_script':script,
+                        'kw_div':div
+                        }
 
 @app.route('/radius', methods=['post'])
 def radius():
