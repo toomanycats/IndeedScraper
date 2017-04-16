@@ -1,3 +1,4 @@
+import pdb
 from MySQLdb import escape_string
 from fuzzywuzzy import fuzz
 import sqlalchemy
@@ -335,6 +336,8 @@ def process_data_in_db(df_file):
     sess_dict = get_sess(session_id)
 
     ind = indeed_scrape.Indeed("kw")
+    ind.add_stop_words()
+
     df = pd.read_csv(df_file)
 
     map(ind.stemmer_, df['summary'])
@@ -462,20 +465,20 @@ def bigram(df, type_, ind, session_id):
                                         max_df=1.0,
                                         min_df=1)
 
-        kw = get_inverse_stem(kw, session_id)
+    kw = get_inverse_stem(kw, session_id)
 
-        script, div = get_plot_comp(kw, count_array, df, session_id)
+    script, div = get_plot_comp(kw, count_array, df, session_id)
 
-        output = """
-            %(kw_div)s
-            %(kw_script)s
-            """
-        logging.debug("run_analysis returning components")
-        logging.debug("bokeh div:%s" % div)
+    output = """
+        %(kw_div)s
+        %(kw_script)s
+        """
+    logging.debug("run_analysis returning components")
+    logging.debug("bokeh div:%s" % div)
 
-        return output %{'kw_script':script,
-                        'kw_div':div
-                        }
+    return output %{'kw_script':script,
+                    'kw_div':div
+                    }
 
 @app.route('/radius', methods=['post'])
 def radius():
@@ -704,4 +707,4 @@ def _escape_html(html):
 
 
 if __name__ == "__main__":
-    app.run(threaded=False, debug=True)
+    app.run(threaded=True, debug=False)
