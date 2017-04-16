@@ -13,14 +13,14 @@ import json
 import pandas as pd
 import urllib2
 from bs4 import BeautifulSoup
-from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer, ENGLISH_STOP_WORDS
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 import numpy as np
 from nltk import stem
 from nltk import tokenize
 import re
 import os
 
-stop_words = 'resume affirmative cover letter equal religion sex disibility veteran status sexual orientation and work ability http https www gender com org the'
+stop_words = 'please resume affirmative cover letter equal religion sex disibility veteran status sexual orientation and work ability http https www gender com org the'
 
 grammar = GrammarParser.GrammarParser()
 
@@ -65,7 +65,7 @@ class Indeed(object):
 
     def add_stop_words(self):
         words = self._split_on_spaces(stop_words)
-        self.stop_words = list(ENGLISH_STOP_WORDS.union(words))
+        self.stop_words = words
         logging.info("using custom stop words")
         logging.debug("stop words:%s" % self.stop_words)
 
