@@ -357,14 +357,13 @@ def look_for_existing_data():
     kw = sess_dict['keyword'][0]
     type_ = sess_dict['type_'][0]
 
-    df_file = look_up_in_db(kw, type_)
-    if df_file is None and df_file != 'NULL':
+    df_file = sess_dict['df_file']
+    if df_file is None or df_file == 'NULL':
         return run_analysis()
 
     else:
-        meta = get_sess_for_df(df_file)
-        update_sql('ind', meta['ind'][0], 'int', session_id)
-        update_sql('end', meta['end'][0], 'int', session_id)
+        update_sql('ind', sess_dict['ind'][0], 'int', session_id)
+        update_sql('end', session_dict['end'][0], 'int', session_id)
         update_sql('count_thres', 25, 'int', session_id)
         update_sql('df_file', df_file, 'string', session_id)
 
