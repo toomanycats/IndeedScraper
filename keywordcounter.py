@@ -712,4 +712,4 @@ def _escape_html(html):
 
 
 if __name__ == "__main__":
-    app.run(threaded=False, debug=True)
+    app.run(threaded=True, debug=False)

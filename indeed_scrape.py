@@ -17,12 +17,16 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 import numpy as np
 from nltk import stem
 from nltk import tokenize
+from nltk import pos_tag
 import re
 import os
+import pdb
 
 stop_words = 'please resume affirmative cover letter equal religion sex disibility veteran status sexual orientation and work ability http https www gender com org the'
 
 grammar = GrammarParser.GrammarParser()
+pat = "^[NVJR]" # defined here for speed
+pos_reg = re.compile(pat)
 
 toker = tokenize.word_tokenize
 sent_toker = tokenize.sent_tokenize
@@ -236,6 +240,7 @@ class Indeed(object):
         words =  map(lambda x: x.lower(), words)
         #words = self.case_norm(document)
         words = self.len_tester(words)
+        words = self.reduce_parts_of_speech(words)
         stem_words = map(stemmer.stem, words)
 
         #master dict of stemmed words and originals
@@ -463,6 +468,20 @@ class Indeed(object):
             self._clean_helper(x)
 
         return x
+
+    def reduce_parts_of_speech(self, words):
+        out = []
+        # works on a list
+        pos = pos_tag(words)
+
+        for item in pos:
+            if pos_reg.match(item[1]):
+                out.append(item[0])
+
+        if len(out) > 0:
+            return out
+        else:
+            return ['none']
 
 
 if __name__ == "__main__":
