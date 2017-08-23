@@ -55,7 +55,10 @@ missing_keywords = compare.MissingKeywords()
 logfile = os.path.join(log_dir, 'python.log')
 logging.basicConfig(filename=logfile, level=logging.INFO)
 
-conn_string = "mysql://%s:%s@%s/indeed" %(sql_username, sql_password, mysql_ip)
+if mysql_ip == '127.0.0.1':
+    conn_string = "sqlite:////mnt/Misc/git_indeed/test.db"
+else:
+    conn_string = "mysql://%s:%s@%s/indeed" %(sql_username, sql_password, mysql_ip)
 
 app = Flask(__name__)
 app.secret_key = mk_random_string()
@@ -143,15 +146,17 @@ def get_data():
         kws = indeed_scrape.Indeed._split_on_spaces(kws)
         kws = " ".join(kws) #enter into DB normalized
 
+        # returns series
         df_file = look_up_in_db(kws, type_)
 
-        if df_file is not None and df_file != "NULL":
+        if df_file is not None or df_file == "NULL":
             logging.info("df file found in DB")
             old_sess = get_sess_for_df(df_file)
             ind = old_sess ['ind'][0]
             end = old_sess['end'][0]
 
         else:
+            # place holder since we can't name the file yet
             df_file = "NULL"
             logging.info("df file not found in DB")
             ind = 0
@@ -345,7 +350,7 @@ def process_data_in_db(df_file):
     update_sql('stem_inv', inv, 'string', session_id)
 
     html = bigram(df, sess_dict['type_'][0], ind, session_id)
-    update_sql('bigram', html, 'string', session_id)
+    #update_sql('bigram', html, 'string', session_id)
     update_sql('count_thres', df.shape[0] + 20, 'int', session_id)
 
     return html
@@ -357,13 +362,13 @@ def look_for_existing_data():
     kw = sess_dict['keyword'][0]
     type_ = sess_dict['type_'][0]
 
-    df_file = sess_dict['df_file']
-    if df_file is None or df_file == 'NULL':
+    df_file = sess_dict['df_file'][0]
+    if df_file is None or df_file == 'NULL' or len(df_file) < 1:
         return run_analysis()
 
     else:
         update_sql('ind', sess_dict['ind'][0], 'int', session_id)
-        update_sql('end', session_dict['end'][0], 'int', session_id)
+        update_sql('end', sess_dict['end'][0], 'int', session_id)
         update_sql('count_thres', 25, 'int', session_id)
         update_sql('df_file', df_file, 'string', session_id)
 
@@ -442,7 +447,7 @@ def run_analysis():
     save_to_csv(df, session_id)
     html = bigram(df, sess_dict['type_'][0], ind, session_id)
 
-    update_sql('bigram', html, 'string', session_id)
+    #update_sql('bigram', html, 'string', session_id)
 
     return html
 
@@ -511,7 +516,8 @@ def radius():
 
 def get_inverse_stem(kw, session_id):
     sess_dict = get_sess(session_id)
-    inv = json.loads(sess_dict['stem_inv'][0])
+    stem_string = sess_dict['stem_inv'][0].replace("\\", "")
+    inv = json.loads(stem_string)
 
     orig_keyword = []
     temp = []
@@ -698,7 +704,7 @@ def save_to_csv(df, session_id):
     sess_dict = get_sess(session_id)
     df_file = sess_dict['df_file'][0]
 
-    df.to_csv(df_file, mode='a', index=False, quoting=1, encoding='utf-8')
+    df.to_csv(df_file, mode='a', quoting=1, index=False, encoding='utf-8')
 
 def _escape_html(html):
     return html.replace("%", "\%").replace("_", "\_").replace("'", "\'").replace('"', '\"')
@@ -706,4 +712,4 @@ def _escape_html(html):
 
 
 if __name__ == "__main__":
-    app.run(threaded=True, debug=False)
+    app.run(threaded=False, debug=True)
