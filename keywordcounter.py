@@ -25,7 +25,6 @@ import re
 def mk_random_string():
     random_string = str(uuid.uuid4())
     return random_string
-
 sql_username = os.getenv("OPENSHIFT_MYSQL_DB_USERNAME")
 if sql_username is None:
     sql_username = 'root'
@@ -350,13 +349,14 @@ def process_data_in_db(df_file):
     update_sql('stem_inv', inv, 'string', session_id)
 
     html = bigram(df, sess_dict['type_'][0], ind, session_id)
-    #update_sql('bigram', html, 'string', session_id)
+    update_sql('bigram', html, 'string', session_id)
     update_sql('count_thres', df.shape[0] + 20, 'int', session_id)
 
     return html
 
 @app.route('/display')
 def look_for_existing_data():
+    #pdb.set_trace()
     session_id = request.args.get("session_id")
     sess_dict = get_sess(session_id)
     kw = sess_dict['keyword'][0]
@@ -447,7 +447,7 @@ def run_analysis():
     save_to_csv(df, session_id)
     html = bigram(df, sess_dict['type_'][0], ind, session_id)
 
-    #update_sql('bigram', html, 'string', session_id)
+    update_sql('bigram', html, 'string', session_id)
 
     return html
 
@@ -680,6 +680,8 @@ def update_sql(field, value, data_type, session_id):
                  'id':session_id
                  }
 
+    sql= sqlalchemy.text(sql)
+
     conn = sql_engine.connect()
     conn.execute(sql)
     conn.close()
@@ -712,4 +714,4 @@ def _escape_html(html):
 
 
 if __name__ == "__main__":
-    app.run(threaded=True, debug=False)
+    app.run(threaded=False, debug=True)
